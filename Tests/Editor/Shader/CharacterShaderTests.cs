@@ -14,7 +14,7 @@ namespace AnimeShaders.Tests
         #region Private Fields
 
         private static readonly string[] ExpectedLightModes =
-            { "UniversalForward", "SRPDefaultUnlit", "ShadowCaster", "DepthOnly", "DepthNormals" };
+            { "UniversalForward", "SRPDefaultUnlit", "AnimeRim", "ShadowCaster", "DepthOnly", "DepthNormals" };
 
         #endregion
 

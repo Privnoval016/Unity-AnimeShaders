@@ -16,6 +16,9 @@ namespace AnimeShaders
         /** <summary>The light mode of the line pass (enable or disable it on a material by this name).</summary> */
         public const string OutlineLightMode = "SRPDefaultUnlit";
 
+        /** <summary>The light mode of the depth-edge rim pass, drawn by <c>AnimeRimFeature</c>.</summary> */
+        public const string RimLightMode = "AnimeRim";
+
         #endregion
 
         /** <summary>The light director's global properties: all zero when never set, which means no change.</summary> */
@@ -222,6 +225,24 @@ namespace AnimeShaders
 
             /** <summary>The property id of _RimLightMask.</summary> */
             public static readonly int RimLightMask = Shader.PropertyToID(RimLightMaskName);
+
+            /** <summary>The switch for the depth-edge rim (1 = on); read by the rim pass.</summary> */
+            public const string RimDepthName = "_RimDepth";
+
+            /** <summary>The property id of _RimDepth.</summary> */
+            public static readonly int RimDepth = Shader.PropertyToID(RimDepthName);
+
+            /** <summary>The name _RimDepthWidth.</summary> */
+            public const string RimDepthWidthName = "_RimDepthWidth";
+
+            /** <summary>The property id of _RimDepthWidth.</summary> */
+            public static readonly int RimDepthWidth = Shader.PropertyToID(RimDepthWidthName);
+
+            /** <summary>The name _RimDepthThreshold.</summary> */
+            public const string RimDepthThresholdName = "_RimDepthThreshold";
+
+            /** <summary>The property id of _RimDepthThreshold.</summary> */
+            public static readonly int RimDepthThreshold = Shader.PropertyToID(RimDepthThresholdName);
 
             /** <summary>The name _InsideDarken.</summary> */
             public const string InsideDarkenName = "_InsideDarken";

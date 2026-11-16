@@ -50,10 +50,12 @@ vertex, and has a global multiplier.
 | `Shaders/Includes/AnimeOutline.hlsl` | The hull pass: baked-normal reconstruction, screen-consistent width, Z offset |
 | `Shaders/Includes/AnimeFade.hlsl` | The dither fade |
 | `Runtime/AnimeShaderIds.cs` | Every global and material property name and id, the toggles, the keywords, the line's light mode, and the fade constants |
-| `Runtime/AnimeMaterials.cs` | Setting a feature (its keyword and its toggle together), receiving shadows, the line pass on or off |
+| `Runtime/AnimeMaterials.cs` | Setting a feature (its keyword and its toggle together), receiving shadows, the line pass on or off, the depth rim on or off |
+| `Runtime/Rendering/AnimeRimFeature.cs`, `AnimeRimPass.cs` | The depth-edge rim's renderer feature and its render-graph pass (below) |
+| `Shaders/Includes/AnimeRimPass.hlsl` | The rim pass: the scene depth read past the line along the normal, the threshold, the light-facing mask |
 | `Editor/OutlineNormalBaker.cs` | The import-time outline normal bake |
 | `Editor/AnimeShaderGUI.cs` | The material inspector (thin for now): the shader's sections, a live preview of the two-tone ramp (the same maths the shader runs, tested against a render), and each feature's settings shown only while the feature is on |
-| `Tests/Editor/` | `Support/` (`LitStage`: a preview scene, camera and light rendering into a linear float target; meshes, materials with colours as the shader reads them, frame reads, source readers, the director's globals held neutral, the batcher check), `Shader/` (passes, batcher, names and constants, every platform's compile, and `Probe/`: an entry shader adding its own property), `Inspector/` (the feature map, the preview against a render), `Look/` (tones, band, rim, director, cast shadows, inside tone, fade), `Outline/` (the line, the baker) |
+| `Tests/Editor/` | `Support/` (`LitStage`: a preview scene, camera and light rendering into a linear float target; `MadePipeline`: a URP asset made for a test with given features, swapped in and always put back; meshes, materials with colours as the shader reads them, frame reads, source readers, the director's globals held neutral, the batcher check), `Shader/` (passes, batcher, names and constants, every platform's compile, and `Probe/`: an entry shader adding its own property), `Inspector/` (the feature map, the preview against a render), `Look/` (tones, band, rim, the depth rim, director, cast shadows, inside tone, fade), `Outline/` (the line, the baker) |
 
 A thin entry shader (face, hair, world, or a project's own with extra passes) includes the same files, declares its own
 pragmas, and calls `AnimeShade`; it adds nothing else to the lighting. Its own material properties go in through
@@ -99,6 +101,19 @@ Set `_Cull` to Off. Back faces (`FRONT_FACE_TYPE`, correct on mirrored rigs) are
 flipped. With the inside tone on, the back face's base colour is tinted by `_InsideTint`, its saturation scaled by
 `_InsideSaturation` and darkened by `_InsideDarken`; the fade option ramps that from 0 to full along the U or V axis
 between `_InsideFadeStart` and `_InsideFadeEnd`. The shadow caster, depth and depth-normals passes follow `_Cull`.
+
+### The depth-edge rim
+
+Add **`AnimeRimFeature`** to each URP renderer that should show it (Forward or Forward+; the camera depth texture on,
+which the feature asks for). It draws, after the skybox, every opaque material whose `AnimeRim` pass is on, additively
+over the camera colour, reading URP's own depth copy (scenery and every body), so no extra target and no prepass; with no
+such body in view it draws nothing. Each pixel reads the depth past the body's own line, `_RimDepthWidth` pixels (at
+1080p, held on screen to the line's far distance, then thinning, never under one pixel) along its normal; where it is
+farther than `_RimDepthThreshold` metres (scaled up past 10 m) the pixel takes `_RimColor` times `_RimStrength`, faded
+by how much the edge faces the light (`_RimLightMask`). Turn it on with **Use Depth Edge Rim** or
+`AnimeMaterials.SetRimDepth` (the switch and the pass together, so a material without it costs nothing). A fading body
+takes no rim; a camera whose renderer lacks the feature draws none. XR single-pass is not handled. The fresnel rim
+(**Use Fresnel Rim**) is the forward pass's own and needs no feature.
 
 ### The light director's globals
 

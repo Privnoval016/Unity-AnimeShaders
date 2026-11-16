@@ -33,12 +33,15 @@ Shader "Hidden/AnimeShaders/Tests/EntryProbe"
         _ExtraLightCap("Additional Light Cap", Range(0, 2)) = 0.6
 
         [Header(Rim)]
-        [Toggle(_ANIME_RIM)] _Rim("Use Rim", Float) = 0
+        [Toggle(_ANIME_RIM)] _Rim("Use Fresnel Rim", Float) = 0
         [HDR] _RimColor("Rim Colour", Color) = (1, 1, 1, 1)
-        _RimWidth("Rim Width", Range(0, 1)) = 0.3
+        _RimWidth("Fresnel Rim Width", Range(0, 1)) = 0.3
         _RimSoftness("Rim Softness", Range(0, 1)) = 0.15
         _RimStrength("Rim Strength", Range(0, 2)) = 0.5
         _RimLightMask("Rim Lit Side Only", Range(0, 1)) = 0.5
+        [ToggleUI] _RimDepth("Use Depth Edge Rim", Float) = 0
+        _RimDepthWidth("Depth Rim Width (px at 1080p)", Range(0, 12)) = 3
+        _RimDepthThreshold("Depth Rim Threshold (m)", Range(0.01, 2)) = 0.15
 
         [Header(Emission)]
         [Toggle(_ANIME_EMISSION)] _Emission("Use Emission", Float) = 0

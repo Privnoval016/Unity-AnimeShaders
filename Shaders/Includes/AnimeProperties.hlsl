@@ -93,6 +93,9 @@ CBUFFER_START(UnityPerMaterial)
     half _RimSoftness;
     half _RimStrength;
     half _RimLightMask;
+    half _RimDepth;
+    float _RimDepthWidth;
+    float _RimDepthThreshold;
 
     half _InsideDarken;
     half _InsideSaturation;

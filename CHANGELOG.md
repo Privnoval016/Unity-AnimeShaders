@@ -17,6 +17,8 @@
 - *Shadow The Whole Body*: the main light's cast shadow read once per renderer, past the body toward the light (no
   self-shadowing, no crawl on an animated character), with its reach in metres.
 - `AnimeShaderGUI`: sections, a live ramp preview, settings shown only while their feature is on.
+- The depth-edge rim: `AnimeRimFeature` (an overlay after the skybox reading URP's depth copy) and the `AnimeRim` pass;
+  `AnimeMaterials.SetRimDepth`; 7 tests through a made pipeline (`MadePipeline`), with break proofs.
 - Tests: passes, messages, the SRP Batcher, the one block, names, every pass compiled for D3D, Vulkan, OpenGL Core,
   Metal and GLES3, and renders of the tones, threshold, softness, emission, rim, toggles, director light colour, cast
   shadows, inside tone, line and fade through a small lit stage; the baker on a hard cube.

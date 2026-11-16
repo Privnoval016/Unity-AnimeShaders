@@ -24,10 +24,8 @@ namespace AnimeShaders.EditorTools
             [Switches.Band2Name] = new[] { Ids.Band2TintName, Ids.Band2OffsetName, Ids.Band2SoftnessName },
             [Switches.BodyShadowName] = new[] { Ids.BodyShadowReachName },
             [Switches.ExtraLightsName] = new[] { Ids.ExtraLightStrengthName, Ids.ExtraLightCapName },
-            [Switches.RimName] = new[]
-            {
-                Ids.RimColorName, Ids.RimWidthName, Ids.RimSoftnessName, Ids.RimStrengthName, Ids.RimLightMaskName,
-            },
+            [Switches.RimName] = new[] { Ids.RimWidthName },
+            [Ids.RimDepthName] = new[] { Ids.RimDepthWidthName, Ids.RimDepthThresholdName },
             [Switches.EmissionName] = new[] { Ids.EmissionColorName, Switches.EmissionMapOnName, Ids.EmissionMapName },
             [Switches.EmissionMapOnName] = new[] { Ids.EmissionMapName },
             [Switches.NormalMapOnName] = new[] { Ids.BumpMapName, Ids.BumpScaleName },
@@ -71,6 +69,13 @@ namespace AnimeShaders.EditorTools
             }
             EditorGUILayout.Space();
             materialEditor.RenderQueueField();
+        }
+
+        /** <summary>Keeps the depth-edge rim's pass in step with its switch whenever the material changes.</summary> */
+        public override void ValidateMaterial(Material material)
+        {
+            if (material.HasFloat(Ids.RimDepth))
+                material.SetShaderPassEnabled(AnimeShaderIds.RimLightMode, material.GetFloat(Ids.RimDepth) > 0.5f);
         }
 
         /** <summary>Whether a property is shown: every toggle it depends on is on (a material's float, 1 = on).</summary> */

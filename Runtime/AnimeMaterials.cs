@@ -32,6 +32,13 @@ namespace AnimeShaders
             material.SetFloat(AnimeShaderIds.Switches.ReceiveShadows, receive ? 1f : 0f);
         }
 
+        /** <summary>Turns the depth-edge rim on or off: its switch and its pass together, so a material without it costs no draw.</summary> */
+        public static void SetRimDepth(Material material, bool on)
+        {
+            material.SetFloat(AnimeShaderIds.MaterialProperties.RimDepth, on ? 1f : 0f);
+            material.SetShaderPassEnabled(AnimeShaderIds.RimLightMode, on);
+        }
+
         /** <summary>Draws or hides <paramref name="material" />'s line pass.</summary> */
         public static void SetLine(Material material, bool on)
         {

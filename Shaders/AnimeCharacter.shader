@@ -49,12 +49,15 @@ Shader "Anime/Character"
         _ExtraLightCap("Additional Light Cap", Range(0, 2)) = 0.6
 
         [Header(Rim)]
-        [Toggle(_ANIME_RIM)] _Rim("Use Rim", Float) = 0
+        [Toggle(_ANIME_RIM)] _Rim("Use Fresnel Rim", Float) = 0
         [HDR] _RimColor("Rim Colour", Color) = (1, 1, 1, 1)
-        _RimWidth("Rim Width", Range(0, 1)) = 0.3
+        _RimWidth("Fresnel Rim Width", Range(0, 1)) = 0.3
         _RimSoftness("Rim Softness", Range(0, 1)) = 0.15
         _RimStrength("Rim Strength", Range(0, 2)) = 0.5
         _RimLightMask("Rim Lit Side Only", Range(0, 1)) = 0.5
+        [ToggleUI] _RimDepth("Use Depth Edge Rim", Float) = 0
+        _RimDepthWidth("Depth Rim Width (px at 1080p)", Range(0, 12)) = 3
+        _RimDepthThreshold("Depth Rim Threshold (m)", Range(0.01, 2)) = 0.15
 
         [Header(Emission)]
         [Toggle(_ANIME_EMISSION)] _Emission("Use Emission", Float) = 0
@@ -166,6 +169,27 @@ Shader "Anime/Character"
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Fog.hlsl"
 
             #include "Includes/AnimeOutline.hlsl"
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "Rim"
+            Tags { "LightMode" = "AnimeRim" }
+
+            Blend One One
+            ZWrite Off
+            ZTest LEqual
+            Cull [_Cull]
+
+            HLSLPROGRAM
+            #pragma target 2.0
+            #pragma vertex AnimeRimVertex
+            #pragma fragment AnimeRimFragment
+
+            #pragma shader_feature_local_fragment _ALPHATEST_ON
+
+            #include "Includes/AnimeRimPass.hlsl"
             ENDHLSL
         }
 
