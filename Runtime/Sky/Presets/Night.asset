@@ -61,7 +61,7 @@ MonoBehaviour:
       distance: 200
     ridgeLitEdge: {r: 0.7, g: 0.8, b: 1, a: 0.25}
     ridgeMistHeight: 2.5
-    ridgeMist: 0.6
+    ridgeMist: 0.85
     stars: 1
     starDensity: 0.35
     starSize: 0.04
@@ -71,10 +71,10 @@ MonoBehaviour:
     ambientGround: {r: 0.06, g: 0.06, b: 0.09, a: 1}
     haze: 1
     hazeStart: 30
-    hazeDensity: 0.004
+    hazeDensity: 0.0025
     hazeBase: 0
     hazeFalloff: 0.01
-    hazeMaxOpacity: 0.9
+    hazeMaxOpacity: 0.97
     hazeGlow: {r: 0.3, g: 0.36, b: 0.55, a: 1}
     hazeGlowStrength: 0.3
     hazeGlowSize: 0.8

@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Day
   m_EditorClassIdentifier: AnimeShaders::AnimeShaders.SkyPreset
   state:
-    zenith: {r: 0.3, g: 0.55, b: 0.9, a: 1}
-    horizon: {r: 0.8, g: 0.89, b: 0.98, a: 1}
+    zenith: {r: 0.2, g: 0.47, b: 0.92, a: 1}
+    horizon: {r: 0.62, g: 0.8, b: 0.97, a: 1}
     below: {r: 0.62, g: 0.68, b: 0.74, a: 1}
     horizonHeight: 0.35
     sunLight: {r: 1, g: 0.97, b: 0.92, a: 1}
@@ -27,7 +27,7 @@ MonoBehaviour:
     haloSize: 0.25
     haloStrength: 0.3
     cloudLit: {r: 1, g: 1, b: 1, a: 1}
-    cloudShade: {r: 0.76, g: 0.81, b: 0.9, a: 1}
+    cloudShade: {r: 0.7, g: 0.78, b: 0.92, a: 1}
     cloudCover: 0.38
     cloudSoftness: 0.02
     cloudSize: 1800
@@ -41,19 +41,19 @@ MonoBehaviour:
     cloudShadowClearRadius: 40
     cloudShadowClearFade: 80
     ridges:
-    - colour: {r: 0.36, g: 0.45, b: 0.62, a: 1}
+    - colour: {r: 0.3, g: 0.45, b: 0.72, a: 1}
       height: 6
       roughness: 3
       hills: 5
       seed: 1
       distance: 900
-    - colour: {r: 0.22, g: 0.34, b: 0.4, a: 1}
+    - colour: {r: 0.15, g: 0.36, b: 0.44, a: 1}
       height: 4
       roughness: 2
       hills: 9
       seed: 2
       distance: 450
-    - colour: {r: 0.12, g: 0.24, b: 0.18, a: 1}
+    - colour: {r: 0.09, g: 0.28, b: 0.15, a: 1}
       height: 2.5
       roughness: 1.5
       hills: 14
@@ -61,7 +61,7 @@ MonoBehaviour:
       distance: 200
     ridgeLitEdge: {r: 1, g: 0.95, b: 0.85, a: 0.35}
     ridgeMistHeight: 2.5
-    ridgeMist: 0.65
+    ridgeMist: 0.85
     stars: 0
     starDensity: 0.2
     starSize: 0.15
@@ -71,10 +71,10 @@ MonoBehaviour:
     ambientGround: {r: 0.3, g: 0.3, b: 0.28, a: 1}
     haze: 1
     hazeStart: 30
-    hazeDensity: 0.004
+    hazeDensity: 0.0025
     hazeBase: 0
     hazeFalloff: 0.01
-    hazeMaxOpacity: 0.9
+    hazeMaxOpacity: 0.97
     hazeGlow: {r: 1, g: 0.9, b: 0.75, a: 1}
     hazeGlowStrength: 0.35
     hazeGlowSize: 0.8
