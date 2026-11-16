@@ -13,9 +13,12 @@
 // and field of view. The Z offset pushes the hull away from the camera along the view ray; with the vertex colour
 // option on, the width and the offset also read the chosen vertex colour channels.
 
-#include "AnimeSurface.hlsl"
-#include "AnimeDirector.hlsl"
-#include "AnimeFade.hlsl"
+#include "../Core/AnimeSurface.hlsl"
+#if !defined(ANIME_GROUP_LINE)
+    #error The line pass needs ANIME_GROUP_LINE in the shader's HLSLINCLUDE.
+#endif
+#include "../Core/AnimeDirector.hlsl"
+#include "../Core/AnimeFade.hlsl"
 
 struct AnimeOutlineAttributes
 {

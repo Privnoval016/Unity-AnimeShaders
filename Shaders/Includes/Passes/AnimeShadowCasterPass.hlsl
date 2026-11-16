@@ -3,8 +3,8 @@
 
 // ShadowCaster: the body's shadow, faded with the body by the same dither (screen space of the shadow map).
 
-#include "AnimeSurface.hlsl"
-#include "AnimeFade.hlsl"
+#include "../Core/AnimeSurface.hlsl"
+#include "../Core/AnimeFade.hlsl"
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
 
 float3 _LightDirection;

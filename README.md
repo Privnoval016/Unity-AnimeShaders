@@ -42,17 +42,18 @@ vertex, and has a global multiplier.
 | File | What it is |
 |---|---|
 | `Shaders/AnimeCharacter.shader` | `Anime/Character`: passes ForwardLit (`UniversalForward`), Outline (`SRPDefaultUnlit`, Cull Front), ShadowCaster, DepthOnly, DepthNormals. No Meta pass (characters are not baked) |
-| `Shaders/Includes/AnimeProperties.hlsl` | The one `UnityPerMaterial` block every pass includes (SRP Batcher), and the dynamic-branch keyword macros. An entry shader adds its own properties by defining `ANIME_ENTRY_PROPERTIES` in its `HLSLINCLUDE` |
-| `Shaders/Includes/AnimeDirector.hlsl` | The light director's global properties (below) |
-| `Shaders/Includes/AnimeSurface.hlsl` | The surface struct, base and emission sampling, alpha clip, the inside tone |
-| `Shaders/Includes/AnimeLighting.hlsl` | The ramp, cast shadows folded into it, the second band, additional lights, the rim, emission, ambient: `AnimeShade` |
-| `Shaders/Includes/AnimeForwardPass.hlsl`, `AnimeShadowCasterPass.hlsl`, `AnimeDepthOnlyPass.hlsl`, `AnimeDepthNormalsPass.hlsl` | One file per pass: structs, vertex, fragment |
-| `Shaders/Includes/AnimeOutline.hlsl` | The hull pass: baked-normal reconstruction, screen-consistent width, Z offset |
-| `Shaders/Includes/AnimeFade.hlsl` | The dither fade |
+| `Shaders/Includes/Core/AnimeProperties.hlsl` | The one `UnityPerMaterial` block every pass includes (SRP Batcher): a core plus feature groups a shader opts into in its `HLSLINCLUDE` (`ANIME_GROUP_BAND`, `_BODY`, `_EMISSION`, `_INSIDE`, `_RIM`, `_LINE`; the code reading a group compiles only with it, and the shader's Properties list holds exactly its groups); its own extra properties through `ANIME_ENTRY_PROPERTIES`; the dynamic-branch keyword macros |
+| `Shaders/Textures/AnimeNoise.png` | The pack's noise, baked by `Editor/AnimeNoiseBaker.cs` (Tools > Anime Shaders > Bake Noise Texture; our own code, deterministic, versioned): 1024 square, R value noise, G fbm, B distance to the nearest cell edge, A a value per cell, every channel tiling; held linear, uncompressed and mipmapped by `Editor/AnimeNoiseImport.cs` (label `AnimeNoise`) |
+| `Shaders/Includes/Core/AnimeDirector.hlsl` | The light director's global properties (below) |
+| `Shaders/Includes/Core/AnimeSurface.hlsl` | The surface struct, base and emission sampling, alpha clip, the inside tone |
+| `Shaders/Includes/Core/AnimeLighting.hlsl` | The ramp, cast shadows folded into it, the second band, additional lights, the rim, emission, ambient: `AnimeShade` |
+| `Shaders/Includes/Passes/AnimeForwardPass.hlsl`, `AnimeShadowCasterPass.hlsl`, `AnimeDepthOnlyPass.hlsl`, `AnimeDepthNormalsPass.hlsl` | One file per pass: structs, vertex, fragment |
+| `Shaders/Includes/Passes/AnimeOutline.hlsl` | The hull pass: baked-normal reconstruction, screen-consistent width, Z offset |
+| `Shaders/Includes/Core/AnimeFade.hlsl` | The dither fade |
 | `Runtime/AnimeShaderIds.cs` | Every global and material property name and id, the toggles, the keywords, the line's light mode, and the fade constants |
 | `Runtime/AnimeMaterials.cs` | Setting a feature (its keyword and its toggle together), receiving shadows, the line pass on or off, the depth rim on or off |
 | `Runtime/Rendering/AnimeRimFeature.cs`, `AnimeRimPass.cs` | The depth-edge rim's renderer feature and its render-graph pass (below) |
-| `Shaders/Includes/AnimeRimPass.hlsl` | The rim pass: the scene depth read past the line along the normal, the threshold, the light-facing mask |
+| `Shaders/Includes/Passes/AnimeRimPass.hlsl` | The rim pass: the scene depth read past the line along the normal, the threshold, the light-facing mask |
 | `Editor/OutlineNormalBaker.cs` | The import-time outline normal bake |
 | `Editor/AnimeShaderGUI.cs` | The material inspector (thin for now): the shader's sections, a live preview of the two-tone ramp (the same maths the shader runs, tested against a render), and each feature's settings shown only while the feature is on |
 | `Tests/Editor/` | `Support/` (`LitStage`: a preview scene, camera and light rendering into a linear float target; `MadePipeline`: a URP asset made for a test with given features, swapped in and always put back; meshes, materials with colours as the shader reads them, frame reads, source readers, the director's globals held neutral, the batcher check), `Shader/` (passes, batcher, names and constants, every platform's compile, and `Probe/`: an entry shader adding its own property), `Inspector/` (the feature map, the preview against a render), `Look/` (tones, band, rim, the depth rim, director, cast shadows, inside tone, fade), `Outline/` (the line, the baker) |

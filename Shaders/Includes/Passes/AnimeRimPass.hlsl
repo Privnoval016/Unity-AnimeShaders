@@ -8,8 +8,11 @@
 // the edge faces the light. The offset uses
 // the normal's xy unnormalised, so surfaces turned to the camera reach nowhere and take none.
 
-#include "AnimeLighting.hlsl"
-#include "AnimeFade.hlsl"
+#include "../Core/AnimeLighting.hlsl"
+#if !defined(ANIME_GROUP_RIM) || !defined(ANIME_GROUP_LINE)
+    #error The rim pass needs ANIME_GROUP_RIM and ANIME_GROUP_LINE in the shader's HLSLINCLUDE.
+#endif
+#include "../Core/AnimeFade.hlsl"
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
 
 struct AnimeRimAttributes

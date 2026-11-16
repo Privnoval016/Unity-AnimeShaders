@@ -47,7 +47,7 @@ half AnimeCastStrength(float3 positionWS)
 // does. Screen-space shadows have no shadow map to read at another point: there the surface is used.
 float3 AnimeShadowPoint(float3 positionWS, half3 lightDirectionWS)
 {
-#if !defined(_MAIN_LIGHT_SHADOWS_SCREEN)
+#if defined(ANIME_GROUP_BODY) && !defined(_MAIN_LIGHT_SHADOWS_SCREEN)
     if (ANIME_BODY_SHADOW_ON)
     {
         float3 centre = (unity_RendererBounds_Min.xyz + unity_RendererBounds_Max.xyz) * 0.5;
@@ -123,6 +123,7 @@ half3 AnimeExtraLights(AnimeSurface surface, InputData inputData, half4 shadowMa
     return sum;
 }
 
+#if defined(ANIME_GROUP_RIM)
 half3 AnimeRim(half3 normalWS, half3 viewDirectionWS, half litWeight)
 {
     half fresnel = 1.0h - saturate(dot(normalWS, viewDirectionWS));
@@ -130,6 +131,7 @@ half3 AnimeRim(half3 normalWS, half3 viewDirectionWS, half litWeight)
     rim *= lerp(1.0h, litWeight, _RimLightMask);
     return _RimColor.rgb * (rim * _RimStrength * AnimeDirectorRimStrengthMultiplier());
 }
+#endif
 
 // The finished colour of a surface (fog not applied). inputData needs positionWS, normalWS, viewDirectionWS,
 // shadowCoord and normalizedScreenSpaceUV.
@@ -153,17 +155,21 @@ half3 AnimeShade(AnimeSurface surface, InputData inputData)
     half3 ambient = AnimeDirectorAmbient(AnimeProbeAmbient());
     half3 shadowTone = surface.albedo * (_ShadowTint.rgb * AnimeDirectorShadowColorMultiplier() + ambient * _AmbientStrength);
 
+#if defined(ANIME_GROUP_BAND)
     if (ANIME_BAND2_ON)
     {
         half deepWeight = AnimeToneWeight(x, _ShadowThreshold - _Band2Offset, _Band2Softness);
         shadowTone = lerp(shadowTone * _Band2Tint.rgb, shadowTone, deepWeight);
     }
+#endif
 
     half3 color = lerp(shadowTone, litTone, litWeight);
     color += AnimeExtraLights(surface, inputData, shadowMask);
 
+#if defined(ANIME_GROUP_RIM)
     if (ANIME_RIM_ON)
         color += AnimeRim(surface.normalWS, inputData.viewDirectionWS, litWeight);
+#endif
 
     return color + surface.emission;
 }

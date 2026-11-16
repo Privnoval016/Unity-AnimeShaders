@@ -34,29 +34,40 @@ namespace AnimeShaders.Tests
             return Path.Combine(Path.GetDirectoryName(AssetDatabase.GetAssetPath(shader)), "Includes");
         }
 
-        /** <summary>The text of a core include by file name.</summary> */
-        public static string IncludeText(Shader shader, string file)
+        /** <summary>The path of an include by file name, wherever it sits under the includes folder.</summary> */
+        public static string IncludePath(Shader shader, string file)
         {
-            return File.ReadAllText(Path.Combine(IncludesFolder(shader), file));
+            return Directory.GetFiles(IncludesFolder(shader), file, SearchOption.AllDirectories).Single();
         }
 
-        /** <summary>Every core include file (by name) <paramref name="file" /> reaches through its includes, itself included.</summary> */
+        /** <summary>Every include file under the includes folder.</summary> */
+        public static string[] AllIncludes(Shader shader)
+        {
+            return Directory.GetFiles(IncludesFolder(shader), "*.hlsl", SearchOption.AllDirectories);
+        }
+
+        /** <summary>The text of an include by file name.</summary> */
+        public static string IncludeText(Shader shader, string file)
+        {
+            return File.ReadAllText(IncludePath(shader, file));
+        }
+
+        /** <summary>Every include file (by name) <paramref name="file" /> reaches through its includes, itself included, following each include's path from the file that names it.</summary> */
         public static HashSet<string> Reached(Shader shader, string file)
         {
             var reached = new HashSet<string>();
             var waiting = new Stack<string>();
-            waiting.Push(file);
+            waiting.Push(Path.GetFullPath(IncludePath(shader, file)));
             while (waiting.Count > 0)
             {
-                string next = waiting.Pop();
-                string path = Path.Combine(IncludesFolder(shader), next);
-                if (!reached.Add(next) || !File.Exists(path))
+                string path = waiting.Pop();
+                if (!reached.Add(Path.GetFileName(path)) || !File.Exists(path))
                     continue;
                 foreach (Match match in Include.Matches(File.ReadAllText(path)))
                 {
-                    string name = Path.GetFileName(match.Groups[1].Value);
-                    if (!match.Groups[1].Value.StartsWith("Packages/"))
-                        waiting.Push(name);
+                    string named = match.Groups[1].Value;
+                    if (!named.StartsWith("Packages/"))
+                        waiting.Push(Path.GetFullPath(Path.Combine(Path.GetDirectoryName(path) ?? string.Empty, named)));
                 }
             }
             return reached;

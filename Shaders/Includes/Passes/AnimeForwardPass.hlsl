@@ -4,8 +4,8 @@
 // The lit forward pass of the character shader: vertex and fragment. Characters ignore lightmaps, reflection probes,
 // decals and vertex lights; the ambient comes from the probe's average (or the director's tint).
 
-#include "AnimeLighting.hlsl"
-#include "AnimeFade.hlsl"
+#include "../Core/AnimeLighting.hlsl"
+#include "../Core/AnimeFade.hlsl"
 
 #if defined(_NORMALMAP)
     #define ANIME_REQUIRES_TANGENT_INTERPOLATOR
@@ -116,12 +116,16 @@ void AnimeForwardFragment(
     AnimeSurface surface;
     surface.albedo = baseSample.rgb * _BaseColor.rgb;
     surface.alpha = alpha;
+#if defined(ANIME_GROUP_INSIDE)
     [branch] if (faceSign < 0.0h && ANIME_INSIDE_TONE_ON)
         surface.albedo = AnimeApplyInsideTone(surface.albedo, input.uv);
+#endif
     surface.normalWS = AnimeSurfaceNormal(input, faceSign, input.uv);
     surface.emission = half3(0, 0, 0);
+#if defined(ANIME_GROUP_EMISSION)
     if (ANIME_EMISSION_ON)
         surface.emission = AnimeSampleEmission(input.uv);
+#endif
 
     InputData inputData;
     AnimeInitializeInputData(input, surface.normalWS, inputData);

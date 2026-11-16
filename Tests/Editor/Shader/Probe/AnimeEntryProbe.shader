@@ -90,6 +90,12 @@ Shader "Hidden/AnimeShaders/Tests/EntryProbe"
         Tags { "RenderType" = "Opaque" "RenderPipeline" = "UniversalPipeline" "Queue" = "Geometry" }
 
         HLSLINCLUDE
+        #define ANIME_GROUP_BAND
+        #define ANIME_GROUP_BODY
+        #define ANIME_GROUP_EMISSION
+        #define ANIME_GROUP_INSIDE
+        #define ANIME_GROUP_RIM
+        #define ANIME_GROUP_LINE
         #define ANIME_ENTRY_PROPERTIES half _ProbeExtra;
         ENDHLSL
 
@@ -101,7 +107,7 @@ Shader "Hidden/AnimeShaders/Tests/EntryProbe"
             HLSLPROGRAM
             #pragma vertex AnimeForwardVertex
             #pragma fragment AnimeForwardFragment
-            #include "../../../../Shaders/Includes/AnimeForwardPass.hlsl"
+            #include "../../../../Shaders/Includes/Passes/AnimeForwardPass.hlsl"
             ENDHLSL
         }
 
@@ -114,7 +120,7 @@ Shader "Hidden/AnimeShaders/Tests/EntryProbe"
             HLSLPROGRAM
             #pragma vertex AnimeOutlineVertex
             #pragma fragment AnimeOutlineFragment
-            #include "../../../../Shaders/Includes/AnimeOutline.hlsl"
+            #include "../../../../Shaders/Includes/Passes/AnimeOutline.hlsl"
             ENDHLSL
         }
 
@@ -127,7 +133,7 @@ Shader "Hidden/AnimeShaders/Tests/EntryProbe"
             HLSLPROGRAM
             #pragma vertex AnimeShadowVertex
             #pragma fragment AnimeShadowFragment
-            #include "../../../../Shaders/Includes/AnimeShadowCasterPass.hlsl"
+            #include "../../../../Shaders/Includes/Passes/AnimeShadowCasterPass.hlsl"
             ENDHLSL
         }
     }

@@ -4,8 +4,8 @@
 // DepthNormals: the camera normals texture for SSAO and other depth consumers. Vertex normals only (a normal map is
 // a lighting detail), flipped on the back faces of a two-sided surface.
 
-#include "AnimeSurface.hlsl"
-#include "AnimeFade.hlsl"
+#include "../Core/AnimeSurface.hlsl"
+#include "../Core/AnimeFade.hlsl"
 
 struct AnimeDepthNormalsAttributes
 {

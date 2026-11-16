@@ -3,8 +3,8 @@
 
 // The one UnityPerMaterial block of every pass of every pack shader. Every pass includes this file, never its own
 // copy, or the SRP Batcher drops the shader. Do not wrap a property in #if: the layout must be identical in every
-// variant and pass. Textures are declared outside the block. An entry shader's own properties go through
-// ANIME_ENTRY_PROPERTIES (below), never a second UnityPerMaterial block.
+// variant and pass. Textures are declared outside the block. A shader opts into feature groups (below) in its
+// HLSLINCLUDE; its own extra properties go through ANIME_ENTRY_PROPERTIES, never a second UnityPerMaterial block.
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
@@ -66,29 +66,43 @@ TEXTURE2D(_BumpMap);
 TEXTURE2D(_EmissionMap);
 
 CBUFFER_START(UnityPerMaterial)
+    // The core every lit pack shader has.
     float4 _BaseMap_ST;
     half4 _BaseColor;
     half4 _ShadowTint;
-    half4 _Band2Tint;
-    half4 _InsideTint;
-    half4 _RimColor;
-    half4 _EmissionColor;
-    half4 _OutlineColor;
-
     half _Cutoff;
     half _BumpScale;
-
     half _ShadowThreshold;
     half _ShadowSoftness;
-    half _Band2Offset;
-    half _Band2Softness;
     half _CastShadowStrength;
-    half _BodyShadowReach;
     half _LightInfluence;
     half _AmbientStrength;
     half _ExtraLightStrength;
     half _ExtraLightCap;
 
+    // Feature groups, opted into by an entry shader's HLSLINCLUDE (#define ANIME_GROUP_...), the same in every pass:
+    // the SRP Batcher needs each variable here declared in the shader's Properties, so a shader carries only its own.
+#if defined(ANIME_GROUP_BAND)
+    half4 _Band2Tint;
+    half _Band2Offset;
+    half _Band2Softness;
+#endif
+#if defined(ANIME_GROUP_BODY)
+    half _BodyShadowReach;
+#endif
+#if defined(ANIME_GROUP_EMISSION)
+    half4 _EmissionColor;
+#endif
+#if defined(ANIME_GROUP_INSIDE)
+    half4 _InsideTint;
+    half _InsideDarken;
+    half _InsideSaturation;
+    half _InsideFadeAxis;
+    half _InsideFadeStart;
+    half _InsideFadeEnd;
+#endif
+#if defined(ANIME_GROUP_RIM)
+    half4 _RimColor;
     half _RimWidth;
     half _RimSoftness;
     half _RimStrength;
@@ -96,13 +110,9 @@ CBUFFER_START(UnityPerMaterial)
     half _RimDepth;
     float _RimDepthWidth;
     float _RimDepthThreshold;
-
-    half _InsideDarken;
-    half _InsideSaturation;
-    half _InsideFadeAxis;
-    half _InsideFadeStart;
-    half _InsideFadeEnd;
-
+#endif
+#if defined(ANIME_GROUP_LINE)
+    half4 _OutlineColor;
     float _OutlineWidth;
     float _OutlineDistanceMin;
     float _OutlineDistanceMax;
@@ -111,6 +121,7 @@ CBUFFER_START(UnityPerMaterial)
     half _OutlineWidthChannel;
     half _OutlineZChannel;
     half _OutlineBaseTint;
+#endif
 
     // An entry shader adds its own material properties by defining ANIME_ENTRY_PROPERTIES (declarations ending in
     // semicolons) in its SubShader's HLSLINCLUDE, so every one of its passes declares the same block. Its own

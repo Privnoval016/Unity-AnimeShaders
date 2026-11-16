@@ -110,6 +110,15 @@ Shader "Anime/Character"
         }
         LOD 300
 
+        HLSLINCLUDE
+        #define ANIME_GROUP_BAND
+        #define ANIME_GROUP_BODY
+        #define ANIME_GROUP_EMISSION
+        #define ANIME_GROUP_INSIDE
+        #define ANIME_GROUP_RIM
+        #define ANIME_GROUP_LINE
+        ENDHLSL
+
         Pass
         {
             Name "ForwardLit"
@@ -144,7 +153,7 @@ Shader "Anime/Character"
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/RenderingLayers.hlsl"
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Fog.hlsl"
 
-            #include "Includes/AnimeForwardPass.hlsl"
+            #include "Includes/Passes/AnimeForwardPass.hlsl"
             ENDHLSL
         }
 
@@ -168,7 +177,7 @@ Shader "Anime/Character"
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/RenderingLayers.hlsl"
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Fog.hlsl"
 
-            #include "Includes/AnimeOutline.hlsl"
+            #include "Includes/Passes/AnimeOutline.hlsl"
             ENDHLSL
         }
 
@@ -189,7 +198,7 @@ Shader "Anime/Character"
 
             #pragma shader_feature_local_fragment _ALPHATEST_ON
 
-            #include "Includes/AnimeRimPass.hlsl"
+            #include "Includes/Passes/AnimeRimPass.hlsl"
             ENDHLSL
         }
 
@@ -211,7 +220,7 @@ Shader "Anime/Character"
             #pragma shader_feature_local _ALPHATEST_ON
             #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
 
-            #include "Includes/AnimeShadowCasterPass.hlsl"
+            #include "Includes/Passes/AnimeShadowCasterPass.hlsl"
             ENDHLSL
         }
 
@@ -231,7 +240,7 @@ Shader "Anime/Character"
 
             #pragma shader_feature_local _ALPHATEST_ON
 
-            #include "Includes/AnimeDepthOnlyPass.hlsl"
+            #include "Includes/Passes/AnimeDepthOnlyPass.hlsl"
             ENDHLSL
         }
 
@@ -252,7 +261,7 @@ Shader "Anime/Character"
             #pragma multi_compile_fragment _ _GBUFFER_NORMALS_OCT
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/RenderingLayers.hlsl"
 
-            #include "Includes/AnimeDepthNormalsPass.hlsl"
+            #include "Includes/Passes/AnimeDepthNormalsPass.hlsl"
             ENDHLSL
         }
     }

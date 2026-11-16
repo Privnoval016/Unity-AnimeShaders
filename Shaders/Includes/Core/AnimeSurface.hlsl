@@ -26,6 +26,7 @@ void AnimeAlphaClip(half alpha)
 #endif
 }
 
+#if defined(ANIME_GROUP_INSIDE)
 // Procedural tone of a two-sided surface's inside, from the front colour: tint, saturation, darkening, and an
 // optional fade along a UV axis (0 at the start edge, full at the end edge).
 half3 AnimeApplyInsideTone(half3 albedo, float2 uv)
@@ -45,7 +46,9 @@ half3 AnimeApplyInsideTone(half3 albedo, float2 uv)
     }
     return lerp(albedo, tinted, strength);
 }
+#endif
 
+#if defined(ANIME_GROUP_EMISSION)
 half3 AnimeSampleEmission(float2 uv)
 {
     half3 emission = _EmissionColor.rgb;
@@ -53,5 +56,6 @@ half3 AnimeSampleEmission(float2 uv)
         emission *= SAMPLE_TEXTURE2D(_EmissionMap, sampler_BaseMap, uv).rgb;
     return emission;
 }
+#endif
 
 #endif

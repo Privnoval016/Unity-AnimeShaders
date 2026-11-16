@@ -3,8 +3,8 @@
 
 // DepthOnly: the depth prepass and depth copy; a faded body fades here too.
 
-#include "AnimeSurface.hlsl"
-#include "AnimeFade.hlsl"
+#include "../Core/AnimeSurface.hlsl"
+#include "../Core/AnimeFade.hlsl"
 
 struct AnimeDepthAttributes
 {

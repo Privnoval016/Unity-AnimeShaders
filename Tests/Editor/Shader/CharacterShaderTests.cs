@@ -76,8 +76,7 @@ namespace AnimeShaders.Tests
         public void OnlyThePropertiesInclude_DeclaresUnityPerMaterial()
         {
             Shader shader = Character();
-            string folder = PackSources.IncludesFolder(shader);
-            var declaring = Directory.GetFiles(folder, "*.hlsl")
+            var declaring = PackSources.AllIncludes(shader)
                 .Where(path => File.ReadAllText(path).Contains("CBUFFER_START(UnityPerMaterial)"))
                 .Select(Path.GetFileName).ToList();
             CollectionAssert.AreEqual(new[] { "AnimeProperties.hlsl" }, declaring);
