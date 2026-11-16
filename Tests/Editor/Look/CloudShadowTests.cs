@@ -133,6 +133,33 @@ namespace AnimeShaders.Tests
         }
 
         [Test]
+        public void TheCloudField_DoesNotRepeatAtTheNoisesTile()
+        {
+            const int Pixels = 128;
+            const float View = 3.2f, Tile = 2f;
+            _stage.Dispose();
+            _stage = new LitStage(Pixels);
+            _stage.LightFrom(Vector3.up);
+            _stage.Camera.orthographicSize = View;
+            LookDownOn(new Vector3(0f, 10f, 0f));
+            FloorAt(Vector3.zero, 20f);
+            _made.Set("cloudCover", 0.5f).Set("cloudSize", Tile);
+            Color[] frame = Render();
+            int tilePixels = Mathf.RoundToInt(Tile / (2f * View) * Pixels);
+            int differing = 0, compared = 0;
+            for (int y = 8; y < Pixels; y += 8)
+            {
+                for (int x = 0; x + tilePixels < Pixels; x += 4)
+                {
+                    compared++;
+                    if (!FrameReads.Near(FrameReads.At(frame, x, y), FrameReads.At(frame, x + tilePixels, y), 0.02f))
+                        differing++;
+                }
+            }
+            Assert.Greater(differing, compared / 10, $"one noise tile on, the shade differs ({differing} of {compared})");
+        }
+
+        [Test]
         public void FarPastTheShadowDistance_TheCloudsStillShade()
         {
             var far = new Vector3(0f, 0f, 1500f);

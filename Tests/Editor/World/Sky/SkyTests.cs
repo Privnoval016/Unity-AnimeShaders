@@ -151,7 +151,7 @@ namespace AnimeShaders.Tests
         [Test]
         public void Stars_ShowOnlyAboveTheHorizon_WhenOn()
         {
-            _made.Set("zenith", Color.black).Set("horizon", Color.black).Set("below", Color.black).Set("starDensity", 1f).Set("starSize", 0.3f);
+            _made.Set("zenith", Color.black).Set("horizon", Color.black).Set("below", Color.black).Set("starDensity", 1f).Set("starSize", 0.3f).Set("starScale", 4f);
             Color[] dark = Looking(Vector3.up);
             _made.Set("stars", true);
             Color[] starry = Looking(Vector3.up);

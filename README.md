@@ -157,7 +157,8 @@ takes no rim; a camera whose renderer lacks the feature draws none. XR single-pa
   smooth stone keeps about 3° of normal and 4 of 255 shade levels, a noisy grass about 9° and 11; a set that needs better
   can be packed without its mask, or its normal split out (not built).
 - **`Anime/Sky`** (the skybox): the gradient; the **cloud field** where the view ray meets its plane (a world plane at
-  the clouds' altitude, so they parallax with the camera; drawn shapes with an anti-aliased edge and one shade band
+  the clouds' altitude, so they parallax with the camera; two reads of the noise that never line up, so the field never
+  repeats; drawn shapes with an anti-aliased edge and one shade band
   away from the sun; the same field the ground's cloud shadows read); stars at night; the sun's halo and disc where the
   main light points (or the director's override); the haze at the sky's distance; and up to three **ridges** of hills on
   the horizon, drawn analytically (no texture), farthest first, each hazed at its own distance, lit softly along its

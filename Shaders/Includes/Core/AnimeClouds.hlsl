@@ -12,12 +12,22 @@
 #define ANIME_CLOUD_MIN_SUN_HEIGHT 0.05
 // The lowest a view ray's height is taken as when meeting the plane, for rays at the horizon.
 #define ANIME_CLOUD_MIN_VIEW_HEIGHT 0.01
+// The second read's scale and angle against the first: an awkward ratio and angle, so the two never line up again and
+// the field never shows the noise's tile.
+#define ANIME_CLOUD_SECOND_SCALE 0.437
+#define ANIME_CLOUD_SECOND_SIN 0.6018
+#define ANIME_CLOUD_SECOND_COS 0.7986
+#define ANIME_CLOUD_SECOND_OFFSET 0.31
 
-// How much cloud there is at a point of the cloud plane (world x and z), 0 to 1.
+// How much cloud there is at a point of the cloud plane (world x and z), 0 to 1. The shape is two reads of the noise at
+// scales and angles that never line up, blended so the contrast holds, so the field never repeats.
 half AnimeCloudDensity(float2 planeXZ)
 {
     float2 uv = (planeXZ - _AnimeCloudMotion.xy * _Time.y) * _AnimeCloudShape.x;
-    half shape = SAMPLE_TEXTURE2D_BIAS(_AnimeCloudNoise, sampler_AnimeCloudNoise, uv, _AnimeCloudMotion.z).g;
+    float2 turned = float2(uv.x * ANIME_CLOUD_SECOND_COS - uv.y * ANIME_CLOUD_SECOND_SIN, uv.x * ANIME_CLOUD_SECOND_SIN + uv.y * ANIME_CLOUD_SECOND_COS);
+    half first = SAMPLE_TEXTURE2D_BIAS(_AnimeCloudNoise, sampler_AnimeCloudNoise, uv, _AnimeCloudMotion.z).g;
+    half second = SAMPLE_TEXTURE2D_BIAS(_AnimeCloudNoise, sampler_AnimeCloudNoise, turned * ANIME_CLOUD_SECOND_SCALE + ANIME_CLOUD_SECOND_OFFSET, _AnimeCloudMotion.z).g;
+    half shape = saturate((first + second - 1.0h) * 1.41421h + 0.5h);
     half threshold = 1.0h - half(_AnimeCloudShape.y);
     half width = max(max(half(fwidth(shape)), half(_AnimeCloudShape.z)), 1e-3h);
     half density = smoothstep(threshold - width, threshold + width, shape);

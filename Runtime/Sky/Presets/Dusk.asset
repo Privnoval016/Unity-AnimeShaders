@@ -13,50 +13,69 @@ MonoBehaviour:
   m_Name: Dusk
   m_EditorClassIdentifier: AnimeShaders::AnimeShaders.SkyPreset
   state:
-    zenith: {r: 0.15, g: 0.15, b: 0.38, a: 1}
-    horizon: {r: 0.85, g: 0.5, b: 0.55, a: 1}
-    below: {r: 0.25, g: 0.2, b: 0.28, a: 1}
-    horizonHeight: 0.3
-    sunLight: {r: 0.9, g: 0.62, b: 0.62, a: 1}
-    sunIntensity: 0.6
-    sunElevation: 3
+    zenith: {r: 0.24, g: 0.22, b: 0.46, a: 1}
+    horizon: {r: 0.96, g: 0.58, b: 0.52, a: 1}
+    below: {r: 0.3, g: 0.25, b: 0.3, a: 1}
+    horizonHeight: 0.45
+    sunLight: {r: 0.95, g: 0.62, b: 0.56, a: 1}
+    sunIntensity: 0.7
+    sunElevation: 4
     sunAzimuth: -30
-    discColor: {r: 1, g: 0.55, b: 0.4, a: 1}
+    discColor: {r: 1, g: 0.62, b: 0.46, a: 1}
     discSize: 0.04
-    discStrength: 1.5
-    haloSize: 0.25
-    haloStrength: 0.3
-    cloudLit: {r: 0.95, g: 0.65, b: 0.7, a: 1}
-    cloudShade: {r: 0.35, g: 0.3, b: 0.5, a: 1}
+    discStrength: 2
+    haloSize: 0.5
+    haloStrength: 0.6
+    cloudLit: {r: 0.96, g: 0.62, b: 0.62, a: 1}
+    cloudShade: {r: 0.4, g: 0.35, b: 0.56, a: 1}
     cloudCover: 0.45
-    cloudSoftness: 0.05
-    cloudSize: 400
-    cloudSimplicity: 1
-    cloudAltitude: 600
-    cloudSpeed: 2
+    cloudSoftness: 0.02
+    cloudSize: 1600
+    cloudSimplicity: 3
+    cloudAltitude: 1200
+    cloudSpeed: 3
     wind: {x: 1, y: 0.3}
-    cloudShadeOffset: 40
-    cloudHorizonFade: 0.12
+    cloudShadeOffset: 120
+    cloudHorizonFade: 0.08
     cloudShadowStrength: 0.4
     cloudShadowClearRadius: 40
     cloudShadowClearFade: 80
-    ridges: []
-    ridgeLitEdge: {r: 1, g: 1, b: 1, a: 1}
-    ridgeMistHeight: 3
-    ridgeMist: 0.8
+    ridges:
+    - colour: {r: 0.42, g: 0.33, b: 0.52, a: 1}
+      height: 6
+      roughness: 3
+      hills: 5
+      seed: 1
+      distance: 900
+    - colour: {r: 0.26, g: 0.2, b: 0.36, a: 1}
+      height: 4
+      roughness: 2
+      hills: 9
+      seed: 2
+      distance: 450
+    - colour: {r: 0.14, g: 0.12, b: 0.21, a: 1}
+      height: 2.5
+      roughness: 1.5
+      hills: 14
+      seed: 3
+      distance: 200
+    ridgeLitEdge: {r: 1, g: 0.62, b: 0.5, a: 0.4}
+    ridgeMistHeight: 2.5
+    ridgeMist: 0.65
     stars: 0
     starDensity: 0.2
     starSize: 0.15
-    ambientSky: {r: 0.35, g: 0.32, b: 0.5, a: 1}
-    ambientEquator: {r: 0.45, g: 0.35, b: 0.42, a: 1}
-    ambientGround: {r: 0.18, g: 0.15, b: 0.18, a: 1}
+    starScale: 24
+    ambientSky: {r: 0.42, g: 0.36, b: 0.56, a: 1}
+    ambientEquator: {r: 0.46, g: 0.36, b: 0.42, a: 1}
+    ambientGround: {r: 0.2, g: 0.17, b: 0.2, a: 1}
     haze: 1
-    hazeStart: 60
-    hazeDensity: 0.0073
+    hazeStart: 30
+    hazeDensity: 0.004
     hazeBase: 0
-    hazeFalloff: 0.02
-    hazeMaxOpacity: 0.85
-    hazeGlow: {r: 1, g: 0.92, b: 0.8, a: 1}
-    hazeGlowStrength: 0.4
-    hazeGlowSize: 0.6
+    hazeFalloff: 0.01
+    hazeMaxOpacity: 0.9
+    hazeGlow: {r: 1, g: 0.56, b: 0.46, a: 1}
+    hazeGlowStrength: 0.6
+    hazeGlowSize: 1
     skyDistance: 1500

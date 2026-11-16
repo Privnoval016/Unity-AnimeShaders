@@ -65,6 +65,7 @@ MonoBehaviour:
     stars: 0
     starDensity: 0.2
     starSize: 0.15
+    starScale: 24
     ambientSky: {r: 0.55, g: 0.62, b: 0.75, a: 1}
     ambientEquator: {r: 0.45, g: 0.5, b: 0.55, a: 1}
     ambientGround: {r: 0.3, g: 0.3, b: 0.28, a: 1}

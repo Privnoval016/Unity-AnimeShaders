@@ -10,6 +10,10 @@
   read in uniform flow, a trig-free hash.
 - The haze (`Core/AnimeFog.hlsl`): distance and height fog with a glow toward the sun, in the pack's forward and outline
   passes in place of URP's fog behind `_ANIME_ATMOSPHERE`; URP's fog takes the same colour and reach for other shaders.
+- The look pass (2c step F, part): the cloud field reads its noise twice at a scale and angle that never line up,
+  blended to keep its contrast, so it never repeats (a test one noise tile on); stars as small dots from the value
+  channel with a `starScale` in the state (the cell channel drew shards); Golden Hour, Dusk and Night retuned with Day's
+  build (large drawn clouds, three ridges with mist, haze with a glow, their own colours).
 - Sun shafts (2c step D): `AnimeSunShafts` (volume override), `AnimeSunShaftsFeature` and its pass (mask with a
   brightness threshold and a 2x2 far-depth test, two radial blurs, an additive composite before the post, at half
   resolution; skipped at 0, with the sun behind, or without post-processing), `Hidden/AnimeShaders/SunShafts`. Tests

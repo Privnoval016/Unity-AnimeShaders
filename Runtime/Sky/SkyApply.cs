@@ -97,6 +97,7 @@ namespace AnimeShaders
             sky.SetVector(Ids.RidgeMist, new Vector4(Mathf.Sin(state.RidgeMistHeight * Mathf.Deg2Rad), state.RidgeMist, 0f, 0f));
             sky.SetFloat(Ids.StarDensity, state.StarDensity);
             sky.SetFloat(Ids.StarSize, state.StarSize);
+            sky.SetFloat(Ids.StarScale, Mathf.Max(state.StarScale, 1f));
             sky.SetFloat(Ids.Stars, state.Stars ? 1f : 0f);
             sky.SetKeyword(new LocalKeyword(sky.shader, Ids.StarsKeyword), state.Stars);
         }

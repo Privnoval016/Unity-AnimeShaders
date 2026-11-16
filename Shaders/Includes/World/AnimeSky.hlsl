@@ -179,7 +179,7 @@ half4 AnimeSkyFragment(AnimeSkyVaryings input) : SV_Target
     half4 field = SAMPLE_TEXTURE2D(_AnimeNoiseTex, sampler_AnimeNoiseTex, direction.xz / (abs(height) + 1.0) * _StarScale);
     if (ANIME_SKY_STARS_ON)
     {
-        half star = smoothstep(1.0h - _StarSize, 1.0h - _StarSize * 0.33h, field.b) * step(1.0h - _StarDensity, field.a);
+        half star = smoothstep(1.0h - _StarSize, 1.0h - _StarSize * 0.33h, field.r) * step(1.0h - _StarDensity, field.a);
         sky += _StarColor.rgb * (star * (1.0h - cloud) * step(0.0, height));
     }
 
