@@ -90,6 +90,8 @@ CBUFFER_START(UnityPerMaterial)
     half _ShadowSoftness;
     half _CastShadowStrength;
     half _CloudShadow;
+    half _ContactShading;
+    half _ContactThreshold;
     half _LightInfluence;
     half _AmbientStrength;
     half _ExtraLightStrength;

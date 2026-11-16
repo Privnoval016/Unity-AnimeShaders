@@ -166,6 +166,18 @@ namespace AnimeShaders
             /** <summary>The property id of _Band2Softness.</summary> */
             public static readonly int Band2Softness = Shader.PropertyToID(Band2SoftnessName);
 
+            /** <summary>The name _ContactShading.</summary> */
+            public const string ContactShadingName = "_ContactShading";
+
+            /** <summary>The property id of _ContactShading.</summary> */
+            public static readonly int ContactShading = Shader.PropertyToID(ContactShadingName);
+
+            /** <summary>The name _ContactThreshold.</summary> */
+            public const string ContactThresholdName = "_ContactThreshold";
+
+            /** <summary>The property id of _ContactThreshold.</summary> */
+            public static readonly int ContactThreshold = Shader.PropertyToID(ContactThresholdName);
+
             /** <summary>The name _CloudShadow.</summary> */
             public const string CloudShadowName = "_CloudShadow";
 

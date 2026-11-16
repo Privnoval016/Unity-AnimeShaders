@@ -10,6 +10,9 @@
   read in uniform flow, a trig-free hash.
 - The haze (`Core/AnimeFog.hlsl`): distance and height fog with a glow toward the sun, in the pack's forward and outline
   passes in place of URP's fog behind `_ANIME_ATMOSPHERE`; URP's fog takes the same colour and reach for other shaders.
+- Contact shading (2c step C): URP's SSAO in the pack's forward passes through the tone step (`_ContactShading`,
+  `_ContactThreshold` on the core block; characters 0.3, the world 1). Tests through URP's real SSAO feature in a made
+  pipeline (a cube's foot shades the floor, the open floor doesn't; a response of 0 is the frame without it); break proofs.
 - Cloud shadows (2c step B): the cloud field projected toward the sun dims the lit tone softly in every lit pack shader
   (`_CloudShadow` on the core block, the material's response; `_ANIME_CLOUD_SHADOWS`); once per body at its shadow
   point; a clear radius round the camera (`cloudShadowClearRadius`, `cloudShadowClearFade`; `_AnimeCloudShadowClear`);

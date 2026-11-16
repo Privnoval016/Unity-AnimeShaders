@@ -169,6 +169,11 @@ takes no rim; a camera whose renderer lacks the feature draws none. XR single-pa
   **Cloud Shadow** sets how much it takes; none within the preset's clear radius round the camera, so a fight never
   changes light; the sky's ridges take it where they stand. Behind the global dynamic branch `_ANIME_CLOUD_SHADOWS`
   (on while a preset has cover and strength): off costs nothing, on one noise read a pixel.
+- **Contact shading** (the lighting): URP's screen-space ambient occlusion, when a renderer has its feature, through the
+  tone step: the occlusion below a material's **Contact Threshold** turns the lit tone to the shadow tone (a crisp shade
+  where things meet, never a smudge), and it dims the ambient; both by the material's **Contact Shading** (low on
+  characters by default, so they read bright; full on the world). The forward passes compile `_SCREEN_SPACE_OCCLUSION`;
+  the renderer's SSAO settings (intensity, radius) decide how deep the occlusion runs, the threshold where it shows.
 - **The haze** (`Core/AnimeFog.hlsl`): distance and height fog in the horizon colour, glowing toward the sun, applied
   per pixel by the pack's forward and outline passes in place of URP's fog while a preset turns it on (the global
   dynamic branch `_ANIME_ATMOSPHERE`); exact on orthographic cameras and transparents; off, URP's fog as before. The sky

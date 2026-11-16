@@ -26,6 +26,8 @@ Shader "Hidden/AnimeShaders/Tests/EntryProbe"
         [ToggleOff(_RECEIVE_SHADOWS_OFF)] _ReceiveShadows("Receive Shadows", Float) = 1
         _CastShadowStrength("Cast Shadow Strength", Range(0, 1)) = 1
         _CloudShadow("Cloud Shadow (how much the clouds shade it)", Range(0, 1)) = 1
+        _ContactShading("Contact Shading (how much ambient occlusion shades it)", Range(0, 1)) = 0.3
+        _ContactThreshold("Contact Threshold (occlusion turns to shade below it)", Range(0, 1)) = 0.6
         [Toggle(_ANIME_BODY_SHADOW)] _BodyShadow("Shadow The Whole Body", Float) = 0
         _BodyShadowReach("Body Shadow Reach (m toward the light)", Range(0, 5)) = 1.5
 

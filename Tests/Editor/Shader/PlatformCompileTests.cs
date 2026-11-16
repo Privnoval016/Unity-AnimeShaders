@@ -21,7 +21,7 @@ namespace AnimeShaders.Tests
         {
             "_MAIN_LIGHT_SHADOWS_CASCADE", "_CLUSTER_LIGHT_LOOP", "_SHADOWS_SOFT_HIGH", "_LIGHT_LAYERS",
             "_WRITE_RENDERING_LAYERS", "FOG_EXP2", "_CASTING_PUNCTUAL_LIGHT_SHADOW", "_GBUFFER_NORMALS_OCT",
-            AnimeShaderIds.World.AtmosphereKeyword, AnimeShaderIds.World.CloudShadowsKeyword,
+            AnimeShaderIds.World.AtmosphereKeyword, AnimeShaderIds.World.CloudShadowsKeyword, "_SCREEN_SPACE_OCCLUSION",
         };
 
         private static readonly string[] PlainForward =

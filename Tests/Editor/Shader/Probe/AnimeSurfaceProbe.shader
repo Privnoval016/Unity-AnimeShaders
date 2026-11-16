@@ -18,6 +18,8 @@ Shader "Hidden/AnimeShaders/Tests/SurfaceProbe"
         [Header(Shadows and Lights)]
         _CastShadowStrength("Cast Shadow Strength", Range(0, 1)) = 1
         _CloudShadow("Cloud Shadow (how much the clouds shade it)", Range(0, 1)) = 1
+        _ContactShading("Contact Shading (how much ambient occlusion shades it)", Range(0, 1)) = 1
+        _ContactThreshold("Contact Threshold (occlusion turns to shade below it)", Range(0, 1)) = 0.6
         _ExtraLightStrength("Additional Light Strength", Range(0, 2)) = 1
         _ExtraLightCap("Additional Light Cap", Range(0, 2)) = 0.6
 

@@ -2,7 +2,8 @@
 #define ANIME_LIGHTING_INCLUDED
 
 // The lighting every lit pack shader shares: an analytic two-tone ramp with the main light's cast shadow joined to
-// it, the clouds' shadows dimming its lit tone softly, an optional second thin shadow band, additional lights through
+// it, the clouds' shadows dimming its lit tone softly, contact shading from URP's ambient occlusion through the same tone
+// step, an optional second thin shadow band, additional lights through
 // the same ramp, a fresnel rim, emission, and a gentle ambient. The ramp is the single seam (AnimeToneWeight and its callers): a ramp texture could replace it
 // later without touching a caller.
 
@@ -91,6 +92,20 @@ half AnimeCloudShade(float3 positionWS, half3 lightDirectionWS)
     return shade;
 }
 
+// Contact shading from URP's screen-space ambient occlusion (none without its renderer feature): x caps the lit weight
+// (the occlusion through the tone step at the material's threshold, so contact reads as a crisp shade, never a smudge),
+// y scales the ambient (the occlusion itself); both by the material's Contact Shading.
+half2 AnimeContact(InputData inputData)
+{
+    half2 contact = half2(1.0h, 1.0h);
+#if defined(_SCREEN_SPACE_OCCLUSION)
+    half occlusion = GetScreenSpaceAmbientOcclusion(inputData.normalizedScreenSpaceUV).indirectAmbientOcclusion;
+    half crisp = AnimeToneWeight(occlusion, _ContactThreshold, _ShadowSoftness);
+    contact = lerp(half2(1.0h, 1.0h), half2(crisp, occlusion), _ContactShading);
+#endif
+    return contact;
+}
+
 half3 AnimeProbeAmbient()
 {
     return max(half3(0, 0, 0), half3(unity_SHAr.w, unity_SHAg.w, unity_SHAb.w));
@@ -166,12 +181,14 @@ half3 AnimeShade(AnimeSurface surface, InputData inputData)
     half castLit = AnimeMainLightCast(inputData, half3(mainLight.direction), castStrength);
     half litWeight = lerp(formWeight, min(formWeight, castLit), castStrength);
     litWeight *= 1.0h - AnimeCloudShade(inputData.positionWS, half3(mainLight.direction));
+    half2 contact = AnimeContact(inputData);
+    litWeight = min(litWeight, contact.x);
     litWeight = mainMatches ? litWeight : 0.0h;
 
     half3 lightColor = mainMatches ? mainLight.color * AnimeDirectorLightColorMultiplier() : half3(0, 0, 0);
     half3 litTone = surface.albedo * lerp(half3(1, 1, 1), lightColor, _LightInfluence);
 
-    half3 ambient = AnimeDirectorAmbient(AnimeProbeAmbient());
+    half3 ambient = AnimeDirectorAmbient(AnimeProbeAmbient()) * contact.y;
     half3 shadowTone = surface.albedo * (_ShadowTint.rgb * AnimeDirectorShadowColorMultiplier() + ambient * _AmbientStrength);
 
 #if defined(ANIME_GROUP_BAND)
