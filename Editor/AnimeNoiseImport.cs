@@ -1,4 +1,3 @@
-using System;
 using UnityEditor;
 using UnityEngine;
 
@@ -32,21 +31,8 @@ namespace AnimeShaders.EditorTools
 
         private void OnPreprocessTexture()
         {
-            string[] labels = AssetDatabase.GetLabels(AssetDatabase.GUIDFromAssetPath(assetPath));
-            if (Array.IndexOf(labels, Label) < 0)
-                return;
-            var importer = (TextureImporter)assetImporter;
-            importer.textureType = TextureImporterType.Default;
-            importer.sRGBTexture = false;
-            importer.alphaSource = TextureImporterAlphaSource.FromInput;
-            importer.alphaIsTransparency = false;
-            importer.textureCompression = TextureImporterCompression.Uncompressed;
-            importer.mipmapEnabled = true;
-            importer.wrapMode = TextureWrapMode.Repeat;
-            importer.filterMode = FilterMode.Trilinear;
-            importer.anisoLevel = 8;
-            importer.npotScale = TextureImporterNPOTScale.None;
-            importer.maxTextureSize = AnimeNoiseBaker.Size;
+            if (DataTextures.HasLabel(assetPath, Label))
+                DataTextures.HoldTo((TextureImporter)assetImporter, TextureImporterCompression.Uncompressed, AnimeNoiseBaker.Size);
         }
 
         #endregion

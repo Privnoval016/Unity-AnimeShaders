@@ -1,4 +1,3 @@
-using System.IO;
 using UnityEditor;
 using UnityEngine;
 
@@ -21,7 +20,6 @@ namespace AnimeShaders.EditorTools
         private const int StoneCells = 8;
         private const float EdgeRange = 0.25f;
 
-        private static readonly string[] NoiseShaders = { "Anime/Ground", "Anime/Sky" };
 
         #endregion
 
@@ -52,10 +50,10 @@ namespace AnimeShaders.EditorTools
                     float v = (y + 0.5f) / size;
                     Stone(u, v, out float edge, out float cell);
                     pixels[y * size + x] = new Color32(
-                        Byte(ValueNoise(u * ValueCells, v * ValueCells, ValueCells, 0)),
-                        Byte(Fbm(u, v)),
-                        Byte(edge),
-                        Byte(cell));
+                        DataTextures.Byte(ValueNoise(u * ValueCells, v * ValueCells, ValueCells, 0)),
+                        DataTextures.Byte(Fbm(u, v)),
+                        DataTextures.Byte(edge),
+                        DataTextures.Byte(cell));
                 }
             }
             return pixels;
@@ -64,20 +62,7 @@ namespace AnimeShaders.EditorTools
         /** <summary>Bakes the noise and writes it as a PNG at <paramref name="path" /> (a project path), then imports it.</summary> */
         public static void Bake(string path)
         {
-            var texture = new Texture2D(Size, Size, TextureFormat.RGBA32, false, true);
-            try
-            {
-                texture.SetPixels32(Pixels());
-                texture.Apply(false);
-                File.WriteAllBytes(path, texture.EncodeToPNG());
-            }
-            finally
-            {
-                Object.DestroyImmediate(texture);
-            }
-            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
-            AssetDatabase.SetLabels(AssetDatabase.LoadMainAssetAtPath(path), new[] { AnimeNoiseImport.Label });
-            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
+            DataTextures.Write(Pixels(), Size, Size, path, AnimeNoiseImport.Label);
         }
 
         /** <summary>Bakes the noise into the pack, beside its shaders, and makes it the default of every pack shader that reads it.</summary> */
@@ -89,35 +74,21 @@ namespace AnimeShaders.EditorTools
             AssignDefaults(AssetDatabase.LoadAssetAtPath<Texture2D>(path));
         }
 
-        /** <summary>Sets <paramref name="noise" /> as the default noise texture of each pack shader that has the property, so new materials take it.</summary> */
+        /** <summary>Sets <paramref name="noise" /> as the default noise texture of every pack shader that has the property, so new materials take it.</summary> */
         public static void AssignDefaults(Texture2D noise)
         {
-            foreach (string name in NoiseShaders)
-            {
-                var shader = Shader.Find(name);
-                if (shader == null)
-                    continue;
-                var importer = (ShaderImporter)AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(shader));
-                importer.SetDefaultTextures(new[] { AnimeShaderIds.Sky.NoiseTexName }, new Texture[] { noise });
-                importer.SaveAndReimport();
-            }
+            ShaderDefaults.Set(new[] { AnimeShaderIds.Sky.NoiseTexName }, noise);
         }
 
-        /** <summary>Where the pack's noise file sits: beside the pack's shaders.</summary> */
+        /** <summary>Where the pack's noise file sits: in the Textures folder beside the pack's shaders.</summary> */
         public static string PackPath()
         {
-            string shader = AssetDatabase.GetAssetPath(Shader.Find("Anime/Character"));
-            return Path.Combine(Path.GetDirectoryName(shader) ?? "Assets", "Textures", FileName).Replace('\\', '/');
+            return $"{ShaderDefaults.PackShadersFolder()}/Textures/{FileName}";
         }
 
         #endregion
 
         #region Helpers
-
-        private static byte Byte(float value)
-        {
-            return (byte)Mathf.Clamp(Mathf.RoundToInt(value * 255f), 0, 255);
-        }
 
         private static uint Hash(int x, int y, int seed)
         {
@@ -136,12 +107,6 @@ namespace AnimeShaders.EditorTools
             return (Hash(x, y, seed) & 0xffffffu) / 16777215f;
         }
 
-        private static int Wrap(int value, int period)
-        {
-            int wrapped = value % period;
-            return wrapped < 0 ? wrapped + period : wrapped;
-        }
-
         private static float Fade(float t)
         {
             return t * t * t * (t * (t * 6f - 15f) + 10f);
@@ -152,10 +117,10 @@ namespace AnimeShaders.EditorTools
         {
             int x0 = Mathf.FloorToInt(x), y0 = Mathf.FloorToInt(y);
             float fx = Fade(x - x0), fy = Fade(y - y0);
-            float a = Random01(Wrap(x0, period), Wrap(y0, period), seed);
-            float b = Random01(Wrap(x0 + 1, period), Wrap(y0, period), seed);
-            float c = Random01(Wrap(x0, period), Wrap(y0 + 1, period), seed);
-            float d = Random01(Wrap(x0 + 1, period), Wrap(y0 + 1, period), seed);
+            float a = Random01(DataTextures.Wrap(x0, period), DataTextures.Wrap(y0, period), seed);
+            float b = Random01(DataTextures.Wrap(x0 + 1, period), DataTextures.Wrap(y0, period), seed);
+            float c = Random01(DataTextures.Wrap(x0, period), DataTextures.Wrap(y0 + 1, period), seed);
+            float d = Random01(DataTextures.Wrap(x0 + 1, period), DataTextures.Wrap(y0 + 1, period), seed);
             return Mathf.Lerp(Mathf.Lerp(a, b, fx), Mathf.Lerp(c, d, fx), fy);
         }
 
@@ -215,8 +180,8 @@ namespace AnimeShaders.EditorTools
 
         private static Vector2 CellPoint(int gx, int gy, out int wx, out int wy)
         {
-            wx = Wrap(gx, StoneCells);
-            wy = Wrap(gy, StoneCells);
+            wx = DataTextures.Wrap(gx, StoneCells);
+            wy = DataTextures.Wrap(gy, StoneCells);
             return new Vector2(gx + 0.15f + 0.7f * Random01(wx, wy, 11), gy + 0.15f + 0.7f * Random01(wx, wy, 12));
         }
 

@@ -19,6 +19,8 @@ namespace AnimeShaders.EditorTools
         private const int RampSteps = 96;
         private const float RampHeight = 18f;
 
+        private static readonly string[] DetailSlots = { Ids.FieldDetailName, Ids.CircleDetailName };
+
         private static readonly Dictionary<string, string[]> Dependents = new()
         {
             [Switches.Band2Name] = new[] { Ids.Band2TintName, Ids.Band2OffsetName, Ids.Band2SoftnessName },
@@ -66,6 +68,7 @@ namespace AnimeShaders.EditorTools
                 if (!Shown(material, property.name))
                     continue;
                 materialEditor.ShaderProperty(property, property.displayName);
+                WarnIfNotPacked(property);
             }
             EditorGUILayout.Space();
             materialEditor.RenderQueueField();
@@ -129,6 +132,16 @@ namespace AnimeShaders.EditorTools
             float halfWidth = Mathf.Max(softness, 0.004f) * 0.5f;
             float t = Mathf.Clamp01((x - (threshold - halfWidth)) / (2f * halfWidth));
             return t * t * (3f - 2f * t);
+        }
+
+        /** <summary>Under a ground layer's detail slot: a warning when the texture there is not a packed detail map.</summary> */
+        private static void WarnIfNotPacked(MaterialProperty property)
+        {
+            if (Array.IndexOf(DetailSlots, property.name) < 0 || property.textureValue == null)
+                return;
+            string path = AssetDatabase.GetAssetPath(property.textureValue);
+            if (!string.IsNullOrEmpty(path) && !DataTextures.HasLabel(path, AnimeDetailImport.Label))
+                EditorGUILayout.HelpBox("Not a packed detail map: pack one from a Detail Set (Create > Anime Shaders > Detail Set).", MessageType.Warning);
         }
 
         private static void DrawRamp(Material material)

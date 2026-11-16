@@ -1,8 +1,10 @@
 Shader "Anime/Ground"
 {
-    // Ground: grass in large soft patches with bare earth, stone flagstones with grout, inside an optional disc (a plaza,
-    // an arena, a ring; radius 0 for none), drawn from the pack's baked noise in world XZ (three samples a pixel), lit
-    // with the pack's two tones and cast shadows per surface. No line, no rim, no fade. Group: ground.
+    // Ground: two layers, the field and, inside an optional disc (a plaza, an arena, a ring; radius 0 for none), the
+    // circle, each painted from a packed detail map (Tools > Anime Shaders: a Detail Set packs one) in world XZ: its
+    // shade picks a colour between the layer's dark and light, or its second pair where the map's mask is off. Large
+    // soft patches and bare earth from the pack's noise. Lit with the pack's two tones and cast shadows. No line, no
+    // rim, no fade. Group: ground.
     Properties
     {
         [Header(Surface)]
@@ -31,25 +33,39 @@ Shader "Anime/Ground"
         _Cutoff("Alpha Cutoff", Range(0, 1)) = 0.5
         [Enum(UnityEngine.Rendering.CullMode)] _Cull("Cull (Off = two-sided)", Float) = 2
 
-        [Header(Grass)]
-        _GrassColorA("Grass Colour", Color) = (0.47, 0.62, 0.36, 1)
-        _GrassColorB("Grass Second Colour", Color) = (0.56, 0.68, 0.4, 1)
-        _GrassPatchScale("Patch Scale (per metre)", Float) = 0.04
+        [Header(Field)]
+        [NoScaleOffset] _FieldDetail("Field Detail (packed)", 2D) = "linearGrey" {}
+        _FieldTile("Field Tile Size (m)", Range(0.1, 20)) = 2
+        _FieldDark("Field Dark", Color) = (0.3, 0.45, 0.22, 1)
+        _FieldLight("Field Light", Color) = (0.56, 0.68, 0.4, 1)
+        _FieldSecondDark("Field Second Dark (mask off)", Color) = (0.36, 0.42, 0.22, 1)
+        _FieldSecondLight("Field Second Light (mask off)", Color) = (0.6, 0.62, 0.36, 1)
+        [IntRange] _FieldSteps("Field Shade Steps (0 smooth)", Range(0, 6)) = 0
+        _FieldNormal("Field Normal Strength", Range(0, 2)) = 0.3
+        _FieldBreakUp("Field Break Up Tiling", Range(0, 1)) = 1
+
+        [Header(Circle)]
+        [NoScaleOffset] _CircleDetail("Circle Detail (packed)", 2D) = "linearGrey" {}
+        _CircleTile("Circle Tile Size (m)", Range(0.1, 20)) = 2
+        _CircleDark("Circle Dark", Color) = (0.5, 0.48, 0.45, 1)
+        _CircleLight("Circle Light", Color) = (0.8, 0.78, 0.73, 1)
+        _CircleSecondDark("Circle Second Dark (mask off)", Color) = (0.5, 0.48, 0.45, 1)
+        _CircleSecondLight("Circle Second Light (mask off)", Color) = (0.8, 0.78, 0.73, 1)
+        [IntRange] _CircleSteps("Circle Shade Steps (0 smooth)", Range(0, 6)) = 0
+        _CircleNormal("Circle Normal Strength", Range(0, 2)) = 0.5
+        _CircleBreakUp("Circle Break Up Tiling", Range(0, 1)) = 0
+
+        [Header(Patches and Tiling)]
+        _PatchScale("Patch Scale (per metre)", Float) = 0.04
+        _PatchStrength("Patch Strength", Range(0, 1)) = 0.15
         _EarthColor("Bare Earth Colour", Color) = (0.55, 0.45, 0.32, 1)
         _EarthAmount("Bare Earth Amount", Range(0, 0.5)) = 0.06
-        _GrainScale("Grain Scale (per metre)", Float) = 0.6
-        _GrainStrength("Grain Strength", Range(0, 1)) = 0.25
+        _BreakUpScale("Break Up Second Read Scale", Range(0.1, 4)) = 0.43
+        _BreakUpAngle("Break Up Second Read Angle", Range(0, 360)) = 37
 
-        [Header(Stone)]
-        _StoneColorA("Stone Colour", Color) = (0.74, 0.72, 0.68, 1)
-        _StoneColorB("Stone Second Colour", Color) = (0.6, 0.58, 0.55, 1)
-        _StoneSize("Flagstone Size (m)", Float) = 1.2
-        _GroutColor("Grout Colour", Color) = (0.5, 0.48, 0.45, 1)
-        _GroutWidth("Grout Width", Range(0, 1)) = 0.06
-
-        [Header(Stone Circle)]
+        [Header(Circle Edge)]
         _GroundCircle("Circle (centre x, centre z, radius, edge wobble)", Vector) = (0, 0, 15, 0.6)
-        _EdgeSoftness("Circle Edge Softness (m)", Float) = 0.8
+        _EdgeSoftness("Circle Edge Softness (m)", Range(0.01, 5)) = 0.8
 
         [Header(Distance)]
         _DetailFadeStart("Detail Fade Start (m)", Float) = 25
@@ -64,7 +80,7 @@ Shader "Anime/Ground"
 
         HLSLINCLUDE
         #define ANIME_GROUP_GROUND
-        #define ANIME_CUSTOM_ALBEDO
+        #define ANIME_CUSTOM_SURFACE
         #define ANIME_NO_FADE
         ENDHLSL
 

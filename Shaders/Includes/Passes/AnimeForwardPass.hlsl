@@ -1,9 +1,10 @@
 #ifndef ANIME_FORWARD_PASS_INCLUDED
 #define ANIME_FORWARD_PASS_INCLUDED
 
-// The lit forward pass of every lit pack shader: vertex and fragment. An entry shader may define ANIME_CUSTOM_ALBEDO
-// and, before this include, half3 AnimeCustomAlbedo(float3 positionWS, float2 uv, half3 baseAlbedo) to make its own
-// surface colour (the ground does). Characters ignore lightmaps, reflection probes,
+// The lit forward pass of every lit pack shader: vertex and fragment. An entry shader may define ANIME_CUSTOM_SURFACE
+// and, before this include, void AnimeCustomSurface(float3 positionWS, float2 uv, inout AnimeSurface surface) to change
+// the surface once its base colour, faced normal and emission are set (the ground paints its colour and tilts its
+// normal); with a hook, the alpha clip waits until after it, so the hook's derivatives never follow a discard. Characters ignore lightmaps, reflection probes,
 // decals and vertex lights; the ambient comes from the probe's average (or the director's tint).
 
 #include "../Core/AnimeLighting.hlsl"
@@ -113,25 +114,28 @@ void AnimeForwardFragment(
 
     half4 baseSample = AnimeSampleBase(input.uv);
     half alpha = baseSample.a * _BaseColor.a;
+#if !defined(ANIME_CUSTOM_SURFACE)
     AnimeAlphaClip(alpha);
+#endif
 
     half faceSign = IS_FRONT_VFACE(isFront, 1.0h, -1.0h);
 
     AnimeSurface surface;
     surface.albedo = baseSample.rgb * _BaseColor.rgb;
-#if defined(ANIME_CUSTOM_ALBEDO)
-    surface.albedo = AnimeCustomAlbedo(input.positionWS, input.uv, surface.albedo);
-#endif
     surface.alpha = alpha;
-#if defined(ANIME_GROUP_INSIDE)
-    [branch] if (faceSign < 0.0h && ANIME_INSIDE_TONE_ON)
-        surface.albedo = AnimeApplyInsideTone(surface.albedo, input.uv);
-#endif
     surface.normalWS = AnimeSurfaceNormal(input, faceSign, input.uv);
     surface.emission = half3(0, 0, 0);
 #if defined(ANIME_GROUP_EMISSION)
     if (ANIME_EMISSION_ON)
         surface.emission = AnimeSampleEmission(input.uv);
+#endif
+#if defined(ANIME_CUSTOM_SURFACE)
+    AnimeCustomSurface(input.positionWS, input.uv, surface);
+    AnimeAlphaClip(surface.alpha);
+#endif
+#if defined(ANIME_GROUP_INSIDE)
+    [branch] if (faceSign < 0.0h && ANIME_INSIDE_TONE_ON)
+        surface.albedo = AnimeApplyInsideTone(surface.albedo, input.uv);
 #endif
 
     InputData inputData;

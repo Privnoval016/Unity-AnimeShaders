@@ -3,6 +3,10 @@ guid: 59a612a31a3e1472cb07b3df5e91476e
 ShaderImporter:
   externalObjects: {}
   defaultTextures:
+  - _BaseMap: {instanceID: 0}
+  - _BumpMap: {instanceID: 0}
+  - _FieldDetail: {fileID: 2800000, guid: 3c0bad44cda6046ff842affaad0d2f7f, type: 3}
+  - _CircleDetail: {fileID: 2800000, guid: 3c0bad44cda6046ff842affaad0d2f7f, type: 3}
   - _AnimeNoiseTex: {fileID: 2800000, guid: 5e4302b096d3a4d3981890bce742ea1f, type: 3}
   nonModifiableTextures: []
   userData: 

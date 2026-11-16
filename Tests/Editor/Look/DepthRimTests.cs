@@ -18,6 +18,7 @@ namespace AnimeShaders.Tests
         private const float FieldOfView = 30f;
         private const float Distance = 6f;
         private const float Threshold = 1f;
+        private const float ReferenceHeight = 1080f;
 
         private static readonly Color Rim = new(0f, 0.6f, 0f);
 
@@ -97,10 +98,16 @@ namespace AnimeShaders.Tests
         [TearDown]
         public void TearDown()
         {
-            _stage?.Dispose();
-            _pipeline?.Dispose();
-            Object.DestroyImmediate(_material);
-            _director.Dispose();
+            try
+            {
+                _stage?.Dispose();
+                Object.DestroyImmediate(_material);
+                _director.Dispose();
+            }
+            finally
+            {
+                _pipeline?.Dispose();
+            }
             Assert.IsFalse(MadePipeline.Active, "the project's pipeline is back");
         }
 
@@ -115,6 +122,9 @@ namespace AnimeShaders.Tests
             Assert.Greater(Count(rim), 0, "the edge takes the rim");
 
             int band = BandThickness();
+            float asked = _material.GetFloat(Ids.RimDepthWidth) * Size / ReferenceHeight;
+            Assert.Less(band, radius * 0.5f, "a band, not the whole disc");
+            Assert.That(band, Is.InRange(asked - 2f, asked + 2f), $"the asked width in pixels at {ReferenceHeight}p");
             Vector2 centre = new(Size / 2f, Size / 2f);
             for (int i = 0; i < rim.Length; i++)
             {
@@ -193,6 +203,7 @@ namespace AnimeShaders.Tests
         public void AFadingBody_TakesNoRim()
         {
             MakeStage(withFeature: true);
+            Assert.Greater(Count(RimPixels()), 0, "solid, it takes the rim");
             _sphere.SetShaderUserValue(128u);
             Assert.AreEqual(0, Count(RimPixels()));
         }
@@ -200,6 +211,10 @@ namespace AnimeShaders.Tests
         [Test]
         public void ARendererWithoutTheFeature_DrawsNoDepthRim()
         {
+            MakeStage(withFeature: true);
+            Assert.Greater(Count(RimPixels()), 0, "with the feature, the rim shows");
+            _stage.Dispose();
+            _pipeline.Dispose();
             MakeStage(withFeature: false);
             Assert.AreEqual(0, Count(RimPixels()));
         }

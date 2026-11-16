@@ -71,6 +71,13 @@ TEXTURE2D(_BaseMap);
 SAMPLER(sampler_BaseMap);
 TEXTURE2D(_BumpMap);
 TEXTURE2D(_EmissionMap);
+#if defined(ANIME_GROUP_GROUND)
+// The ground's two layers' packed detail maps (R shade, G mask, B and A the normal's X and Y), each with its own sampler.
+TEXTURE2D(_FieldDetail);
+SAMPLER(sampler_FieldDetail);
+TEXTURE2D(_CircleDetail);
+SAMPLER(sampler_CircleDetail);
+#endif
 
 CBUFFER_START(UnityPerMaterial)
     // The core every lit pack shader has.
@@ -119,19 +126,29 @@ CBUFFER_START(UnityPerMaterial)
     float _RimDepthThreshold;
 #endif
 #if defined(ANIME_GROUP_GROUND)
-    half4 _GrassColorA;
-    half4 _GrassColorB;
+    half4 _FieldDark;
+    half4 _FieldLight;
+    half4 _FieldSecondDark;
+    half4 _FieldSecondLight;
+    half4 _CircleDark;
+    half4 _CircleLight;
+    half4 _CircleSecondDark;
+    half4 _CircleSecondLight;
     half4 _EarthColor;
-    half4 _StoneColorA;
-    half4 _StoneColorB;
-    half4 _GroutColor;
     float4 _GroundCircle;
-    float _GrassPatchScale;
-    float _GrainScale;
-    half _GrainStrength;
+    float _FieldTile;
+    float _CircleTile;
+    half _FieldSteps;
+    half _CircleSteps;
+    half _FieldNormal;
+    half _CircleNormal;
+    half _FieldBreakUp;
+    half _CircleBreakUp;
+    float _BreakUpScale;
+    float _BreakUpAngle;
+    float _PatchScale;
+    half _PatchStrength;
     half _EarthAmount;
-    float _StoneSize;
-    half _GroutWidth;
     float _EdgeSoftness;
     float _DetailFadeStart;
     float _DetailFadeRange;

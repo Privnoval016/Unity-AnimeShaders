@@ -5,8 +5,9 @@ two-tone look in the manner of modern anime games, outlines that hold up on two-
 as the head turns, and a light director so a project can set a mood per scene and relight a single shot. When it is
 done, everything will be tuned through a custom inspector with presets, with nothing needing code.
 
-**Status: in construction (0.1.0).** The lit core and the character shader are written; the face, hair, world and
-foliage shaders, the inspector, the director's runtime and presets arrive in the order of the table below, each
+**Status: in construction (0.2.0).** The lit core, the character shader, the depth-edge rim, the world, ground and sky
+shaders, sky presets and detail sets are written; the face, hair and foliage shaders, the full inspector, the director's
+runtime and look presets arrive in the order of the table below, each
 proved before the next.
 
 - **Requires:** Unity 6, URP 17, the Forward or Forward+ renderer with depth priming off. Deferred is not supported
@@ -37,7 +38,7 @@ normals, smoothed so hard edges don't crack the line. Those normals are baked on
 leaving the tangents free for normal maps. Width follows the camera's distance and field of view, can be painted per
 vertex, and has a global multiplier.
 
-## What exists now (0.1.0)
+## What exists now (0.2.0)
 
 | File | What it is |
 |---|---|
@@ -55,10 +56,14 @@ vertex, and has a global multiplier.
 | `Runtime/Rendering/AnimeRimFeature.cs`, `AnimeRimPass.cs` | The depth-edge rim's renderer feature and its render-graph pass (below) |
 | `Shaders/Includes/Passes/AnimeRimPass.hlsl` | The rim pass: the scene depth read past the line along the normal, the threshold, the light-facing mask |
 | `Editor/OutlineNormalBaker.cs` | The import-time outline normal bake |
+| `Editor/ShaderDefaults.cs` | Sets the pack shaders' default textures (the noise, the neutral detail map) in every pack shader declaring the property, keeping their other defaults |
+| `Editor/DataTextures.cs` | Textures that hold data: written as labelled PNGs, held by their import rule to linear, alpha-as-data, mipmapped, trilinear, repeating settings (the noise's and the detail maps' rules both use it) |
+| `Editor/Detail/` | Detail sets (below): `AnimeDetailSet` (the asset), `AnimeDetailSetEditor` (Pack, out of date, video memory), `DetailMath` (the packing as pure image maths), `AnimeDetailPacker` (the sources read from disk, the map written and recorded, the neutral map), `AnimeDetailImport` (the label `AnimeDetail`), `DetailImage`, `DetailSources`, `DetailSettings`, `NormalConvention` |
+| `Shaders/Textures/AnimeDetailNeutral.png` | The neutral detail map (shade 0.5, mask 1, flat normal): the ground's default, so a layer with no set renders as its palette's middle (Tools > Anime Shaders > Make Neutral Detail Map) |
 | `Shaders/AnimeWorld.shader`, `AnimeGround.shader`, `AnimeSky.shader`; `Shaders/Includes/World/` | The world's shaders and the ground's and sky's own code (below) |
 | `Runtime/Sky/` | `SkyPreset`, `SkyState`, `SkyApply`, `SkyPresetApplier`, and the shipped presets in `Presets/` |
 | `Editor/AnimeShaderGUI.cs` | The material inspector (thin for now): the shader's sections, a live preview of the two-tone ramp (the same maths the shader runs, tested against a render), and each feature's settings shown only while the feature is on |
-| `Tests/Editor/` | `Support/` (`LitStage`: a preview scene, camera and light rendering into a linear float target; `MadePipeline`: a URP asset made for a test with given features, swapped in and always put back; meshes, materials with colours as the shader reads them, frame reads, source readers, the director's globals held neutral, the batcher check), `Shader/` (passes, batcher, names and constants, every platform's compile, and `Probe/`: an entry shader adding its own property), `Inspector/` (the feature map, the preview against a render), `Look/` (tones, band, rim, the depth rim, director, cast shadows, inside tone, fade), `World/` (the noise, the ground, the sky, presets, world UVs), `Outline/` (the line, the baker) |
+| `Tests/Editor/` | `Support/` (`LitStage`: a preview scene, camera and light rendering into a linear float target; `MadePipeline`: a URP asset made for a test with given features, swapped in and always put back; meshes, materials with colours as the shader reads them, frame reads, source readers, the director's globals held neutral, the batcher check), `Shader/` (passes, batcher, names and constants, every platform's compile, and `Probe/`: an entry shader adding its own property, and one through the surface hook), `Inspector/` (the feature map, the preview against a render), `Look/` (tones, band, rim, the depth rim, director, cast shadows, inside tone, fade, the surface hook), `World/` (the noise, the detail packer and its import, the ground, the sky, presets, world UVs), `Outline/` (the line, the baker) |
 
 A thin entry shader (face, hair, world, or a project's own with extra passes) includes the same files, declares its own
 pragmas, and calls `AnimeShade`; it adds nothing else to the lighting. Its own material properties go in through
@@ -109,8 +114,8 @@ between `_InsideFadeStart` and `_InsideFadeEnd`. The shadow caster, depth and de
 
 Add **`AnimeRimFeature`** to each URP renderer that should show it (Forward or Forward+; the camera depth texture on,
 which the feature asks for). It draws, after the skybox, every opaque material whose `AnimeRim` pass is on, additively
-over the camera colour, reading URP's own depth copy (scenery and every body), so no extra target and no prepass; with no
-such body in view it draws nothing. Each pixel reads the depth past the body's own line, `_RimDepthWidth` pixels (at
+over the camera colour, reading URP's own depth copy (scenery and every body), so no extra target and no prepass; the
+pass is enqueued every frame and draws nothing where no such body is in view. Each pixel reads the depth past the body's own line, `_RimDepthWidth` pixels (at
 1080p, held on screen to the line's far distance, then thinning, never under one pixel) along its normal; where it is
 farther than `_RimDepthThreshold` metres (scaled up past 10 m) the pixel takes `_RimColor` times `_RimStrength`, faded
 by how much the edge faces the light (`_RimLightMask`). Turn it on with **Use Depth Edge Rim** or
@@ -123,10 +128,32 @@ takes no rim; a camera whose renderer lacks the feature draws none. XR single-pa
 - **`Anime/World`** (buildings and props): the core with the band and emission groups; cast shadows per surface; no
   line, rim or fade (`ANIME_NO_FADE`: no clip, so tile-based GPUs keep early depth rejection); **Base Map In World XZ**
   tiles the base map by metres (its tiling and offset per metre), so a large plane needs no UVs.
-- **`Anime/Ground`** (the ground group, through `ANIME_CUSTOM_ALBEDO`): grass in soft patches with bare earth, stone
-  flagstones with grout, inside an optional disc (centre x, centre z, radius, edge wobble; radius 0 for none), all from
-  the baked noise in world XZ (three reads a pixel); grout widened by its own derivative and the fine detail faded with
-  distance so a low camera never sees it shimmer. Placeholder until texture sets are picked (the game's asset request).
+- **`Anime/Ground`** (the ground group, through `ANIME_CUSTOM_SURFACE`): two layers with the same settings, the
+  **Field** and, inside an optional disc (centre x, centre z, radius, edge wobble; radius 0 for none), the **Circle**.
+  Each is painted from a packed detail map in world XZ (its tile size in metres): the map's shade picks a colour between
+  the layer's **Dark** and **Light**, or its **Second** pair where the map's mask is off (blended in a perceptual space),
+  optionally in **Shade Steps**; its normal tilts the surface by **Normal Strength**; **Break Up Tiling** blends a second
+  read at another scale and angle by the noise, keeping the contrast, so a large field shows no repeat. The baked noise
+  adds soft patches (**Patch Strength**) and bare earth on the field. Reads: the noise once, then only the layer that
+  shows (once, or twice with break-up): 2 a pixel inside the circle, 3 outside, up to 5 on the edge band; the reads sit
+  in branches with their gradients taken before them, each map with its own sampler; the steps, painting and tilt run
+  after. Measured on the playground fight at 4K (2026-11-16): 10.1 ms median with the branches, 10.6 without. Far off
+  (**Detail Fade**) the normal flattens and the steps smooth; the shade is left to the mips, which settle on each map's
+  mean of 0.5. Shade Steps are whole numbers; an Edge Softness or Tile Size of 0 is held to a small minimum. The
+  depth-normals pass keeps the geometric normal (screen-space effects don't see the detail); the alpha clip runs after
+  the surface hook. The material inspector warns under a detail slot holding a texture that is not a packed map.
+  Breaking change from 0.1.0's procedural ground: its grass, stone and grout properties (and their ids) are gone.
+- **Detail sets** (Create > Anime Shaders > Detail Set): a photo-scanned surface's colour and normal maps, and
+  optionally its occlusion and a mask (read from their files' bytes, so their import settings never matter; OpenGL or
+  DirectX normals), packed by **Pack** into one map beside the set: R the shade (the colour's brightness, softened by
+  **Soften**, a percentage of the tile so it looks the same at any resolution, darkened by occlusion by **Occlusion
+  Weight**, stretched over 0..1 and curved to a mean of 0.5), G the mask, B and A the normal's X and Y. Every step
+  wraps, so a tiling set packs to a tiling map. The Inspector says when the packed map is out of date (a hash of the
+  source files' bytes and the settings), what it costs in video memory, and warns above 2048 square (a 2K map packs in
+  seconds; the import rule's version, if raised, reimports every texture in the project). The packed map is held linear, compressed at high quality, mipmapped and repeating by its
+  label. Its four channels compress worse than one: measured on the playground's sets (BC7 and ASTC 4x4 alike), a
+  smooth stone keeps about 3° of normal and 4 of 255 shade levels, a noisy grass about 9° and 11; a set that needs better
+  can be packed without its mask, or its normal split out (not built).
 - **`Anime/Sky`** (the skybox): the gradient, the sun disc and halo where the main light points (or the director's
   override), cel clouds drifting with game time (frozen with hitstop), stars at night; everything but the disc stays
   under **Brightest Sky** so it never blooms over what is in front of it.

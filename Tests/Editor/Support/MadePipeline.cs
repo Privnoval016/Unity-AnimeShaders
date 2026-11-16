@@ -50,17 +50,26 @@ namespace AnimeShaders.Tests
             }
             SessionState.SetString(Recorded, string.Join("|", paths));
 
-            _renderer = ScriptableObject.CreateInstance<UniversalRendererData>();
-            _renderer.hideFlags = HideFlags.DontSave;
-            foreach (ScriptableRendererFeature feature in features)
+            try
             {
-                feature.hideFlags = HideFlags.DontSave;
-                _renderer.rendererFeatures.Add(feature);
+                _renderer = ScriptableObject.CreateInstance<UniversalRendererData>();
+                _renderer.hideFlags = HideFlags.DontSave;
+                foreach (ScriptableRendererFeature feature in features)
+                {
+                    feature.hideFlags = HideFlags.DontSave;
+                    _renderer.rendererFeatures.Add(feature);
+                }
+                _asset = UniversalRenderPipelineAsset.Create(_renderer);
+                _asset.hideFlags = HideFlags.DontSave;
+                _asset.supportsCameraDepthTexture = true;
+                QualitySettings.renderPipeline = _asset;
             }
-            _asset = UniversalRenderPipelineAsset.Create(_renderer);
-            _asset.hideFlags = HideFlags.DontSave;
-            _asset.supportsCameraDepthTexture = true;
-            QualitySettings.renderPipeline = _asset;
+            catch
+            {
+                PutBack(_levels, _level);
+                SessionState.EraseString(Recorded);
+                throw;
+            }
         }
 
         /** <summary>Puts every quality level's pipeline back, returns to the level the test began on, and destroys what was made.</summary> */
@@ -86,6 +95,12 @@ namespace AnimeShaders.Tests
 
         #region Helpers
 
+        /** <summary>Whether a recorded value means nothing to put back: SessionState answers an empty string, not null, for a key never set.</summary> */
+        private static bool NothingRecorded(string recorded)
+        {
+            return string.IsNullOrEmpty(recorded);
+        }
+
         private static void PutBack(RenderPipelineAsset[] levels, int current)
         {
             for (int i = 0; i < levels.Length; i++)
@@ -101,9 +116,8 @@ namespace AnimeShaders.Tests
         [InitializeOnLoadMethod]
         private static void RestoreAfterReload()
         {
-            // SessionState answers an empty string, not null, for a key never set: empty means nothing to put back.
             string recorded = SessionState.GetString(Recorded, string.Empty);
-            if (string.IsNullOrEmpty(recorded))
+            if (NothingRecorded(recorded))
                 return;
             string[] paths = recorded.Split('|');
             var levels = new RenderPipelineAsset[Mathf.Min(paths.Length, QualitySettings.names.Length)];

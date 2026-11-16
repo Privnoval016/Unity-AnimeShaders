@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.2.0 (2026-11-16)
+
+- **Breaking:** `Anime/Ground` paints two layers (Field, Circle) from packed detail maps instead of procedural grass and
+  flagstones; the old grass, stone, grout and grain properties are gone. Reads only the layer that shows, its gradients
+  taken outside the branches; shade steps; detail normals in a world-XZ frame; break-up tiling that keeps contrast.
+- **Breaking:** the forward pass's hook is `ANIME_CUSTOM_SURFACE` (`AnimeCustomSurface(positionWS, uv, inout
+  AnimeSurface)`), called once the base colour, faced normal and emission are set; `ANIME_CUSTOM_ALBEDO` is gone.
+- **Breaking:** `AnimeShaderIds.MaterialProperties` loses the procedural ground's ids (grass, stone, grout, grain,
+  patch scale) and gains the two layers', the patches' and the break-up's.
+- Detail sets (`AnimeDetailSet`, `DetailMath`, `AnimeDetailPacker`): a scanned set packed into one map (shade, mask,
+  normal XY), wrapping, mean-centred, occlusion optional, soften as a share of the tile, out-of-date check, video memory
+  shown; `AnimeDetailImport`; the neutral detail map as the ground's default; `DataTextures` (the labelled data
+  textures' writer and import rule, shared with the noise); `ShaderDefaults` sets defaults in every pack shader
+  declaring the property, keeping the others; the material inspector warns on an unpacked texture in a detail slot.
+- After four reviewers: the detail maps take their own samplers; whole-number steps that can't divide by zero; the
+  break-up keeps the normal's spread too; the detail normal's frame turns smoothly on slopes; Edge Softness and tile
+  sizes held off zero; the alpha clip after the surface hook; the second break-up read skipped where its weight is 0.
+- Tests: the packer (luminance weights, occlusion, the stretch and mean, resampling with its wrap, non-square sets,
+  soften and its wrap, every setting in the hash) and its import (the rule, a set's pixels on disk, out of date on a
+  source or setting change, the shaders' defaults), the ground's layers each (tile, steps, normal in X and Z, break-up),
+  gradient, mask, earth, DirectX through the packer, edge band, distance, degenerate settings, slopes, far from the
+  origin, the reads' structure; the surface hook through a probe; the rim's band against its asked width, and baselines
+  for its none-cases. Break proofs throughout.
+
 ## 0.1.0 (2026-11-15)
 
 - The lit core (properties block, light director globals, surface, lighting, outline, fade, one include per pass) and
