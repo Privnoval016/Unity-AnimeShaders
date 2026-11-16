@@ -46,6 +46,9 @@ Shader "Anime/Ground"
         [IntRange] _FieldSteps("Field Shade Steps (0 smooth)", Range(0, 6)) = 0
         _FieldNormal("Field Normal Strength", Range(0, 2)) = 0.3
         _FieldBreakUp("Field Break Up Tiling", Range(0, 1)) = 1
+        [NoScaleOffset] _FieldStones("Field Stone Map (from a detail set with Stones)", 2D) = "black" {}
+        _FieldStoneShade("Field Stone Shade (each stone varies by up to this)", Range(0, 0.5)) = 0
+        _FieldStoneMix("Field Stone Mix (share of stones in the second pair)", Range(0, 1)) = 0
 
         [Header(Circle)]
         [NoScaleOffset] _CircleDetail("Circle Detail (packed)", 2D) = "linearGrey" {}
@@ -57,6 +60,9 @@ Shader "Anime/Ground"
         [IntRange] _CircleSteps("Circle Shade Steps (0 smooth)", Range(0, 6)) = 0
         _CircleNormal("Circle Normal Strength", Range(0, 2)) = 0.5
         _CircleBreakUp("Circle Break Up Tiling", Range(0, 1)) = 0
+        [NoScaleOffset] _CircleStones("Circle Stone Map (from a detail set with Stones)", 2D) = "black" {}
+        _CircleStoneShade("Circle Stone Shade (each stone varies by up to this)", Range(0, 0.5)) = 0
+        _CircleStoneMix("Circle Stone Mix (share of stones in the second pair)", Range(0, 1)) = 0
 
         [Header(Patches and Tiling)]
         _PatchScale("Patch Scale (per metre)", Float) = 0.04

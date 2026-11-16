@@ -7,8 +7,9 @@ using Object = UnityEngine.Object;
 namespace AnimeShaders.EditorTools
 {
     /**
-     * <summary>Textures that hold data, not colour (the noise, packed detail maps): written as PNGs carrying an asset
-     * label, and held by their import rule to linear, alpha-as-data, mipmapped, trilinear, repeating settings.</summary>
+     * <summary>Textures that hold data, not colour (the noise, packed detail maps, stone maps): written as PNGs carrying
+     * an asset label, and held by their import rule to linear, alpha-as-data, repeating settings: mipmapped and trilinear,
+     * or, for values that must never blend (ids, codes), point-sampled without mips.</summary>
      */
     public static class DataTextures
     {
@@ -68,18 +69,18 @@ namespace AnimeShaders.EditorTools
             AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
         }
 
-        /** <summary>Holds <paramref name="importer" /> to a data texture's settings, with the given compression and largest size.</summary> */
-        public static void HoldTo(TextureImporter importer, TextureImporterCompression compression, int maxSize)
+        /** <summary>Holds <paramref name="importer" /> to a data texture's settings, with the given compression and largest size; <paramref name="point" /> for values that must never blend.</summary> */
+        public static void HoldTo(TextureImporter importer, TextureImporterCompression compression, int maxSize, bool point = false)
         {
             importer.textureType = TextureImporterType.Default;
             importer.sRGBTexture = false;
             importer.alphaSource = TextureImporterAlphaSource.FromInput;
             importer.alphaIsTransparency = false;
             importer.textureCompression = compression;
-            importer.mipmapEnabled = true;
+            importer.mipmapEnabled = !point;
             importer.wrapMode = TextureWrapMode.Repeat;
-            importer.filterMode = FilterMode.Trilinear;
-            importer.anisoLevel = Anisotropy;
+            importer.filterMode = point ? FilterMode.Point : FilterMode.Trilinear;
+            importer.anisoLevel = point ? 0 : Anisotropy;
             importer.npotScale = TextureImporterNPOTScale.None;
             importer.maxTextureSize = maxSize;
         }

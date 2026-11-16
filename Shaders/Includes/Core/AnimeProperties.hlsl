@@ -77,6 +77,10 @@ TEXTURE2D(_FieldDetail);
 SAMPLER(sampler_FieldDetail);
 TEXTURE2D(_CircleDetail);
 SAMPLER(sampler_CircleDetail);
+// The layers' stone maps (R the stone's value, G its home-tile code), read point-sampled through URP's global
+// sampler_PointRepeat (GlobalSamplers.hlsl).
+TEXTURE2D(_FieldStones);
+TEXTURE2D(_CircleStones);
 #endif
 
 CBUFFER_START(UnityPerMaterial)
@@ -148,6 +152,10 @@ CBUFFER_START(UnityPerMaterial)
     half _CircleNormal;
     half _FieldBreakUp;
     half _CircleBreakUp;
+    half _FieldStoneShade;
+    half _CircleStoneShade;
+    half _FieldStoneMix;
+    half _CircleStoneMix;
     float _BreakUpScale;
     float _BreakUpAngle;
     float _PatchScale;

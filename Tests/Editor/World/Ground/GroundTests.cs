@@ -41,13 +41,25 @@ namespace AnimeShaders.Tests
 
             public int BreakUp { get; }
 
-            public LayerIds(int detail, int[] colours, int steps, int normal, int breakUp)
+            public int Tile { get; }
+
+            public int Stones { get; }
+
+            public int StoneShade { get; }
+
+            public int StoneMix { get; }
+
+            public LayerIds(int detail, int[] colours, int steps, int normal, int breakUp, int tile, int stones, int stoneShade, int stoneMix)
             {
                 Detail = detail;
                 Colours = colours;
                 Steps = steps;
                 Normal = normal;
                 BreakUp = breakUp;
+                Tile = tile;
+                Stones = stones;
+                StoneShade = stoneShade;
+                StoneMix = stoneMix;
             }
         }
 
@@ -124,6 +136,44 @@ namespace AnimeShaders.Tests
             return Detail((x, y) => pixel, 4);
         }
 
+        /** <summary>A made stone map, point-sampled and repeating as a packed one is: R the stone's value, G its home-tile code.</summary> */
+        private Texture2D StoneTexture(int width, int height, Func<int, int, Color32> texel)
+        {
+            var texture = new Texture2D(width, height, TextureFormat.RGBA32, false, true)
+            {
+                wrapMode = TextureWrapMode.Repeat,
+                filterMode = FilterMode.Point,
+            };
+            var pixels = new Color32[width * height];
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                    pixels[y * width + x] = texel(x, y);
+            }
+            texture.SetPixels32(pixels);
+            texture.Apply(false);
+            _made.Add(texture);
+            return texture;
+        }
+
+        /** <summary>A stone per texel, each its own value, every home its own tile.</summary> */
+        private Texture2D StonePerTexel(int size)
+        {
+            return StoneTexture(size, size, (x, y) => new Color32((byte)(1 + (y * size + x) * 37 % 255), StoneMath.Code(0, 0), 0, 255));
+        }
+
+        /** <summary>Shows <paramref name="layer" /> with a flat mid shade on a black-to-white gradient, the given stone map and variation.</summary> */
+        private void StoneLayer(Layer layer, Texture2D stones, float shade, float mix, byte detailShade = 128)
+        {
+            Show(layer);
+            Lit();
+            Colours(Of(layer).Colours, Black, White);
+            _material.SetTexture(Of(layer).Detail, Uniform(new Color32(detailShade, 255, 128, 128)));
+            _material.SetTexture(Of(layer).Stones, stones);
+            _material.SetFloat(Of(layer).StoneShade, shade);
+            _material.SetFloat(Of(layer).StoneMix, mix);
+        }
+
         /** <summary>The perceptual shade a pixel shows on a black-to-white gradient (the gradient blends square roots).</summary> */
         private static float ShadeOf(Color pixel)
         {
@@ -171,8 +221,8 @@ namespace AnimeShaders.Tests
         private static LayerIds Of(Layer layer)
         {
             return layer == Layer.Field
-                ? new LayerIds(Ids.FieldDetail, FieldColours, Ids.FieldSteps, Ids.FieldNormal, Ids.FieldBreakUp)
-                : new LayerIds(Ids.CircleDetail, CircleColours, Ids.CircleSteps, Ids.CircleNormal, Ids.CircleBreakUp);
+                ? new LayerIds(Ids.FieldDetail, FieldColours, Ids.FieldSteps, Ids.FieldNormal, Ids.FieldBreakUp, Ids.FieldTile, Ids.FieldStones, Ids.FieldStoneShade, Ids.FieldStoneMix)
+                : new LayerIds(Ids.CircleDetail, CircleColours, Ids.CircleSteps, Ids.CircleNormal, Ids.CircleBreakUp, Ids.CircleTile, Ids.CircleStones, Ids.CircleStoneShade, Ids.CircleStoneMix);
         }
 
         /** <summary>Lights the floor straight down with the ramp back as the stage made it: every flat pixel fully lit.</summary> */
@@ -465,6 +515,113 @@ namespace AnimeShaders.Tests
             Assert.AreEqual(0, circle.Count(pixel => FrameReads.Covered(pixel) && pixel.r > pixel.g + 0.1f), "the circle takes none");
         }
 
+        [TestCase(Layer.Field)]
+        [TestCase(Layer.Circle)]
+        public void StoneVariation_OffOrWithoutAMap_ChangesNothing(Layer layer)
+        {
+            StoneLayer(layer, StonePerTexel(2), 0f, 0f);
+            Color[] plain = _stage.Render();
+            Assert.Greater(FrameReads.Count(plain, FrameReads.Covered), 0, "the floor drew");
+            StoneLayer(layer, null, 0.3f, 0.5f);
+            Assert.IsTrue(plain.SequenceEqual(_stage.Render()), "variation with no map is the plain frame");
+            StoneLayer(layer, StoneTexture(2, 2, (x, y) => new Color32(90, StoneMath.None, 0, 255)), 0.3f, 0.5f);
+            Assert.IsTrue(plain.SequenceEqual(_stage.Render()), "texels with no stone take no variation");
+        }
+
+        [TestCase(Layer.Field)]
+        [TestCase(Layer.Circle)]
+        public void EachStone_IsOneShade_AndDiffersFromItsRepeats(Layer layer)
+        {
+            StoneLayer(layer, StonePerTexel(2), 0.3f, 0f);
+            float tile = _material.GetFloat(Of(layer).Tile);
+            Color[] frame = _stage.Render();
+            var repeats = new List<Color>();
+            for (int i = -2; i < 2; i++)
+            {
+                for (int j = -2; j < 2; j++)
+                {
+                    float x = (i + 0.25f) * tile, z = (j + 0.25f) * tile;
+                    Color stone = At(frame, x, z);
+                    Assert.IsTrue(FrameReads.Near(stone, At(frame, x + tile * 0.15f, z + tile * 0.15f), 0.01f), $"one shade across the stone at ({x}, {z})");
+                    repeats.Add(stone);
+                }
+            }
+            int distinct = repeats.Count(stone => repeats.Count(other => FrameReads.Near(stone, other, 0.005f)) == 1);
+            Assert.Greater(distinct, repeats.Count / 2, "the same stone of the tile differs from copy to copy");
+        }
+
+        [TestCase(Layer.Field)]
+        [TestCase(Layer.Circle)]
+        public void AStoneAcrossTheTilesEdge_HasNoSeam(Layer layer)
+        {
+            byte home = StoneMath.Code(0, 0), next = StoneMath.Code(1, 0);
+            StoneLayer(layer, StoneTexture(2, 1, (x, y) => new Color32(7, x == 0 ? home : next, 0, 255)), 0.3f, 0f);
+            float tile = _material.GetFloat(Of(layer).Tile);
+            float step = tile * 0.1f;
+            Color[] frame = _stage.Render();
+            int split = 0;
+            for (int i = -2; i < 2; i++)
+            {
+                float edge = (i + 1) * tile, middle = (i + 0.5f) * tile;
+                if (i < 1)
+                    Assert.IsTrue(FrameReads.Near(At(frame, edge - step, 0.3f), At(frame, edge + step, 0.3f), 0.01f), $"one stone across the tile's edge at {edge}");
+                if (!FrameReads.Near(At(frame, middle - step, 0.3f), At(frame, middle + step, 0.3f), 0.005f))
+                    split++;
+            }
+            Assert.Greater(split, 1, "and two stones meet in each tile's middle");
+        }
+
+        [Test]
+        public void StoneMix_PaintsAShareOfStones_RisingWithTheMix()
+        {
+            Layer layer = Layer.Circle;
+            float[] shares = new[] { 0f, 0.25f, 0.75f, 1f }.Select(mix =>
+            {
+                StoneLayer(layer, StonePerTexel(8), 0f, mix);
+                Colours(Of(layer).Colours, White, White, Black, Black);
+                Color[] frame = _stage.Render();
+                return FrameReads.Count(frame, pixel => FrameReads.Covered(pixel) && pixel.r < 0.5f) / (float)FrameReads.Count(frame, FrameReads.Covered);
+            }).ToArray();
+            Assert.AreEqual(0f, shares[0], "no mix, the first pair everywhere");
+            Assert.AreEqual(1f, shares[3], 0.01f, "all of it, the second pair everywhere");
+            Assert.Greater(shares[2], shares[1], $"more stones with more mix ({shares[1]} then {shares[2]})");
+            Assert.Greater(shares[1], 0f);
+            Assert.Less(shares[2], 1f);
+        }
+
+        [Test]
+        public void StoneVariation_FadesWithDistance_AndSkipsTheJoints()
+        {
+            Layer layer = Layer.Circle;
+            StoneLayer(layer, StonePerTexel(2), 0f, 0f);
+            Color[] plain = _stage.Render();
+            StoneLayer(layer, StonePerTexel(2), 0.3f, 0f);
+            Assert.IsFalse(plain.SequenceEqual(_stage.Render()), "near, the stones vary");
+            _material.SetFloat(Ids.DetailFadeStart, 0f);
+            _material.SetFloat(Ids.DetailFadeRange, 0.01f);
+            Color[] far = _stage.Render();
+            _material.SetFloat(Of(layer).StoneShade, 0f);
+            Assert.IsTrue(far.Zip(_stage.Render(), (a, b) => FrameReads.Near(a, b, 0.003f)).All(same => same), "far, the variation has faded");
+
+            _material.SetFloat(Ids.DetailFadeStart, 100f);
+            StoneLayer(layer, StonePerTexel(2), 0f, 0f, 20);
+            Color[] joint = _stage.Render();
+            _material.SetFloat(Of(layer).StoneShade, 0.3f);
+            Assert.IsTrue(joint.Zip(_stage.Render(), (a, b) => FrameReads.Near(a, b, 0.003f)).All(same => same), "a dark joint takes no variation");
+        }
+
+        [Test]
+        public void BreakUpTiling_DampsTheStoneVariation()
+        {
+            Layer layer = Layer.Circle;
+            StoneLayer(layer, StonePerTexel(4), 0.3f, 0f);
+            _material.SetFloat(Ids.PatchScale, 1f);
+            float plain = Spread(CoveredShades(_stage.Render()));
+            _material.SetFloat(Of(layer).BreakUp, 1f);
+            float broken = Spread(CoveredShades(_stage.Render()));
+            Assert.Less(broken, plain * 0.9f, $"the second read's stones don't line up, so the variation backs off ({broken} against {plain})");
+        }
+
         [TestCase(0f)]
         [TestCase(0.6f)]
         public void TheEdgeBand_HasNoStep(float wobble)
@@ -570,6 +727,10 @@ namespace AnimeShaders.Tests
             Assert.AreEqual(2, Regex.Matches(surface, @"UNITY_BRANCH\s*if \([^)]*\)\s*\w+ = AnimeGroundRead\([^;]*;").Count,
                 "each layer's branch holds its read and nothing else, so painting, steps and the tilt run outside");
             Assert.AreEqual(2, Regex.Matches(read, @"SAMPLE_TEXTURE2D_GRAD\(").Count, "at most two reads a layer");
+            StringAssert.IsMatch(@"if \(readStones\)", read, "the stone read only while the layer varies stones");
+            string stone = Body(text, "half3 AnimeGroundStoneAt(");
+            StringAssert.Contains("SAMPLE_TEXTURE2D_LOD(", stone, "the stone map read at its top level, no gradients");
+            StringAssert.Contains("sampler_PointRepeat", text, "point-sampled, so stone values never blend");
         }
     }
 }

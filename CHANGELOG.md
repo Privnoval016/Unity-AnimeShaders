@@ -10,6 +10,15 @@
   read in uniform flow, a trig-free hash.
 - The haze (`Core/AnimeFog.hlsl`): distance and height fog with a glow toward the sun, in the pack's forward and outline
   passes in place of URP's fog behind `_ANIME_ATMOSPHERE`; URP's fog takes the same colour and reach for other shaders.
+- **Stones** (variation per stone, for any tiled set with an occlusion map): a detail set's Stones section writes a
+  stone map beside it (`StoneMath`: the stones found on the tile as a torus at the occlusion's resolution, an exact
+  home-tile code per texel; `AnimeStones` label, point-sampled, uncompressed); `Anime/Ground` gains per layer **Stone
+  Map**, **Stone Shade** and **Stone Mix** (one point read and an integer hash, only while a layer varies stones).
+  `DataTextures.HoldTo` takes a point-data option; `DetailMath.Blur` is shared. Tests: the stones of a made grid (one
+  centred on the tile's corner) one home and value across the edges, pitting, joints, the fill across the edge, bands
+  and flat maps, determinism, the codes; the stone map's import, Stones off removing it, the stale hash per setting; on
+  the ground, no map or no variation the plain frame, a stone one shade and unlike its repeats, no seam across the tile's
+  edge, the mix by ratio, the fade, the joints, Break Up; break proofs.
 - `Anime/Ground`: the field's **Patch Tint** (`_PatchTint`, alpha the strength; `_PatchTintScale`, `_PatchTintCover`,
   `_PatchTintSoftness`): broad patches take the tint's hue at the colour's own brightness, from a second noise read
   (fbm) only when the strength is above 0. `AnimeLuma` in `Core/AnimeSurface.hlsl` holds the brightness weights. Test:

@@ -7,8 +7,13 @@
 // light (or its second pair where the mask is off) and its normal tilts the surface. The pack's noise adds large soft
 // patches, the field's tinted patches, bare earth and the circle's wobbly edge.
 //
+// A layer with a stone map (AnimeDetailPacker's, from a detail set with Stones) varies each stone on the floor: its
+// shade (Stone Shade) and, for a share of stones, the second colour pair (Stone Mix). The map gives each texel its
+// stone's value and the tile holding the stone's centre; hashed with that tile, every stone on the floor differs, and
+// both pieces of a stone crossing a tile's edge agree.
+//
 // Reads: the noise once (twice with a patch tint), then each layer's map only where that layer shows (once, or twice
-// with Break Up Tiling).
+// with Break Up Tiling, and its stone map once, point-sampled, while it varies stones).
 // Those reads sit in branches, so every gradient they use is taken before the branches and everything that needs a
 // derivative (the steps, the lighting) runs after them.
 
@@ -30,6 +35,9 @@ SAMPLER(sampler_AnimeNoiseTex);
 #define ANIME_GROUND_BREAK_UP_OFFSET 0.5
 // The narrowest a step's soft edge gets, so a flat shade never meets a zero-width edge.
 #define ANIME_GROUND_STEP_MIN_WIDTH 1e-3h
+// The stone variation fades out in the joints: none where the shade is below FROM, full above TO.
+#define ANIME_GROUND_GROUT_FROM 0.15h
+#define ANIME_GROUND_GROUT_TO 0.35h
 // The tangent turns from world X to world Z as the surface normal leans this far toward X, so no slope sees a seam.
 #define ANIME_GROUND_FRAME_TURN_FROM 0.7
 #define ANIME_GROUND_FRAME_TURN_TO 0.95
@@ -42,6 +50,8 @@ struct AnimeGroundLayer
     half3 secondDark;
     half3 secondLight;
     half steps;
+    half stoneShade;
+    half stoneMix;
 };
 
 struct AnimeGroundCoordinates
@@ -54,11 +64,16 @@ struct AnimeGroundCoordinates
     float2 dy2;
 };
 
+// stoneShade is the stone's shade offset (-1 to 1), stoneKey its draw for the mix (0 to 1), stoneStrength how much of
+// the variation applies (0 off the stones, less where Break Up Tiling blends in reads whose stones don't line up).
 struct AnimeGroundSample
 {
     half shade;
     half mask;
     half2 normalXY;
+    half stoneShade;
+    half stoneKey;
+    half stoneStrength;
 };
 
 half4 AnimeGroundNoise(float2 position)
@@ -82,6 +97,8 @@ AnimeGroundLayer AnimeFieldLayer()
     layer.secondDark = _FieldSecondDark.rgb;
     layer.secondLight = _FieldSecondLight.rgb;
     layer.steps = round(_FieldSteps);
+    layer.stoneShade = _FieldStoneShade;
+    layer.stoneMix = _FieldStoneMix;
     return layer;
 }
 
@@ -93,6 +110,8 @@ AnimeGroundLayer AnimeCircleLayer()
     layer.secondDark = _CircleSecondDark.rgb;
     layer.secondLight = _CircleSecondLight.rgb;
     layer.steps = round(_CircleSteps);
+    layer.stoneShade = _CircleStoneShade;
+    layer.stoneMix = _CircleStoneMix;
     return layer;
 }
 
@@ -116,6 +135,9 @@ AnimeGroundSample AnimeGroundUnpack(half4 packed)
     unpacked.shade = packed.r;
     unpacked.mask = packed.g;
     unpacked.normalXY = packed.ba * 2.0h - 1.0h;
+    unpacked.stoneShade = 0.0h;
+    unpacked.stoneKey = 1.0h;
+    unpacked.stoneStrength = 0.0h;
     return unpacked;
 }
 
@@ -126,16 +148,55 @@ AnimeGroundSample AnimeGroundNeutral()
     neutral.shade = 0.5h;
     neutral.mask = 1.0h;
     neutral.normalXY = half2(0.0h, 0.0h);
+    neutral.stoneShade = 0.0h;
+    neutral.stoneKey = 1.0h;
+    neutral.stoneStrength = 0.0h;
     return neutral;
 }
 
-// One layer's reads: one, or two blended by the noise where Break Up Tiling reaches. The blend keeps the shade's spread
+// An integer hash (PCG3D): the same bits on every graphics API.
+uint3 AnimeGroundHash(uint3 v)
+{
+    v = v * 1664525u + 1013904223u;
+    v.x += v.y * v.z;
+    v.y += v.z * v.x;
+    v.z += v.x * v.y;
+    v ^= v >> 16u;
+    v.x += v.y * v.z;
+    v.y += v.z * v.x;
+    v.z += v.x * v.y;
+    return v;
+}
+
+// The stone at a layer UV: its shade offset (-1 to 1), its mix draw (0 to 1) and 1, or (0, 1, 0) where the map has
+// none. The map is read at the UV's place in its tile, so the tile index and the texel never disagree at the seam.
+half3 AnimeGroundStoneAt(TEXTURE2D_PARAM(stones, stonesSampler), float2 uv)
+{
+    float2 tile = floor(uv);
+    half2 texel = SAMPLE_TEXTURE2D_LOD(stones, stonesSampler, uv - tile, 0).rg;
+    uint code = uint(round(texel.g * 255.0h));
+    uint value = uint(round(texel.r * 255.0h));
+    uint index = max(code, 1u) - 1u;
+    int2 home = int2(tile) + int2(int(index / 3u) - 1, int(index % 3u) - 1);
+    uint3 hash = AnimeGroundHash(uint3(asuint(home), value));
+    float2 draws = float2(hash.xy) * (1.0 / 4294967296.0);
+    return code == 0u ? half3(0.0h, 1.0h, 0.0h) : half3(half(draws.x * 2.0 - 1.0), half(draws.y), 1.0h);
+}
+
+// One layer's reads: one, or two blended by the noise where Break Up Tiling reaches, and its stone while it varies them. The blend keeps the shade's spread
 // about its mean of 0.5 and the normal's about flat, so a mixed patch is as contrasted and as bumpy as a plain one; the
 // second read's normal is turned back into the layer's frame.
-AnimeGroundSample AnimeGroundRead(TEXTURE2D_PARAM(detail, detailSampler), AnimeGroundCoordinates coordinates,
-    half breakUp, half breakUpNoise, float2x2 rotation)
+AnimeGroundSample AnimeGroundRead(TEXTURE2D_PARAM(detail, detailSampler), TEXTURE2D_PARAM(stones, stonesSampler),
+    AnimeGroundCoordinates coordinates, half breakUp, half breakUpNoise, float2x2 rotation, bool readStones)
 {
     AnimeGroundSample first = AnimeGroundUnpack(SAMPLE_TEXTURE2D_GRAD(detail, detailSampler, coordinates.uv, coordinates.dx, coordinates.dy));
+    if (readStones)
+    {
+        half3 stone = AnimeGroundStoneAt(TEXTURE2D_ARGS(stones, stonesSampler), coordinates.uv);
+        first.stoneShade = stone.x;
+        first.stoneKey = stone.y;
+        first.stoneStrength = stone.z;
+    }
     half weight = smoothstep(ANIME_GROUND_BREAK_UP_FROM, ANIME_GROUND_BREAK_UP_TO, breakUpNoise) * breakUp;
     UNITY_BRANCH
     if (weight > 0.0h)
@@ -146,6 +207,7 @@ AnimeGroundSample AnimeGroundRead(TEXTURE2D_PARAM(detail, detailSampler), AnimeG
         first.shade = saturate((lerp(first.shade, second.shade, weight) - 0.5h) * spread + 0.5h);
         first.mask = lerp(first.mask, second.mask, weight);
         first.normalXY = lerp(first.normalXY, second.normalXY, weight) * spread;
+        first.stoneStrength *= 1.0h - weight;
     }
     return first;
 }
@@ -168,13 +230,16 @@ half3 AnimeGroundGradient(half3 dark, half3 light, half shade)
     return blended * blended;
 }
 
+// The stone's variation applies near (it fades with the detail) and off the joints, so it never steps where grout is.
 half3 AnimeGroundPaint(AnimeGroundSample sample, AnimeGroundLayer layer, half shift, half near)
 {
-    half shade = saturate(sample.shade + shift);
+    half stone = sample.stoneStrength * near * smoothstep(ANIME_GROUND_GROUT_FROM, ANIME_GROUND_GROUT_TO, sample.shade);
+    half shade = saturate(sample.shade + shift + sample.stoneShade * layer.stoneShade * stone);
     shade = lerp(shade, AnimeGroundSteps(shade, layer.steps), near);
+    half mixed = sample.stoneKey < layer.stoneMix ? stone : 0.0h;
     half3 first = AnimeGroundGradient(layer.dark, layer.light, shade);
     half3 second = AnimeGroundGradient(layer.secondDark, layer.secondLight, shade);
-    return lerp(second, first, sample.mask);
+    return lerp(second, first, sample.mask * (1.0h - mixed));
 }
 
 // The surface normal tilted by a detail normal's X and Y. The frame: world X made perpendicular to the normal (turning
@@ -224,14 +289,16 @@ void AnimeCustomSurface(float3 positionWS, float2 uv, inout AnimeSurface surface
     AnimeGroundCoordinates fieldUV = AnimeGroundCoordinatesOf(p, positionDx, positionDy, _FieldTile, rotation);
     AnimeGroundCoordinates circleUV = AnimeGroundCoordinatesOf(p, positionDx, positionDy, _CircleTile, rotation);
 
+    bool fieldStones = _FieldStoneShade > 0.0h || _FieldStoneMix > 0.0h;
+    bool circleStones = _CircleStoneShade > 0.0h || _CircleStoneMix > 0.0h;
     AnimeGroundSample field = AnimeGroundNeutral();
     AnimeGroundSample circle = AnimeGroundNeutral();
     UNITY_BRANCH
     if (inside < 1.0h)
-        field = AnimeGroundRead(TEXTURE2D_ARGS(_FieldDetail, sampler_FieldDetail), fieldUV, _FieldBreakUp, patch.r, rotation);
+        field = AnimeGroundRead(TEXTURE2D_ARGS(_FieldDetail, sampler_FieldDetail), TEXTURE2D_ARGS(_FieldStones, sampler_PointRepeat), fieldUV, _FieldBreakUp, patch.r, rotation, fieldStones);
     UNITY_BRANCH
     if (inside > 0.0h)
-        circle = AnimeGroundRead(TEXTURE2D_ARGS(_CircleDetail, sampler_CircleDetail), circleUV, _CircleBreakUp, patch.r, rotation);
+        circle = AnimeGroundRead(TEXTURE2D_ARGS(_CircleDetail, sampler_CircleDetail), TEXTURE2D_ARGS(_CircleStones, sampler_PointRepeat), circleUV, _CircleBreakUp, patch.r, rotation, circleStones);
 
     half shift = (patch.g - 0.5h) * _PatchStrength;
     half3 fieldColour = AnimeGroundPatchTint(AnimeGroundPaint(field, AnimeFieldLayer(), shift, near), tintNoise);

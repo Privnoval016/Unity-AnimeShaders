@@ -4,6 +4,7 @@ using AnimeShaders.EditorTools;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.TestTools;
 using Object = UnityEngine.Object;
 
 namespace AnimeShaders.Tests
@@ -12,8 +13,9 @@ namespace AnimeShaders.Tests
      * <summary>Packed detail maps on disk: the import rule holds a labelled map to a data texture's settings, puts a
      * changed one back on reimport, forces a normal-map import back to data and leaves unlabelled textures alone; a set
      * packs from its source files into a map beside it whose pixels carry each source in its channel, records it, and
-     * reads as out of date once a source or setting changes; the pack shaders' default textures. Everything is written
-     * to a scratch folder deleted before and after.</summary>
+     * reads as out of date once a source or setting changes; a set with Stones writes a point-sampled stone map beside
+     * it, counts its stones and removes the map when Stones is off; the pack shaders' default textures. Everything is
+     * written to a scratch folder deleted before and after.</summary>
      */
     public class DetailImportTests
     {
@@ -29,6 +31,9 @@ namespace AnimeShaders.Tests
         private const string ConventionField = "normalConvention";
         private const string WeightField = "occlusionWeight";
         private const string SizeField = "size";
+        private const string StonesField = "stones";
+        private const int StoneTile = 64;
+        private const int StoneCell = 16;
 
         #endregion
 
@@ -52,6 +57,46 @@ namespace AnimeShaders.Tests
             }
             AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
             return path;
+        }
+
+        /** <summary>An occlusion map of a 4 by 4 grid of bright stones on dark two-texel joints.</summary> */
+        private static string WriteStoneGrid(string name)
+        {
+            string path = $"{Scratch}/{name}.png";
+            var texture = new Texture2D(StoneTile, StoneTile, TextureFormat.RGBA32, false, true);
+            try
+            {
+                var pixels = new Color32[StoneTile * StoneTile];
+                for (int i = 0; i < pixels.Length; i++)
+                {
+                    bool joint = i % StoneTile % StoneCell < 2 || i / StoneTile % StoneCell < 2;
+                    byte value = joint ? (byte)40 : (byte)230;
+                    pixels[i] = new Color32(value, value, value, 255);
+                }
+                texture.SetPixels32(pixels);
+                texture.Apply(false);
+                File.WriteAllBytes(path, texture.EncodeToPNG());
+            }
+            finally
+            {
+                Object.DestroyImmediate(texture);
+            }
+            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
+            return path;
+        }
+
+        /** <summary>A saved set with the stone grid as its occlusion, Stones on, its stone settings set for the grid.</summary> */
+        private static AnimeDetailSet MakeStoneSet(string name)
+        {
+            AnimeDetailSet set = MakeSet(name, new Color32(128, 128, 255, 255));
+            var serialized = new SerializedObject(set);
+            serialized.FindProperty(OcclusionField).objectReferenceValue = AssetDatabase.LoadAssetAtPath<Texture2D>(WriteStoneGrid(name + "Occlusion"));
+            serialized.FindProperty(StonesField).boolValue = true;
+            serialized.FindProperty("stoneBlur").floatValue = 100f / StoneTile;
+            serialized.FindProperty("stoneThreshold").floatValue = 0.5f;
+            serialized.FindProperty("stoneMinSize").floatValue = 1f;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            return set;
         }
 
         private static TextureImporter Importer(string path)
@@ -182,6 +227,63 @@ namespace AnimeShaders.Tests
             AnimeDetailPacker.Pack(set);
             WritePng("TrackedColour", new Color32(30, 30, 30, 255));
             Assert.AreNotEqual(AnimeDetailPacker.HashOf(set), set.PackedHash, "a source's pixels changed");
+        }
+
+        [Test]
+        public void ASetWithStones_WritesAPointSampledStoneMap_CountsItsStones_AndRemovesItWhenOff()
+        {
+            AnimeDetailSet set = MakeStoneSet("Paving");
+            AnimeDetailPacker.Pack(set);
+            string path = $"{Scratch}/Paving{AnimeDetailPacker.StoneMapSuffix}.png";
+            Assert.AreEqual(path, AssetDatabase.GetAssetPath(set.StoneMap), "the stone map beside the set");
+            Assert.AreEqual(StoneTile / StoneCell * (StoneTile / StoneCell), set.StoneCount);
+            CollectionAssert.Contains(AssetDatabase.GetLabels(set.StoneMap), AnimeDetailImport.StonesLabel);
+            TextureImporter importer = Importer(path);
+            Assert.IsFalse(importer.sRGBTexture, "linear");
+            Assert.IsFalse(importer.mipmapEnabled, "no mips: values never blend");
+            Assert.AreEqual(FilterMode.Point, importer.filterMode);
+            Assert.AreEqual(TextureWrapMode.Repeat, importer.wrapMode);
+            Assert.AreEqual(TextureImporterCompression.Uncompressed, importer.textureCompression);
+            Assert.GreaterOrEqual(importer.maxTextureSize, StoneMath.MapSize);
+
+            var serialized = new SerializedObject(set);
+            serialized.FindProperty(StonesField).boolValue = false;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            AnimeDetailPacker.Pack(set);
+            Assert.IsNull(set.StoneMap, "no map recorded");
+            Assert.IsFalse(File.Exists(path), "the old map removed");
+        }
+
+        [TestCase("stones", 0f)]
+        [TestCase("stoneBlur", 1f)]
+        [TestCase("stoneThreshold", 0.6f)]
+        [TestCase("stoneMinSize", 2f)]
+        public void AStoneSetting_PutsTheSetOutOfDate(string field, float value)
+        {
+            AnimeDetailSet set = MakeStoneSet("Tracked" + field);
+            AnimeDetailPacker.Pack(set);
+            Assert.AreEqual(AnimeDetailPacker.HashOf(set), set.PackedHash, "up to date");
+            var serialized = new SerializedObject(set);
+            SerializedProperty property = serialized.FindProperty(field);
+            if (property.propertyType == SerializedPropertyType.Boolean)
+                property.boolValue = value > 0f;
+            else
+                property.floatValue = value;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            Assert.AreNotEqual(AnimeDetailPacker.HashOf(set), set.PackedHash, $"{field} changed");
+        }
+
+        [Test]
+        public void StonesWithoutOcclusion_WriteNoMap()
+        {
+            AnimeDetailSet set = MakeSet("NoStones", new Color32(128, 128, 255, 255));
+            var serialized = new SerializedObject(set);
+            serialized.FindProperty(StonesField).boolValue = true;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            LogAssert.Expect(LogType.Warning, "NoStones: stones need an occlusion map.");
+            AnimeDetailPacker.Pack(set);
+            Assert.IsNull(set.StoneMap);
+            Assert.IsNotNull(set.Packed, "the detail map still packs");
         }
 
         [Test]

@@ -77,44 +77,8 @@ namespace AnimeShaders.EditorTools
             return DetailImage.Filled(size, size, new Color32(middle, byte.MaxValue, middle, middle));
         }
 
-        #endregion
-
-        #region Helpers
-
-        private static float[] Luminance(DetailImage image)
-        {
-            var values = new float[image.Pixels.Length];
-            for (int i = 0; i < values.Length; i++)
-            {
-                Color32 pixel = image.Pixels[i];
-                values[i] = (pixel.r * LuminanceWeights.x + pixel.g * LuminanceWeights.y + pixel.b * LuminanceWeights.z) / 255f;
-            }
-            return values;
-        }
-
-        private static float[] Channel(DetailImage image, int channel)
-        {
-            var values = new float[image.Pixels.Length];
-            for (int i = 0; i < values.Length; i++)
-                values[i] = image.Pixels[i][channel] / 255f;
-            return values;
-        }
-
-        /** <summary>The kernel's taps as indices into a line of <paramref name="length" />, wrapped: one row of offsets per position.</summary> */
-        private static int[] WrappedTaps(int length, int reach)
-        {
-            int span = reach * 2 + 1;
-            var taps = new int[length * span];
-            for (int position = 0; position < length; position++)
-            {
-                for (int k = -reach; k <= reach; k++)
-                    taps[position * span + k + reach] = DataTextures.Wrap(position + k, length);
-            }
-            return taps;
-        }
-
         /** <summary>A Gaussian blur of <paramref name="sigma" /> texels that wraps at every edge.</summary> */
-        private static float[] Blur(float[] values, int width, int height, float sigma)
+        internal static float[] Blur(float[] values, int width, int height, float sigma)
         {
             if (sigma <= 0f)
                 return values;
@@ -158,6 +122,42 @@ namespace AnimeShaders.EditorTools
                 }
             }
             return blurred;
+        }
+
+        #endregion
+
+        #region Helpers
+
+        private static float[] Luminance(DetailImage image)
+        {
+            var values = new float[image.Pixels.Length];
+            for (int i = 0; i < values.Length; i++)
+            {
+                Color32 pixel = image.Pixels[i];
+                values[i] = (pixel.r * LuminanceWeights.x + pixel.g * LuminanceWeights.y + pixel.b * LuminanceWeights.z) / 255f;
+            }
+            return values;
+        }
+
+        private static float[] Channel(DetailImage image, int channel)
+        {
+            var values = new float[image.Pixels.Length];
+            for (int i = 0; i < values.Length; i++)
+                values[i] = image.Pixels[i][channel] / 255f;
+            return values;
+        }
+
+        /** <summary>The kernel's taps as indices into a line of <paramref name="length" />, wrapped: one row of offsets per position.</summary> */
+        private static int[] WrappedTaps(int length, int reach)
+        {
+            int span = reach * 2 + 1;
+            var taps = new int[length * span];
+            for (int position = 0; position < length; position++)
+            {
+                for (int k = -reach; k <= reach; k++)
+                    taps[position * span + k + reach] = DataTextures.Wrap(position + k, length);
+            }
+            return taps;
         }
 
         /** <summary>Bilinear, wrapping, from <paramref name="source" />'s size to the given one; the same size is returned as it is.</summary> */

@@ -5,7 +5,8 @@ namespace AnimeShaders.EditorTools
 {
     /**
      * <summary>A detail set: a photo-scanned surface's maps and how to pack them (<see cref="AnimeDetailPacker" />) into
-     * one detail map for a ground layer. The Inspector packs it and says when the packed map is out of date.</summary>
+     * one detail map for a ground layer, and optionally a stone map (<see cref="StoneMath" />) so the layer can vary each
+     * stone. The Inspector packs it and says when the packed map is out of date.</summary>
      */
     [CreateAssetMenu(menuName = "Anime Shaders/Detail Set", fileName = "DetailSet")]
     public class AnimeDetailSet : ScriptableObject
@@ -36,11 +37,30 @@ namespace AnimeShaders.EditorTools
         [SerializeField, FormerlySerializedAs("_size"), Min(0), Tooltip("The packed map's width and height in texels. 0: the colour map's size. 2048 holds a 2 m tile at about 1 mm a texel.")]
         private int size = RecommendedSize;
 
+        [Header("Stones")]
+        [SerializeField, Tooltip("Makes a stone map beside the packed map, so a ground layer can vary each stone on the floor (Stone Shade, Stone Mix on the material) and a tiled set stops repeating. Needs an occlusion map that is darker in the joints (paving, tiles, bricks).")]
+        private bool stones;
+
+        [SerializeField, Range(0f, 2f), Tooltip("Blurs the occlusion before the stones are found, as a percentage of the tile's width, so pitting inside a stone doesn't split it. Raise it when the count is far above the stones you see.")]
+        private float stoneBlur = 0.3f;
+
+        [SerializeField, Range(0f, 1f), Tooltip("The blurred occlusion above which a texel is stone, below which it is joint. Raise it when neighbouring stones merge; lower it when stones break up.")]
+        private float stoneThreshold = 0.84f;
+
+        [SerializeField, Range(0f, 5f), Tooltip("The smallest stone kept, as a percentage of the tile's area; smaller pieces join the stone beside them.")]
+        private float stoneMinSize = 0.4f;
+
         [SerializeField, FormerlySerializedAs("_packed"), HideInInspector]
         private Texture2D packed;
 
         [SerializeField, FormerlySerializedAs("_packedHash"), HideInInspector]
         private string packedHash;
+
+        [SerializeField, HideInInspector]
+        private Texture2D stoneMap;
+
+        [SerializeField, HideInInspector]
+        private int stoneCount;
 
         #endregion
 
@@ -64,6 +84,18 @@ namespace AnimeShaders.EditorTools
         /** <summary>How the set is packed.</summary> */
         public DetailSettings Settings => new(soften, occlusionWeight, size, normalConvention);
 
+        /** <summary>Whether packing also makes a stone map.</summary> */
+        public bool MakesStones => stones;
+
+        /** <summary>How the stones are found.</summary> */
+        public StoneSettings StoneSettings => new(stoneBlur, stoneThreshold, stoneMinSize);
+
+        /** <summary>The stone map last written, or null.</summary> */
+        public Texture2D StoneMap => stoneMap;
+
+        /** <summary>How many stones the last stone map held.</summary> */
+        public int StoneCount => stoneCount;
+
         /** <summary>The packed map last written, or null.</summary> */
         public Texture2D Packed => packed;
 
@@ -79,6 +111,13 @@ namespace AnimeShaders.EditorTools
         {
             packed = packedMap;
             packedHash = hash;
+        }
+
+        /** <summary>Records the stone map just written (or null for none) and its stone count.</summary> */
+        public void RecordStones(Texture2D map, int count)
+        {
+            stoneMap = map;
+            stoneCount = count;
         }
 
         #endregion

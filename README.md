@@ -59,8 +59,8 @@ vertex, and has a global multiplier.
 | `Shaders/Includes/Passes/AnimeRimPass.hlsl` | The rim pass: the scene depth read past the line along the normal, the threshold, the light-facing mask |
 | `Editor/OutlineNormalBaker.cs` | The import-time outline normal bake |
 | `Editor/ShaderDefaults.cs` | Sets the pack shaders' default textures (the noise, the neutral detail map) in every pack shader declaring the property, keeping their other defaults |
-| `Editor/DataTextures.cs` | Textures that hold data: written as labelled PNGs, held by their import rule to linear, alpha-as-data, mipmapped, trilinear, repeating settings (the noise's and the detail maps' rules both use it) |
-| `Editor/Detail/` | Detail sets (below): `AnimeDetailSet` (the asset), `AnimeDetailSetEditor` (Pack, out of date, video memory), `DetailMath` (the packing as pure image maths), `AnimeDetailPacker` (the sources read from disk, the map written and recorded, the neutral map), `AnimeDetailImport` (the label `AnimeDetail`), `DetailImage`, `DetailSources`, `DetailSettings`, `NormalConvention` |
+| `Editor/DataTextures.cs` | Textures that hold data: written as labelled PNGs, held by their import rule to linear, alpha-as-data, repeating settings, mipmapped and trilinear or (for ids and codes) point-sampled without mips (the noise's, the detail maps' and the stone maps' rules all use it) |
+| `Editor/Detail/` | Detail sets (below): `AnimeDetailSet` (the asset), `AnimeDetailSetEditor` (Pack, out of date, video memory), `DetailMath` (the packing as pure image maths), `AnimeDetailPacker` (the sources read from disk, the map written and recorded, the neutral map), `AnimeDetailImport` (the labels `AnimeDetail` and `AnimeStones`), `DetailImage`, `DetailSources`, `DetailSettings`, `NormalConvention`; `Stones/`: `StoneMath` (finding the stones as pure image maths), `StoneSettings`, `StoneMap` |
 | `Shaders/Textures/AnimeDetailNeutral.png` | The neutral detail map (shade 0.5, mask 1, flat normal): the ground's default, so a layer with no set renders as its palette's middle (Tools > Anime Shaders > Make Neutral Detail Map) |
 | `Shaders/AnimeWorld.shader`, `AnimeGround.shader`, `AnimeSky.shader`; `Shaders/Includes/World/` | The world's shaders and the ground's and sky's own code (below) |
 | `Runtime/Sky/` | `SkyPreset`, `SkyState` (everything a preset sets, held once), `SkyRidge`, `SkyApply` (the one writer), `SkyPresetApplier`, and the shipped presets in `Presets/` |
@@ -139,7 +139,8 @@ takes no rim; a camera whose renderer lacks the feature draws none. XR single-pa
   adds soft patches (**Patch Strength**) and bare earth on the field; the field's **Patch Tint** (its alpha the strength;
   its own scale, cover and softness) gives broad patches the tint's hue at the colour's own brightness. Reads: the noise
   once (twice with a patch tint), then only the layer that shows (once, or twice with break-up): 2 a pixel inside the
-  circle, 3 outside, up to 5 on the edge band; the reads sit
+  circle, 3 outside, up to 5 on the edge band, and one point read of a layer's stone map while it varies stones
+  (**Stones**, below); the reads sit
   in branches with their gradients taken before them, each map with its own sampler; the steps, painting and tilt run
   after. Measured on the playground fight at 4K (2026-11-16): 10.1 ms median with the branches, 10.6 without. Far off
   (**Detail Fade**) the normal flattens and the steps smooth; the shade is left to the mips, which settle on each map's
@@ -158,6 +159,23 @@ takes no rim; a camera whose renderer lacks the feature draws none. XR single-pa
   label. Its four channels compress worse than one: measured on the playground's sets (BC7 and ASTC 4x4 alike), a
   smooth stone keeps about 3° of normal and 4 of 255 shade levels, a noisy grass about 9° and 11; a set that needs better
   can be packed without its mask, or its normal split out (not built).
+- **Stones** (a detail set's Stones section, for any tiled set whose joints are darker in its occlusion: paving, tiles,
+  bricks, flagstones): Pack also writes a **stone map** beside the set (`<set>_Stones.png`, 512 square, 1 MB,
+  uncompressed, point-sampled, no mips, label `AnimeStones`). The stones are found at the occlusion's own resolution
+  (thin joints vanish when averaged down): **Stone Blur** (percent of the tile) so pitting doesn't split a stone,
+  **Stone Threshold** (above it stone, below it joint), the tile seen as a torus so a stone cut by the tile's edge is one
+  stone, pieces under **Stone Min Size** joined to a neighbour, every joint texel given its nearest stone, a stone that
+  wraps onto itself or spans the whole tile dropped. Each texel holds R its stone's value (1 to 255) and G a code for
+  the tile holding the stone's centre relative to the texel's own copy (each axis -1, 0 or 1; 0 none): exact, so both
+  pieces of a stone across the tile's edge agree. The Inspector shows the stone count and warns with no occlusion, no
+  stones, or over 400 (pitting splitting them). Turning Stones off removes the map. On the ground: the layer's **Stone
+  Map**, **Stone Shade** (each stone's shade moves by up to this) and **Stone Mix** (that share of stones painted with
+  the layer's Second pair, which a mask also uses). The shader hashes the stone's home tile with its value, so every
+  stone on the floor differs and the tile stops repeating; the variation fades in the joints (by the shade), with
+  distance (Detail Fade) and where Break Up Tiling blends a second read. Cost: one point read and an integer hash a
+  pixel, only on a layer with Stone Shade or Mix above 0; nothing otherwise. To use it on another texture: give its
+  detail set the occlusion map, tick Stones, Pack, read the count against the stones you see (raise the blur if it is
+  far above, raise the threshold if neighbours merge), then set the layer's Stone Map, Shade and Mix.
 - **`Anime/Sky`** (the skybox): the gradient; the **cloud field** where the view ray meets its plane (a world plane at
   the clouds' altitude, so they parallax with the camera; two reads of the noise that never line up, so the field never
   repeats; drawn shapes with an anti-aliased edge and one shade band

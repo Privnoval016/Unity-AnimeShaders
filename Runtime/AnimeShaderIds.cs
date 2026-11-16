@@ -399,6 +399,42 @@ namespace AnimeShaders
             /** <summary>The property id of _CircleBreakUp.</summary> */
             public static readonly int CircleBreakUp = Shader.PropertyToID(CircleBreakUpName);
 
+            /** <summary>The name _FieldStones.</summary> */
+            public const string FieldStonesName = "_FieldStones";
+
+            /** <summary>The property id of _FieldStones.</summary> */
+            public static readonly int FieldStones = Shader.PropertyToID(FieldStonesName);
+
+            /** <summary>The name _FieldStoneShade.</summary> */
+            public const string FieldStoneShadeName = "_FieldStoneShade";
+
+            /** <summary>The property id of _FieldStoneShade.</summary> */
+            public static readonly int FieldStoneShade = Shader.PropertyToID(FieldStoneShadeName);
+
+            /** <summary>The name _FieldStoneMix.</summary> */
+            public const string FieldStoneMixName = "_FieldStoneMix";
+
+            /** <summary>The property id of _FieldStoneMix.</summary> */
+            public static readonly int FieldStoneMix = Shader.PropertyToID(FieldStoneMixName);
+
+            /** <summary>The name _CircleStones.</summary> */
+            public const string CircleStonesName = "_CircleStones";
+
+            /** <summary>The property id of _CircleStones.</summary> */
+            public static readonly int CircleStones = Shader.PropertyToID(CircleStonesName);
+
+            /** <summary>The name _CircleStoneShade.</summary> */
+            public const string CircleStoneShadeName = "_CircleStoneShade";
+
+            /** <summary>The property id of _CircleStoneShade.</summary> */
+            public static readonly int CircleStoneShade = Shader.PropertyToID(CircleStoneShadeName);
+
+            /** <summary>The name _CircleStoneMix.</summary> */
+            public const string CircleStoneMixName = "_CircleStoneMix";
+
+            /** <summary>The property id of _CircleStoneMix.</summary> */
+            public static readonly int CircleStoneMix = Shader.PropertyToID(CircleStoneMixName);
+
             /** <summary>The name _BreakUpScale.</summary> */
             public const string BreakUpScaleName = "_BreakUpScale";
 
