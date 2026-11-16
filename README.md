@@ -52,7 +52,8 @@ vertex, and has a global multiplier.
 | `Runtime/AnimeShaderIds.cs` | Every global and material property name and id, the toggles, the keywords, the line's light mode, and the fade constants |
 | `Runtime/AnimeMaterials.cs` | Setting a feature (its keyword and its toggle together), receiving shadows, the line pass on or off |
 | `Editor/OutlineNormalBaker.cs` | The import-time outline normal bake |
-| `Tests/Editor/` | `Support/` (`LitStage`: a preview scene, camera and light rendering into a linear float target; meshes, materials with colours as the shader reads them, frame reads, source readers, the director's globals held neutral, the batcher check), `Shader/` (passes, batcher, names and constants, every platform's compile, and `Probe/`: an entry shader adding its own property), `Look/` (tones, band, rim, director, cast shadows, inside tone, fade), `Outline/` (the line, the baker) |
+| `Editor/AnimeShaderGUI.cs` | The material inspector (thin for now): the shader's sections, a live preview of the two-tone ramp (the same maths the shader runs, tested against a render), and each feature's settings shown only while the feature is on |
+| `Tests/Editor/` | `Support/` (`LitStage`: a preview scene, camera and light rendering into a linear float target; meshes, materials with colours as the shader reads them, frame reads, source readers, the director's globals held neutral, the batcher check), `Shader/` (passes, batcher, names and constants, every platform's compile, and `Probe/`: an entry shader adding its own property), `Inspector/` (the feature map, the preview against a render), `Look/` (tones, band, rim, director, cast shadows, inside tone, fade), `Outline/` (the line, the baker) |
 
 A thin entry shader (face, hair, world, or a project's own with extra passes) includes the same files, declares its own
 pragmas, and calls `AnimeShade`; it adds nothing else to the lighting. Its own material properties go in through

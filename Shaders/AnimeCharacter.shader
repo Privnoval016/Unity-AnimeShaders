@@ -234,4 +234,5 @@ Shader "Anime/Character"
     }
 
     Fallback Off
+    CustomEditor "AnimeShaders.EditorTools.AnimeShaderGUI"
 }
