@@ -21,6 +21,8 @@ namespace AnimeShaders.EditorTools
         private const int StoneCells = 8;
         private const float EdgeRange = 0.25f;
 
+        private static readonly string[] NoiseShaders = { "Anime/Ground", "Anime/Sky" };
+
         #endregion
 
         #region Properties
@@ -78,12 +80,34 @@ namespace AnimeShaders.EditorTools
             AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
         }
 
-        /** <summary>Bakes the noise into the pack, beside its shaders.</summary> */
+        /** <summary>Bakes the noise into the pack, beside its shaders, and makes it the default of every pack shader that reads it.</summary> */
         [MenuItem("Tools/Anime Shaders/Bake Noise Texture")]
         public static void BakeIntoPack()
         {
+            string path = PackPath();
+            Bake(path);
+            AssignDefaults(AssetDatabase.LoadAssetAtPath<Texture2D>(path));
+        }
+
+        /** <summary>Sets <paramref name="noise" /> as the default noise texture of each pack shader that has the property, so new materials take it.</summary> */
+        public static void AssignDefaults(Texture2D noise)
+        {
+            foreach (string name in NoiseShaders)
+            {
+                var shader = Shader.Find(name);
+                if (shader == null)
+                    continue;
+                var importer = (ShaderImporter)AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(shader));
+                importer.SetDefaultTextures(new[] { AnimeShaderIds.Sky.NoiseTexName }, new Texture[] { noise });
+                importer.SaveAndReimport();
+            }
+        }
+
+        /** <summary>Where the pack's noise file sits: beside the pack's shaders.</summary> */
+        public static string PackPath()
+        {
             string shader = AssetDatabase.GetAssetPath(Shader.Find("Anime/Character"));
-            Bake(Path.Combine(Path.GetDirectoryName(shader) ?? "Assets", "Textures", FileName).Replace('\\', '/'));
+            return Path.Combine(Path.GetDirectoryName(shader) ?? "Assets", "Textures", FileName).Replace('\\', '/');
         }
 
         #endregion

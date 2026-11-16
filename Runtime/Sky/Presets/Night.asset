@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dfb173f56c79d4df6b6b1dcbe07fa7f1, type: 3}
+  m_Name: Night
+  m_EditorClassIdentifier: AnimeShaders::AnimeShaders.SkyPreset
+  _zenith: {r: 0.02, g: 0.04, b: 0.12, a: 1}
+  _horizon: {r: 0.1, g: 0.14, b: 0.28, a: 1}
+  _below: {r: 0.04, g: 0.05, b: 0.08, a: 1}
+  _horizonHeight: 0.3
+  _sunLight: {r: 0.6, g: 0.7, b: 1, a: 1}
+  _sunIntensity: 0.35
+  _sunElevation: 40
+  _sunAzimuth: -30
+  _discColor: {r: 0.85, g: 0.9, b: 1, a: 1}
+  _discSize: 0.03
+  _discStrength: 1.2
+  _haloStrength: 0.15
+  _cloudLit: {r: 0.35, g: 0.4, b: 0.55, a: 1}
+  _cloudShade: {r: 0.12, g: 0.14, b: 0.22, a: 1}
+  _cloudCover: 0.3
+  _cloudSpeed: 0.004
+  _wind: {x: 1, y: 0.3}
+  _stars: 1
+  _starDensity: 0.25
+  _ambientSky: {r: 0.15, g: 0.18, b: 0.3, a: 1}
+  _ambientEquator: {r: 0.1, g: 0.12, b: 0.2, a: 1}
+  _ambientGround: {r: 0.05, g: 0.05, b: 0.07, a: 1}
+  _fog: 1
+  _fogStart: 60
+  _fogEnd: 320

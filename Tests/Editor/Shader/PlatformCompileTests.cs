@@ -8,7 +8,7 @@ using UnityEngine;
 namespace AnimeShaders.Tests
 {
     /**
-     * <summary>Every pass of Anime/Character compiles for each graphics API a build can use, from whichever Editor
+     * <summary>Every pass of every pack shader compiles for each graphics API a build can use, from whichever Editor
      * runs the tests, through each lighting path: no keywords; every material feature with Forward+ and cascades;
      * plain Forward with additional lights and their shadows; screen-space shadows with receiving off; a normal map
      * alone.</summary>
@@ -36,6 +36,8 @@ namespace AnimeShaders.Tests
 
         private static readonly string[] NormalMapAlone = { AnimeShaderIds.Keywords.NormalmapName };
 
+        private static readonly string[] PackShaders = { "Anime/Character", "Anime/World", "Anime/Ground", "Anime/Sky" };
+
         #endregion
 
         #region Helpers
@@ -56,11 +58,13 @@ namespace AnimeShaders.Tests
             yield return NormalMapAlone;
         }
 
-        private static IEnumerable<string> Failures(ShaderCompilerPlatform platform, BuildTarget target)
+        private static IEnumerable<string> Failures(Shader shader, ShaderCompilerPlatform platform, BuildTarget target)
         {
-            ShaderData.Subshader subshader = ShaderUtil.GetShaderData(Character()).ActiveSubshader;
-            foreach (string[] keywords in KeywordSets())
+            ShaderData.Subshader subshader = ShaderUtil.GetShaderData(shader).ActiveSubshader;
+            var declared = new HashSet<string>(shader.keywordSpace.keywordNames);
+            foreach (string[] set in KeywordSets())
             {
+                string[] keywords = set.Where(declared.Contains).ToArray();
                 for (int index = 0; index < subshader.PassCount; index++)
                 {
                     ShaderData.Pass pass = subshader.GetPass(index);
@@ -70,7 +74,7 @@ namespace AnimeShaders.Tests
                         if (!result.Success)
                         {
                             string errors = string.Join("; ", result.Messages.Select(message => message.message));
-                            yield return $"{pass.Name} {stage} [{string.Join(" ", keywords)}]: {errors}";
+                            yield return $"{shader.name} {pass.Name} {stage} [{string.Join(" ", keywords)}]: {errors}";
                         }
                     }
                 }
@@ -82,7 +86,7 @@ namespace AnimeShaders.Tests
         [Test]
         public void EveryKeywordCompiled_IsOneTheShaderDeclares()
         {
-            var declared = new HashSet<string>(Character().keywordSpace.keywordNames);
+            var declared = new HashSet<string>(PackShaders.SelectMany(name => Shader.Find(name).keywordSpace.keywordNames));
             var unknown = KeywordSets().SelectMany(set => set).Where(name => !declared.Contains(name)).Distinct().ToList();
             Assert.IsEmpty(unknown, "a typo here would silently drop a path from the compile check");
         }
@@ -94,7 +98,7 @@ namespace AnimeShaders.Tests
         [TestCase(ShaderCompilerPlatform.GLES3x, BuildTarget.Android)]
         public void EveryPass_Compiles(ShaderCompilerPlatform platform, BuildTarget target)
         {
-            List<string> failures = Failures(platform, target).ToList();
+            List<string> failures = PackShaders.SelectMany(name => Failures(Shader.Find(name), platform, target)).ToList();
             Assert.IsEmpty(failures, string.Join("\n", failures));
         }
     }

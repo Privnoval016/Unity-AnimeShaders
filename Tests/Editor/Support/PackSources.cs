@@ -17,6 +17,8 @@ namespace AnimeShaders.Tests
         private static readonly Regex Include = new("#include\\s+\"([^\"]+\\.hlsl)\"");
         private static readonly Regex Declaration = new("^\\s*(?:half|float|int|uint)\\d?\\s+(_\\w+)\\s*;", RegexOptions.Multiline);
         private static readonly Regex Texture = new("TEXTURE2D\\((_\\w+)\\)");
+        private static readonly Regex GroupStart = new("^#if defined\\((ANIME_GROUP_\\w+)\\)$");
+        private static readonly Regex GroupDefine = new("#define (ANIME_GROUP_\\w+)");
 
         #endregion
 
@@ -104,6 +106,50 @@ namespace AnimeShaders.Tests
         {
             Match match = Regex.Match(text, pattern);
             return match.Success ? match.Groups[1].Value : null;
+        }
+
+        /** <summary>The variables of the constant buffer <paramref name="buffer" /> by feature group: the core under "", each group under its define (ANIME_GROUP_...).</summary> */
+        public static Dictionary<string, HashSet<string>> BufferGroups(string text, string buffer)
+        {
+            int start = text.IndexOf("CBUFFER_START(" + buffer + ")", StringComparison.Ordinal);
+            int end = text.IndexOf("CBUFFER_END", start, StringComparison.Ordinal);
+            var groups = new Dictionary<string, HashSet<string>> { [string.Empty] = new() };
+            string current = string.Empty;
+            foreach (string raw in text.Substring(start, end - start).Split('\n'))
+            {
+                string line = raw.Trim();
+                Match group = GroupStart.Match(line);
+                if (group.Success)
+                {
+                    current = group.Groups[1].Value;
+                    groups[current] = new HashSet<string>();
+                    continue;
+                }
+                if (line.StartsWith("#endif"))
+                {
+                    current = string.Empty;
+                    continue;
+                }
+                Match declared = Declaration.Match(raw);
+                if (declared.Success)
+                    groups[current].Add(declared.Groups[1].Value);
+            }
+            return groups;
+        }
+
+        /** <summary>The feature groups a shader file defines in its HLSLINCLUDE.</summary> */
+        public static HashSet<string> ShaderGroups(string shaderText)
+        {
+            return new HashSet<string>(GroupDefine.Matches(shaderText).Cast<Match>().Select(match => match.Groups[1].Value));
+        }
+
+        /** <summary>Every texture declared in any include.</summary> */
+        public static HashSet<string> AllTextureNames(Shader shader)
+        {
+            var names = new HashSet<string>();
+            foreach (string path in AllIncludes(shader))
+                names.UnionWith(TextureNames(File.ReadAllText(path)));
+            return names;
         }
 
         /** <summary>The textures declared in <paramref name="text" />.</summary> */

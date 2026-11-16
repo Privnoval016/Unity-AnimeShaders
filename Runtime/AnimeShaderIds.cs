@@ -244,6 +244,102 @@ namespace AnimeShaders
             /** <summary>The property id of _RimDepthThreshold.</summary> */
             public static readonly int RimDepthThreshold = Shader.PropertyToID(RimDepthThresholdName);
 
+            /** <summary>The name _GrassColorA.</summary> */
+            public const string GrassColorAName = "_GrassColorA";
+
+            /** <summary>The property id of _GrassColorA.</summary> */
+            public static readonly int GrassColorA = Shader.PropertyToID(GrassColorAName);
+
+            /** <summary>The name _GrassColorB.</summary> */
+            public const string GrassColorBName = "_GrassColorB";
+
+            /** <summary>The property id of _GrassColorB.</summary> */
+            public static readonly int GrassColorB = Shader.PropertyToID(GrassColorBName);
+
+            /** <summary>The name _EarthColor.</summary> */
+            public const string EarthColorName = "_EarthColor";
+
+            /** <summary>The property id of _EarthColor.</summary> */
+            public static readonly int EarthColor = Shader.PropertyToID(EarthColorName);
+
+            /** <summary>The name _StoneColorA.</summary> */
+            public const string StoneColorAName = "_StoneColorA";
+
+            /** <summary>The property id of _StoneColorA.</summary> */
+            public static readonly int StoneColorA = Shader.PropertyToID(StoneColorAName);
+
+            /** <summary>The name _StoneColorB.</summary> */
+            public const string StoneColorBName = "_StoneColorB";
+
+            /** <summary>The property id of _StoneColorB.</summary> */
+            public static readonly int StoneColorB = Shader.PropertyToID(StoneColorBName);
+
+            /** <summary>The name _GroutColor.</summary> */
+            public const string GroutColorName = "_GroutColor";
+
+            /** <summary>The property id of _GroutColor.</summary> */
+            public static readonly int GroutColor = Shader.PropertyToID(GroutColorName);
+
+            /** <summary>The name _GroundCircle.</summary> */
+            public const string GroundCircleName = "_GroundCircle";
+
+            /** <summary>The property id of _GroundCircle.</summary> */
+            public static readonly int GroundCircle = Shader.PropertyToID(GroundCircleName);
+
+            /** <summary>The name _GrassPatchScale.</summary> */
+            public const string GrassPatchScaleName = "_GrassPatchScale";
+
+            /** <summary>The property id of _GrassPatchScale.</summary> */
+            public static readonly int GrassPatchScale = Shader.PropertyToID(GrassPatchScaleName);
+
+            /** <summary>The name _GrainScale.</summary> */
+            public const string GrainScaleName = "_GrainScale";
+
+            /** <summary>The property id of _GrainScale.</summary> */
+            public static readonly int GrainScale = Shader.PropertyToID(GrainScaleName);
+
+            /** <summary>The name _GrainStrength.</summary> */
+            public const string GrainStrengthName = "_GrainStrength";
+
+            /** <summary>The property id of _GrainStrength.</summary> */
+            public static readonly int GrainStrength = Shader.PropertyToID(GrainStrengthName);
+
+            /** <summary>The name _EarthAmount.</summary> */
+            public const string EarthAmountName = "_EarthAmount";
+
+            /** <summary>The property id of _EarthAmount.</summary> */
+            public static readonly int EarthAmount = Shader.PropertyToID(EarthAmountName);
+
+            /** <summary>The name _StoneSize.</summary> */
+            public const string StoneSizeName = "_StoneSize";
+
+            /** <summary>The property id of _StoneSize.</summary> */
+            public static readonly int StoneSize = Shader.PropertyToID(StoneSizeName);
+
+            /** <summary>The name _GroutWidth.</summary> */
+            public const string GroutWidthName = "_GroutWidth";
+
+            /** <summary>The property id of _GroutWidth.</summary> */
+            public static readonly int GroutWidth = Shader.PropertyToID(GroutWidthName);
+
+            /** <summary>The name _EdgeSoftness.</summary> */
+            public const string EdgeSoftnessName = "_EdgeSoftness";
+
+            /** <summary>The property id of _EdgeSoftness.</summary> */
+            public static readonly int EdgeSoftness = Shader.PropertyToID(EdgeSoftnessName);
+
+            /** <summary>The name _DetailFadeStart.</summary> */
+            public const string DetailFadeStartName = "_DetailFadeStart";
+
+            /** <summary>The property id of _DetailFadeStart.</summary> */
+            public static readonly int DetailFadeStart = Shader.PropertyToID(DetailFadeStartName);
+
+            /** <summary>The name _DetailFadeRange.</summary> */
+            public const string DetailFadeRangeName = "_DetailFadeRange";
+
+            /** <summary>The property id of _DetailFadeRange.</summary> */
+            public static readonly int DetailFadeRange = Shader.PropertyToID(DetailFadeRangeName);
+
             /** <summary>The name _InsideDarken.</summary> */
             public const string InsideDarkenName = "_InsideDarken";
 
@@ -417,11 +513,160 @@ namespace AnimeShaders
             /** <summary>The property id of _OutlineBakedNormals.</summary> */
             public static readonly int OutlineBakedNormals = Shader.PropertyToID(OutlineBakedNormalsName);
 
+            /** <summary>The toggle for the base map in world XZ (tiling per metre).</summary> */
+            public const string WorldUVName = "_WorldUV";
+
+            /** <summary>The property id of _WorldUV.</summary> */
+            public static readonly int WorldUV = Shader.PropertyToID(WorldUVName);
+
             /** <summary>The cull mode (Off draws both sides).</summary> */
             public const string CullName = "_Cull";
 
             /** <summary>The property id of _Cull.</summary> */
             public static readonly int Cull = Shader.PropertyToID(CullName);
+
+            #endregion
+        }
+
+        /** <summary>Anime/Sky's property names and ids, and its stars keyword.</summary> */
+        public static class Sky
+        {
+            #region Properties
+
+            /** <summary>The name _ZenithColor.</summary> */
+            public const string ZenithColorName = "_ZenithColor";
+
+            /** <summary>The property id of _ZenithColor.</summary> */
+            public static readonly int ZenithColor = Shader.PropertyToID(ZenithColorName);
+
+            /** <summary>The name _HorizonColor.</summary> */
+            public const string HorizonColorName = "_HorizonColor";
+
+            /** <summary>The property id of _HorizonColor.</summary> */
+            public static readonly int HorizonColor = Shader.PropertyToID(HorizonColorName);
+
+            /** <summary>The name _BelowColor.</summary> */
+            public const string BelowColorName = "_BelowColor";
+
+            /** <summary>The property id of _BelowColor.</summary> */
+            public static readonly int BelowColor = Shader.PropertyToID(BelowColorName);
+
+            /** <summary>The name _HorizonHeight.</summary> */
+            public const string HorizonHeightName = "_HorizonHeight";
+
+            /** <summary>The property id of _HorizonHeight.</summary> */
+            public static readonly int HorizonHeight = Shader.PropertyToID(HorizonHeightName);
+
+            /** <summary>The name _SunColor.</summary> */
+            public const string SunColorName = "_SunColor";
+
+            /** <summary>The property id of _SunColor.</summary> */
+            public static readonly int SunColor = Shader.PropertyToID(SunColorName);
+
+            /** <summary>The name _SunSize.</summary> */
+            public const string SunSizeName = "_SunSize";
+
+            /** <summary>The property id of _SunSize.</summary> */
+            public static readonly int SunSize = Shader.PropertyToID(SunSizeName);
+
+            /** <summary>The name _SunStrength.</summary> */
+            public const string SunStrengthName = "_SunStrength";
+
+            /** <summary>The property id of _SunStrength.</summary> */
+            public static readonly int SunStrength = Shader.PropertyToID(SunStrengthName);
+
+            /** <summary>The name _SunHaloSize.</summary> */
+            public const string SunHaloSizeName = "_SunHaloSize";
+
+            /** <summary>The property id of _SunHaloSize.</summary> */
+            public static readonly int SunHaloSize = Shader.PropertyToID(SunHaloSizeName);
+
+            /** <summary>The name _SunHaloStrength.</summary> */
+            public const string SunHaloStrengthName = "_SunHaloStrength";
+
+            /** <summary>The property id of _SunHaloStrength.</summary> */
+            public static readonly int SunHaloStrength = Shader.PropertyToID(SunHaloStrengthName);
+
+            /** <summary>The name _CloudLitColor.</summary> */
+            public const string CloudLitColorName = "_CloudLitColor";
+
+            /** <summary>The property id of _CloudLitColor.</summary> */
+            public static readonly int CloudLitColor = Shader.PropertyToID(CloudLitColorName);
+
+            /** <summary>The name _CloudShadeColor.</summary> */
+            public const string CloudShadeColorName = "_CloudShadeColor";
+
+            /** <summary>The property id of _CloudShadeColor.</summary> */
+            public static readonly int CloudShadeColor = Shader.PropertyToID(CloudShadeColorName);
+
+            /** <summary>The name _CloudCover.</summary> */
+            public const string CloudCoverName = "_CloudCover";
+
+            /** <summary>The property id of _CloudCover.</summary> */
+            public static readonly int CloudCover = Shader.PropertyToID(CloudCoverName);
+
+            /** <summary>The name _CloudSoftness.</summary> */
+            public const string CloudSoftnessName = "_CloudSoftness";
+
+            /** <summary>The property id of _CloudSoftness.</summary> */
+            public static readonly int CloudSoftness = Shader.PropertyToID(CloudSoftnessName);
+
+            /** <summary>The name _CloudScale.</summary> */
+            public const string CloudScaleName = "_CloudScale";
+
+            /** <summary>The property id of _CloudScale.</summary> */
+            public static readonly int CloudScale = Shader.PropertyToID(CloudScaleName);
+
+            /** <summary>The name _CloudSpeed.</summary> */
+            public const string CloudSpeedName = "_CloudSpeed";
+
+            /** <summary>The property id of _CloudSpeed.</summary> */
+            public static readonly int CloudSpeed = Shader.PropertyToID(CloudSpeedName);
+
+            /** <summary>The name _CloudWind.</summary> */
+            public const string CloudWindName = "_CloudWind";
+
+            /** <summary>The property id of _CloudWind.</summary> */
+            public static readonly int CloudWind = Shader.PropertyToID(CloudWindName);
+
+            /** <summary>The name _StarColor.</summary> */
+            public const string StarColorName = "_StarColor";
+
+            /** <summary>The property id of _StarColor.</summary> */
+            public static readonly int StarColor = Shader.PropertyToID(StarColorName);
+
+            /** <summary>The name _StarDensity.</summary> */
+            public const string StarDensityName = "_StarDensity";
+
+            /** <summary>The property id of _StarDensity.</summary> */
+            public static readonly int StarDensity = Shader.PropertyToID(StarDensityName);
+
+            /** <summary>The name _StarScale.</summary> */
+            public const string StarScaleName = "_StarScale";
+
+            /** <summary>The property id of _StarScale.</summary> */
+            public static readonly int StarScale = Shader.PropertyToID(StarScaleName);
+
+            /** <summary>The name _BloomCeiling.</summary> */
+            public const string BloomCeilingName = "_BloomCeiling";
+
+            /** <summary>The property id of _BloomCeiling.</summary> */
+            public static readonly int BloomCeiling = Shader.PropertyToID(BloomCeilingName);
+
+            /** <summary>The name _Stars.</summary> */
+            public const string StarsName = "_Stars";
+
+            /** <summary>The property id of _Stars.</summary> */
+            public static readonly int Stars = Shader.PropertyToID(StarsName);
+
+            /** <summary>The name _AnimeNoiseTex.</summary> */
+            public const string NoiseTexName = "_AnimeNoiseTex";
+
+            /** <summary>The property id of _AnimeNoiseTex.</summary> */
+            public static readonly int NoiseTex = Shader.PropertyToID(NoiseTexName);
+
+            /** <summary>The name of the stars keyword.</summary> */
+            public const string StarsKeyword = "_ANIME_SKY_STARS";
 
             #endregion
         }
@@ -460,6 +705,9 @@ namespace AnimeShaders
 
             /** <summary>The name _ANIME_BODY_SHADOW.</summary> */
             public const string BodyShadowName = "_ANIME_BODY_SHADOW";
+
+            /** <summary>The name _ANIME_WORLD_UV.</summary> */
+            public const string WorldUVName = "_ANIME_WORLD_UV";
 
             /** <summary>The name _ANIME_INSIDE_FADE.</summary> */
             public const string InsideFadeName = "_ANIME_INSIDE_FADE";

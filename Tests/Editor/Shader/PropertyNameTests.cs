@@ -7,9 +7,18 @@ using UnityEngine.Rendering;
 
 namespace AnimeShaders.Tests
 {
-    /** <summary>The name tables in <see cref="AnimeShaderIds" />, the HLSL and the shader's own properties name the same things.</summary> */
+    /**
+     * <summary>The name tables in <see cref="AnimeShaderIds" />, the HLSL and each pack shader's own properties name the
+     * same things: every lit shader declares exactly the variables of the feature groups it opts into.</summary>
+     */
     public class PropertyNameTests
     {
+        #region Private Fields
+
+        private static readonly string[] LitShaders = { "Anime/Character", "Anime/World", "Anime/Ground" };
+
+        #endregion
+
         #region Helpers
 
         private static Shader Character()
@@ -17,12 +26,9 @@ namespace AnimeShaders.Tests
             return Shader.Find(TestMaterials.CharacterShader);
         }
 
-        private static HashSet<string> BlockAndTextures(Shader shader)
+        private static Dictionary<string, HashSet<string>> Groups()
         {
-            string text = PackSources.IncludeText(shader, "AnimeProperties.hlsl");
-            var names = PackSources.BufferNames(text, "UnityPerMaterial");
-            names.UnionWith(PackSources.TextureNames(text));
-            return names;
+            return PackSources.BufferGroups(PackSources.IncludeText(Character(), "AnimeProperties.hlsl"), "UnityPerMaterial");
         }
 
         private static HashSet<string> ShaderProperties(Shader shader)
@@ -33,23 +39,57 @@ namespace AnimeShaders.Tests
             return names;
         }
 
+        /** <summary>The block's variables for <paramref name="shader" />: the core and the groups its file defines.</summary> */
+        private static HashSet<string> BlockFor(Shader shader)
+        {
+            Dictionary<string, HashSet<string>> groups = Groups();
+            var names = new HashSet<string>(groups[string.Empty]);
+            foreach (string group in PackSources.ShaderGroups(PackSources.ShaderText(shader)))
+                names.UnionWith(groups[group]);
+            return names;
+        }
+
         #endregion
 
         [Test]
-        public void MaterialTable_MatchesTheBlockAndTextures()
+        public void MaterialTable_MatchesTheBlockAndItsTextures()
         {
-            CollectionAssert.AreEquivalent(BlockAndTextures(Character()),
-                PackSources.NameTable(typeof(AnimeShaderIds.MaterialProperties)));
+            string text = PackSources.IncludeText(Character(), "AnimeProperties.hlsl");
+            var block = new HashSet<string>(Groups().SelectMany(group => group.Value));
+            block.UnionWith(PackSources.TextureNames(text));
+            CollectionAssert.AreEquivalent(block, PackSources.NameTable(typeof(AnimeShaderIds.MaterialProperties)));
+        }
+
+        [TestCase("Anime/Character")]
+        [TestCase("Anime/World")]
+        [TestCase("Anime/Ground")]
+        public void EveryVariableOfTheShadersGroups_IsOneOfItsProperties(string name)
+        {
+            Shader shader = Shader.Find(name);
+            HashSet<string> properties = ShaderProperties(shader);
+            var missing = BlockFor(shader).Where(variable => !variable.EndsWith("_ST") && !properties.Contains(variable)).ToList();
+            Assert.IsEmpty(missing, "the SRP Batcher needs every block variable declared");
+        }
+
+        [TestCase("Anime/Character")]
+        [TestCase("Anime/World")]
+        [TestCase("Anime/Ground")]
+        public void EveryPropertyOfTheShader_BelongsToItsGroups_IsATexture_OrASwitch(string name)
+        {
+            Shader shader = Shader.Find(name);
+            HashSet<string> allowed = BlockFor(shader);
+            allowed.UnionWith(PackSources.AllTextureNames(shader));
+            allowed.UnionWith(PackSources.NameTable(typeof(AnimeShaderIds.Switches)));
+            var stray = ShaderProperties(shader).Where(property => !allowed.Contains(property)).ToList();
+            Assert.IsEmpty(stray, "a property no group of this shader reads");
         }
 
         [Test]
-        public void ShaderProperties_AreTheBlockTexturesAndSwitches()
+        public void SkyTable_MatchesTheSkyShader()
         {
-            Shader shader = Character();
-            var expected = BlockAndTextures(shader);
-            expected.RemoveWhere(name => name.EndsWith("_ST"));
-            expected.UnionWith(PackSources.NameTable(typeof(AnimeShaderIds.Switches)));
-            CollectionAssert.AreEquivalent(expected, ShaderProperties(shader));
+            var table = PackSources.NameTable(typeof(AnimeShaderIds.Sky));
+            table.Remove(AnimeShaderIds.Sky.StarsKeyword);
+            CollectionAssert.AreEquivalent(table, ShaderProperties(Shader.Find("Anime/Sky")));
         }
 
         [Test]
@@ -61,10 +101,10 @@ namespace AnimeShaders.Tests
         }
 
         [Test]
-        public void KeywordTable_MatchesTheShadersMaterialKeywords()
+        public void KeywordTable_MatchesThePackShadersMaterialKeywords()
         {
-            var local = Character().keywordSpace.keywords.Where(keyword => !keyword.isOverridable)
-                .Select(keyword => keyword.name);
+            var local = LitShaders.SelectMany(name => Shader.Find(name).keywordSpace.keywords)
+                .Where(keyword => !keyword.isOverridable).Select(keyword => keyword.name).Distinct();
             CollectionAssert.AreEquivalent(PackSources.NameTable(typeof(AnimeShaderIds.Keywords)), local);
         }
 

@@ -18,7 +18,7 @@ proved before the next.
 - **Written by hand in HLSL**, every material property in one per-material block so the SRP Batcher holds, material
   toggles as local keywords so a feature turned off costs nothing.
 
-## What it will hold (the core and `Anime/Character` exist; the rest is planned)
+## What it will hold (the core, `Anime/Character`, `Anime/World`, `Anime/Ground` and `Anime/Sky` exist; the rest is planned)
 
 | Part | What it is |
 |---|---|
@@ -55,8 +55,10 @@ vertex, and has a global multiplier.
 | `Runtime/Rendering/AnimeRimFeature.cs`, `AnimeRimPass.cs` | The depth-edge rim's renderer feature and its render-graph pass (below) |
 | `Shaders/Includes/Passes/AnimeRimPass.hlsl` | The rim pass: the scene depth read past the line along the normal, the threshold, the light-facing mask |
 | `Editor/OutlineNormalBaker.cs` | The import-time outline normal bake |
+| `Shaders/AnimeWorld.shader`, `AnimeGround.shader`, `AnimeSky.shader`; `Shaders/Includes/World/` | The world's shaders and the ground's and sky's own code (below) |
+| `Runtime/Sky/` | `SkyPreset`, `SkyState`, `SkyApply`, `SkyPresetApplier`, and the shipped presets in `Presets/` |
 | `Editor/AnimeShaderGUI.cs` | The material inspector (thin for now): the shader's sections, a live preview of the two-tone ramp (the same maths the shader runs, tested against a render), and each feature's settings shown only while the feature is on |
-| `Tests/Editor/` | `Support/` (`LitStage`: a preview scene, camera and light rendering into a linear float target; `MadePipeline`: a URP asset made for a test with given features, swapped in and always put back; meshes, materials with colours as the shader reads them, frame reads, source readers, the director's globals held neutral, the batcher check), `Shader/` (passes, batcher, names and constants, every platform's compile, and `Probe/`: an entry shader adding its own property), `Inspector/` (the feature map, the preview against a render), `Look/` (tones, band, rim, the depth rim, director, cast shadows, inside tone, fade), `Outline/` (the line, the baker) |
+| `Tests/Editor/` | `Support/` (`LitStage`: a preview scene, camera and light rendering into a linear float target; `MadePipeline`: a URP asset made for a test with given features, swapped in and always put back; meshes, materials with colours as the shader reads them, frame reads, source readers, the director's globals held neutral, the batcher check), `Shader/` (passes, batcher, names and constants, every platform's compile, and `Probe/`: an entry shader adding its own property), `Inspector/` (the feature map, the preview against a render), `Look/` (tones, band, rim, the depth rim, director, cast shadows, inside tone, fade), `World/` (the noise, the ground, the sky, presets, world UVs), `Outline/` (the line, the baker) |
 
 A thin entry shader (face, hair, world, or a project's own with extra passes) includes the same files, declares its own
 pragmas, and calls `AnimeShade`; it adds nothing else to the lighting. Its own material properties go in through
@@ -115,6 +117,25 @@ by how much the edge faces the light (`_RimLightMask`). Turn it on with **Use De
 `AnimeMaterials.SetRimDepth` (the switch and the pass together, so a material without it costs nothing). A fading body
 takes no rim; a camera whose renderer lacks the feature draws none. XR single-pass is not handled. The fresnel rim
 (**Use Fresnel Rim**) is the forward pass's own and needs no feature.
+
+### The world: `Anime/World`, `Anime/Ground`, `Anime/Sky` and sky presets
+
+- **`Anime/World`** (buildings and props): the core with the band and emission groups; cast shadows per surface; no
+  line, rim or fade (`ANIME_NO_FADE`: no clip, so tile-based GPUs keep early depth rejection); **Base Map In World XZ**
+  tiles the base map by metres (its tiling and offset per metre), so a large plane needs no UVs.
+- **`Anime/Ground`** (the ground group, through `ANIME_CUSTOM_ALBEDO`): grass in soft patches with bare earth, stone
+  flagstones with grout, inside an optional disc (centre x, centre z, radius, edge wobble; radius 0 for none), all from
+  the baked noise in world XZ (three reads a pixel); grout widened by its own derivative and the fine detail faded with
+  distance so a low camera never sees it shimmer. Placeholder until texture sets are picked (the game's asset request).
+- **`Anime/Sky`** (the skybox): the gradient, the sun disc and halo where the main light points (or the director's
+  override), cel clouds drifting with game time (frozen with hitstop), stars at night; everything but the disc stays
+  under **Brightest Sky** so it never blooms over what is in front of it.
+- **Sky presets** (`SkyPreset` assets: Day, Golden Hour, Dusk, Night in `Runtime/Sky/Presets/`): the sky's colours,
+  clouds and stars, the sun's colour, strength and angle, the ambient (Trilight) and the fog (linear, in the horizon
+  colour). `SkyApply.Apply` is the one writer (the sky material, the sun light, the scene's render settings; reflections
+  off, so a preset costs no sky-to-cubemap render). **`SkyPresetApplier`** applies one on enable in Edit and Play Mode;
+  no preset (Authored) leaves the scene alone; switched off in Play Mode it puts back what the scene had. Never applied
+  mid-fight. The light director (when built) becomes its caller.
 
 ### The light director's globals
 

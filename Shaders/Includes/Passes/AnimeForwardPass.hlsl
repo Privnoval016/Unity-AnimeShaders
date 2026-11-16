@@ -1,7 +1,9 @@
 #ifndef ANIME_FORWARD_PASS_INCLUDED
 #define ANIME_FORWARD_PASS_INCLUDED
 
-// The lit forward pass of the character shader: vertex and fragment. Characters ignore lightmaps, reflection probes,
+// The lit forward pass of every lit pack shader: vertex and fragment. An entry shader may define ANIME_CUSTOM_ALBEDO
+// and, before this include, half3 AnimeCustomAlbedo(float3 positionWS, float2 uv, half3 baseAlbedo) to make its own
+// surface colour (the ground does). Characters ignore lightmaps, reflection probes,
 // decals and vertex lights; the ambient comes from the probe's average (or the director's tint).
 
 #include "../Core/AnimeLighting.hlsl"
@@ -48,6 +50,8 @@ AnimeForwardVaryings AnimeForwardVertex(AnimeForwardAttributes input)
     VertexNormalInputs normalInput = GetVertexNormalInputs(input.normalOS, input.tangentOS);
 
     output.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
+    if (ANIME_WORLD_UV_ON)
+        output.uv = vertexInput.positionWS.xz * _BaseMap_ST.xy + _BaseMap_ST.zw;
     output.positionWS = vertexInput.positionWS;
     output.normalWS = normalInput.normalWS;
 #if defined(ANIME_REQUIRES_TANGENT_INTERPOLATOR)
@@ -115,6 +119,9 @@ void AnimeForwardFragment(
 
     AnimeSurface surface;
     surface.albedo = baseSample.rgb * _BaseColor.rgb;
+#if defined(ANIME_CUSTOM_ALBEDO)
+    surface.albedo = AnimeCustomAlbedo(input.positionWS, input.uv, surface.albedo);
+#endif
     surface.alpha = alpha;
 #if defined(ANIME_GROUP_INSIDE)
     [branch] if (faceSign < 0.0h && ANIME_INSIDE_TONE_ON)

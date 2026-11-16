@@ -13,6 +13,17 @@
 #define ANIME_FADE_LEVEL_MASK 0xFFu
 #define ANIME_FADE_LEVEL_FULL 255u
 
+#if defined(ANIME_NO_FADE)
+
+// A shader without the fade (ANIME_NO_FADE in its HLSLINCLUDE): no clip in any pass, so tile-based GPUs keep early
+// depth rejection.
+uint AnimeFadeLevel() { return 0u; }
+bool AnimeFadeIsFull() { return false; }
+float4 AnimeFadeCull(float4 positionCS) { return positionCS; }
+void AnimeFadeClip(float4 positionCS) { }
+
+#else
+
 uint AnimeFadeLevel()
 {
     return unity_RendererUserValue & ANIME_FADE_LEVEL_MASK;
@@ -48,5 +59,7 @@ void AnimeFadeClip(float4 positionCS)
         clip(coverage - AnimeBayer4Threshold(uint2(positionCS.xy)));
     }
 }
+
+#endif
 
 #endif

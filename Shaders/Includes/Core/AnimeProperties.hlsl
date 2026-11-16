@@ -52,6 +52,13 @@
 #else
     #define ANIME_BODY_SHADOW_ON false
 #endif
+#if defined(_ANIME_WORLD_UV_KEYWORD_DECLARED)
+    #define ANIME_WORLD_UV_ON (_ANIME_WORLD_UV)
+#elif defined(_ANIME_WORLD_UV)
+    #define ANIME_WORLD_UV_ON true
+#else
+    #define ANIME_WORLD_UV_ON false
+#endif
 #if defined(_ANIME_INSIDE_FADE_KEYWORD_DECLARED)
     #define ANIME_INSIDE_FADE_ON (_ANIME_INSIDE_FADE)
 #elif defined(_ANIME_INSIDE_FADE)
@@ -110,6 +117,24 @@ CBUFFER_START(UnityPerMaterial)
     half _RimDepth;
     float _RimDepthWidth;
     float _RimDepthThreshold;
+#endif
+#if defined(ANIME_GROUP_GROUND)
+    half4 _GrassColorA;
+    half4 _GrassColorB;
+    half4 _EarthColor;
+    half4 _StoneColorA;
+    half4 _StoneColorB;
+    half4 _GroutColor;
+    float4 _GroundCircle;
+    float _GrassPatchScale;
+    float _GrainScale;
+    half _GrainStrength;
+    half _EarthAmount;
+    float _StoneSize;
+    half _GroutWidth;
+    float _EdgeSoftness;
+    float _DetailFadeStart;
+    float _DetailFadeRange;
 #endif
 #if defined(ANIME_GROUP_LINE)
     half4 _OutlineColor;

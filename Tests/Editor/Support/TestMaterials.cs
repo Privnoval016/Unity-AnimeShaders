@@ -39,6 +39,23 @@ namespace AnimeShaders.Tests
         }
 
         /**
+         * <summary>A material on <paramref name="shader" /> (Anime/World or Anime/Ground) whose lit tone is its
+         * surface colour exactly: light colour, ambient and cast shadows play no part, the ramp's softness a hair.</summary>
+         */
+        public static Material WorldLit(string shader)
+        {
+            var material = new Material(Shader.Find(shader)) { name = "TestWorld" };
+            SetLinear(material, Ids.BaseColor, Color.white);
+            SetLinear(material, Ids.ShadowTint, new Color(0.5f, 0.5f, 0.5f));
+            material.SetFloat(Ids.ShadowThreshold, 0.5f);
+            material.SetFloat(Ids.ShadowSoftness, 0.004f);
+            material.SetFloat(Ids.LightInfluence, 0f);
+            material.SetFloat(Ids.AmbientStrength, 0f);
+            material.SetFloat(Ids.CastShadowStrength, 0f);
+            return material;
+        }
+
+        /**
          * <summary>Sets a colour property so the shader reads <paramref name="colour" />: in a linear project a
          * colour property that is not HDR is converted from sRGB however it is set, so its gamma value goes in.</summary>
          */

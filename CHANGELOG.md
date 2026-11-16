@@ -21,6 +21,8 @@
   `AnimeMaterials.SetRimDepth`; 7 tests through a made pipeline (`MadePipeline`), with break proofs.
 - The core's material block in feature groups (a shader declares only the properties it uses); the includes in
   `Core/` and `Passes/`; the baked noise texture, its baker and import rule.
+- `Anime/World`, `Anime/Ground` (procedural, a placeholder for texture sets), `Anime/Sky`; sky presets (Day, Golden Hour,
+  Dusk, Night), `SkyApply`, `SkyPresetApplier`; the no-fade, custom-surface and world-UV seams.
 - Tests: passes, messages, the SRP Batcher, the one block, names, every pass compiled for D3D, Vulkan, OpenGL Core,
   Metal and GLES3, and renders of the tones, threshold, softness, emission, rim, toggles, director light colour, cast
   shadows, inside tone, line and fade through a small lit stage; the baker on a hard cube.

@@ -13,6 +13,8 @@ namespace AnimeShaders.Tests
     {
         #region Private Fields
 
+        private const string SkyInclude = "AnimeSky.hlsl";
+
         private static readonly string[] ExpectedLightModes =
             { "UniversalForward", "SRPDefaultUnlit", "AnimeRim", "ShadowCaster", "DepthOnly", "DepthNormals" };
 
@@ -46,10 +48,21 @@ namespace AnimeShaders.Tests
             CollectionAssert.AreEquivalent(ExpectedLightModes.Select(mode => mode.ToUpperInvariant()), modes);
         }
 
-        [Test]
-        public void SrpBatcher_IsCompatible()
+        [TestCase("Anime/Character")]
+        [TestCase("Anime/World")]
+        [TestCase("Anime/Ground")]
+        public void SrpBatcher_IsCompatible(string name)
         {
-            Assert.IsNull(ShaderChecks.SrpBatcherProblem(Character()));
+            Assert.IsNull(ShaderChecks.SrpBatcherProblem(Shader.Find(name)));
+        }
+
+        [TestCase("Anime/World")]
+        [TestCase("Anime/Ground")]
+        [TestCase("Anime/Sky")]
+        public void TheWorldShaders_CompileWithNoMessages(string name)
+        {
+            ShaderMessage[] messages = ShaderUtil.GetShaderMessages(Shader.Find(name));
+            Assert.IsEmpty(messages, string.Join("\n", messages.Select(message => message.message)));
         }
 
         [Test]
@@ -73,10 +86,11 @@ namespace AnimeShaders.Tests
         }
 
         [Test]
-        public void OnlyThePropertiesInclude_DeclaresUnityPerMaterial()
+        public void OnlyThePropertiesInclude_DeclaresUnityPerMaterial_TheSkyApart()
         {
             Shader shader = Character();
             var declaring = PackSources.AllIncludes(shader)
+                .Where(path => Path.GetFileName(path) != SkyInclude)
                 .Where(path => File.ReadAllText(path).Contains("CBUFFER_START(UnityPerMaterial)"))
                 .Select(Path.GetFileName).ToList();
             CollectionAssert.AreEqual(new[] { "AnimeProperties.hlsl" }, declaring);
