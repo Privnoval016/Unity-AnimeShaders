@@ -55,6 +55,7 @@ vertex, and has a global multiplier.
 | `Runtime/AnimeShaderIds.cs` | Every global and material property name and id, the toggles, the keywords, the line's light mode, and the fade constants |
 | `Runtime/AnimeMaterials.cs` | Setting a feature (its keyword and its toggle together), receiving shadows, the line pass on or off, the depth rim on or off |
 | `Runtime/Rendering/AnimeRimFeature.cs`, `AnimeRimPass.cs` | The depth-edge rim's renderer feature and its render-graph pass (below) |
+| `Runtime/Rendering/AnimeSunShafts.cs`, `AnimeSunShaftsFeature.cs`, `AnimeSunShaftsPass.cs`; `Shaders/AnimeSunShafts.shader` | The sun shafts: the volume override, the renderer feature, its render-graph passes and their shader (below) |
 | `Shaders/Includes/Passes/AnimeRimPass.hlsl` | The rim pass: the scene depth read past the line along the normal, the threshold, the light-facing mask |
 | `Editor/OutlineNormalBaker.cs` | The import-time outline normal bake |
 | `Editor/ShaderDefaults.cs` | Sets the pack shaders' default textures (the noise, the neutral detail map) in every pack shader declaring the property, keeping their other defaults |
@@ -64,7 +65,7 @@ vertex, and has a global multiplier.
 | `Shaders/AnimeWorld.shader`, `AnimeGround.shader`, `AnimeSky.shader`; `Shaders/Includes/World/` | The world's shaders and the ground's and sky's own code (below) |
 | `Runtime/Sky/` | `SkyPreset`, `SkyState` (everything a preset sets, held once), `SkyRidge`, `SkyApply` (the one writer), `SkyPresetApplier`, and the shipped presets in `Presets/` |
 | `Editor/AnimeShaderGUI.cs` | The material inspector (thin for now): the shader's sections, a live preview of the two-tone ramp (the same maths the shader runs, tested against a render), and each feature's settings shown only while the feature is on |
-| `Tests/Editor/` | `Support/` (in `Stage/`, `World/` and `Sources/`: `LitStage`: a preview scene, camera and light rendering into a linear float target; `MadePipeline`: a URP asset made for a test with given features, swapped in and always put back; meshes, materials with colours as the shader reads them, frame reads, source readers, the director's globals and the world's globals held neutral (`WorldGlobals`; every stage holds them), a sky preset made field by field (`MadeSky`), the finite scan, the batcher check), `Shader/` (passes, batcher, names and constants, every platform's compile, and `Probe/`: an entry shader adding its own property, and one through the surface hook), `Inspector/` (the feature map, the preview against a render), `Look/` (tones, band, rim, the depth rim, director, cast shadows, inside tone, fade, the surface hook), `World/` (the noise, world UVs; `Ground/`: the detail packer and its import, the ground; `Sky/`: the sky, its ridges and clouds, the haze, presets), `Outline/` (the line, the baker) |
+| `Tests/Editor/` | `Support/` (in `Stage/`, `World/` and `Sources/`: `LitStage`: a preview scene, camera and light rendering into a linear float target; `MadePipeline`: a URP asset made for a test with given features, swapped in and always put back; meshes, materials with colours as the shader reads them, frame reads, source readers, the director's globals and the world's globals held neutral (`WorldGlobals`; every stage holds them), a sky preset made field by field (`MadeSky`), a volume only the stage camera sees (`MadeVolume`), the finite scan, the batcher check), `Shader/` (passes, batcher, names and constants, every platform's compile, and `Probe/`: an entry shader adding its own property, and one through the surface hook), `Inspector/` (the feature map, the preview against a render), `Look/` (tones, band, rim, director, cast shadows, cloud shadows, contact shading, inside tone, fade, the surface hook; `Screen/`: the depth rim, the sun shafts), `World/` (the noise, world UVs; `Ground/`: the detail packer and its import, the ground; `Sky/`: the sky, its ridges and clouds, the haze, presets), `Outline/` (the line, the baker) |
 
 A thin entry shader (face, hair, world, or a project's own with extra passes) includes the same files, declares its own
 pragmas, and calls `AnimeShade`; it adds nothing else to the lighting. Its own material properties go in through
@@ -174,6 +175,13 @@ takes no rim; a camera whose renderer lacks the feature draws none. XR single-pa
   where things meet, never a smudge), and it dims the ambient; both by the material's **Contact Shading** (low on
   characters by default, so they read bright; full on the world). The forward passes compile `_SCREEN_SPACE_OCCLUSION`;
   the renderer's SSAO settings (intensity, radius) decide how deep the occlusion runs, the threshold where it shows.
+- **Sun shafts** (`AnimeSunShafts`, a volume override: Add Override > Anime Shaders > Sun Shafts; drawn by
+  **`AnimeSunShaftsFeature`** on the renderers that have it): at half resolution, the sky brighter than **Threshold**
+  (near the sky's bloom ceiling: the sun and its hottest glow, so clouds and bodies crossing it break the light into
+  rays), where all four depths under a texel are the far plane and weighted by **Reach** round the sun on screen, blurred
+  toward the sun twice (**Length**, **Decay**, **Samples**), added before the post in the sun's colour times **Tint** and
+  **Intensity**, faded by the sun's angle from the view. Nothing is recorded at intensity 0, with the sun behind, or on a
+  camera with post-processing off (menu figures, portraits). Game and Scene view cameras; MSAA unsupported.
 - **The haze** (`Core/AnimeFog.hlsl`): distance and height fog in the horizon colour, glowing toward the sun, applied
   per pixel by the pack's forward and outline passes in place of URP's fog while a preset turns it on (the global
   dynamic branch `_ANIME_ATMOSPHERE`); exact on orthographic cameras and transparents; off, URP's fog as before. The sky

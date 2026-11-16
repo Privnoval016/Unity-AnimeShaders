@@ -59,6 +59,35 @@ namespace AnimeShaders
             #endregion
         }
 
+        /** <summary>The sun shafts' shader and the properties <c>AnimeSunShaftsPass</c> sets on its material.</summary> */
+        public static class SunShafts
+        {
+            #region Properties
+
+            /** <summary>The shafts' shader's name.</summary> */
+            public const string ShaderName = "Hidden/AnimeShaders/SunShafts";
+
+            /** <summary>The name _SunShaftsSun.</summary> */
+            public const string SunName = "_SunShaftsSun";
+
+            /** <summary>The property id of _SunShaftsSun.</summary> */
+            public static readonly int Sun = Shader.PropertyToID(SunName);
+
+            /** <summary>The name _SunShaftsBlur.</summary> */
+            public const string BlurName = "_SunShaftsBlur";
+
+            /** <summary>The property id of _SunShaftsBlur.</summary> */
+            public static readonly int Blur = Shader.PropertyToID(BlurName);
+
+            /** <summary>The name _SunShaftsColor.</summary> */
+            public const string ColorName = "_SunShaftsColor";
+
+            /** <summary>The property id of _SunShaftsColor.</summary> */
+            public static readonly int Color = Shader.PropertyToID(ColorName);
+
+            #endregion
+        }
+
         /** <summary>Every per-material property and texture the shaders read.</summary> */
         public static class MaterialProperties
         {

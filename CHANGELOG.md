@@ -10,6 +10,12 @@
   read in uniform flow, a trig-free hash.
 - The haze (`Core/AnimeFog.hlsl`): distance and height fog with a glow toward the sun, in the pack's forward and outline
   passes in place of URP's fog behind `_ANIME_ATMOSPHERE`; URP's fog takes the same colour and reach for other shaders.
+- Sun shafts (2c step D): `AnimeSunShafts` (volume override), `AnimeSunShaftsFeature` and its pass (mask with a
+  brightness threshold and a 2x2 far-depth test, two radial blurs, an additive composite before the post, at half
+  resolution; skipped at 0, with the sun behind, or without post-processing), `Hidden/AnimeShaders/SunShafts`. Tests
+  through a made pipeline and `MadeVolume` (in the stage's own scene, since URP blends only the volumes a camera renders):
+  identity at 0, the sun behind, no post, rays over the sky against the wall beside the sun, the sun off the edge;
+  break proofs.
 - Contact shading (2c step C): URP's SSAO in the pack's forward passes through the tone step (`_ContactShading`,
   `_ContactThreshold` on the core block; characters 0.3, the world 1). Tests through URP's real SSAO feature in a made
   pipeline (a cube's foot shades the floor, the open floor doesn't; a response of 0 is the frame without it); break proofs.
