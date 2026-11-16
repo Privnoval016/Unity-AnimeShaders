@@ -160,7 +160,8 @@ takes no rim; a camera whose renderer lacks the feature draws none. XR single-pa
   away from the sun; the same field the ground's cloud shadows read); stars at night; the sun's halo and disc where the
   main light points (or the director's override); the haze at the sky's distance; and up to three **ridges** of hills on
   the horizon, drawn analytically (no texture), farthest first, each hazed at its own distance, lit softly along its
-  line where it faces the sun, hiding the sun behind it. Everything but the disc stays under **Brightest Sky**. Every
+  line where it faces the sun, hiding the sun behind it, its foot dissolving into the haze over the sky (the **mist**:
+  how high it reaches and how thick, in the preset), so the far ground meets the hills softly. Everything but the disc stays under **Brightest Sky**. Every
   noise read is in uniform flow.
 - **The haze** (`Core/AnimeFog.hlsl`): distance and height fog in the horizon colour, glowing toward the sun, applied
   per pixel by the pack's forward and outline passes in place of URP's fog while a preset turns it on (the global

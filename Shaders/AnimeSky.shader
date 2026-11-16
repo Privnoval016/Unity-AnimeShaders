@@ -35,6 +35,7 @@ Shader "Anime/Sky"
         _RidgeShape2("Ridge 3 (height, roughness, hills, seed)", Vector) = (0.03, 0.015, 16, 2)
         _RidgeDistance("Ridge Distances (m: 1, 2, 3)", Vector) = (1200, 700, 400, 0)
         _RidgeLitColor("Ridge Sunlit Edge (alpha: strength)", Color) = (1, 1, 1, 0.3)
+        _RidgeMist("Ridge Foot Mist (height, strength)", Vector) = (0.05, 0.8, 0, 0)
 
         [Header(Night)]
         [Toggle(_ANIME_SKY_STARS)] _Stars("Use Stars", Float) = 0

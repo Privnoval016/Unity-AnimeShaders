@@ -83,7 +83,8 @@ namespace AnimeShaders.Tests
             _stage.Perspective(FieldOfView, 0f);
             _sky = new Material(Shader.Find("Anime/Sky"));
             _made = new MadeSky().Set("zenith", Zenith).Set("horizon", Horizon).Set("below", Below).Set("horizonHeight", 0.3f)
-                .Set("cloudCover", 0f).Set("cloudSpeed", 0f).Set("discStrength", 0f).Set("haloStrength", 0f).Set("haze", false);
+                .Set("cloudCover", 0f).Set("cloudSpeed", 0f).Set("discStrength", 0f).Set("haloStrength", 0f).Set("haze", false)
+                .Set("ridgeMist", 0f);
             _stage.Camera.clearFlags = CameraClearFlags.Skybox;
             _stage.Camera.gameObject.AddComponent<Skybox>().material = _sky;
         }
@@ -168,6 +169,19 @@ namespace AnimeShaders.Tests
             Color[] ridged = Looking(Vector3.forward);
             Assert.IsTrue(FrameReads.Near(Above(ridged, 5f), RedAsDrawn, 0.05f), $"five degrees up: the ridge {Above(ridged, 5f)}");
             Assert.IsTrue(FrameReads.Near(Above(ridged, 20f), Above(bare, 20f), 0.01f), "twenty degrees up: the sky as it was");
+        }
+
+        [Test]
+        public void ARidgesFoot_DissolvesIntoTheMist_AndItsBodyDoesNot()
+        {
+            _made.Ridges(Flat(Red, 12f, 0f)).Set("ridgeMistHeight", 6f);
+            Color[] clear = Looking(Vector3.forward);
+            Assert.IsTrue(FrameReads.Near(Above(clear, 1f), RedAsDrawn, 0.05f), "no mist: the foot is the ridge");
+            _made.Set("ridgeMist", 1f);
+            Color[] misty = Looking(Vector3.forward);
+            Color horizon = Horizon.linear;
+            Assert.Less(Distance(Above(misty, 1f), horizon), Distance(Above(misty, 1f), RedAsDrawn), $"the foot nearer the horizon colour {Above(misty, 1f)}");
+            Assert.IsTrue(FrameReads.Near(Above(misty, 9f), RedAsDrawn, 0.05f), $"above the mist the ridge as it was {Above(misty, 9f)}");
         }
 
         [Test]

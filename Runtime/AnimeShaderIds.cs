@@ -731,6 +731,12 @@ namespace AnimeShaders
             /** <summary>The property id of _RidgeLitColor.</summary> */
             public static readonly int RidgeLitColor = Shader.PropertyToID(RidgeLitColorName);
 
+            /** <summary>The name _RidgeMist.</summary> */
+            public const string RidgeMistName = "_RidgeMist";
+
+            /** <summary>The property id of _RidgeMist.</summary> */
+            public static readonly int RidgeMist = Shader.PropertyToID(RidgeMistName);
+
             /** <summary>The name _Stars.</summary> */
             public const string StarsName = "_Stars";
 

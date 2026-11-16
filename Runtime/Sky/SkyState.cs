@@ -72,8 +72,12 @@ namespace AnimeShaders
         [Header("Ridges")]
         [Tooltip("Hills and mountains drawn on the horizon, farthest first; at most three.")]
         [SerializeField] private SkyRidge[] ridges;
-        [Tooltip("The ridges' edges that face the sun take this colour, softly.")]
+        [Tooltip("The ridges' edges that face the sun take this colour, softly (alpha: how strongly).")]
         [SerializeField] private Color ridgeLitEdge;
+        [Tooltip("How high the mist at the ridges' feet reaches above the horizon, in degrees: the hills dissolve into the haze there, so the far ground meets them softly.")]
+        [Range(0f, 15f)] [SerializeField] private float ridgeMistHeight;
+        [Tooltip("How thick the mist at the ridges' feet is (0: none, 1: the hills' feet are the haze itself).")]
+        [Range(0f, 1f)] [SerializeField] private float ridgeMist;
 
         [Header("Night")]
         [Tooltip("Whether stars show.")]
@@ -127,7 +131,7 @@ namespace AnimeShaders
             cloudLit = Color.white, cloudShade = new Color(0.8f, 0.84f, 0.93f), cloudCover = 0.45f, cloudSoftness = 0.05f,
             cloudSize = 400f, cloudSimplicity = 1f, cloudAltitude = 600f, cloudSpeed = 2f, wind = new Vector2(1f, 0.3f),
             cloudShadeOffset = 40f, cloudHorizonFade = 0.12f, cloudShadowStrength = 0.4f,
-            ridges = Array.Empty<SkyRidge>(), ridgeLitEdge = Color.white,
+            ridges = Array.Empty<SkyRidge>(), ridgeLitEdge = Color.white, ridgeMistHeight = 3f, ridgeMist = 0.8f,
             stars = false, starDensity = 0.2f, starSize = 0.15f,
             ambientSky = new Color(0.55f, 0.62f, 0.75f), ambientEquator = new Color(0.45f, 0.5f, 0.55f),
             ambientGround = new Color(0.3f, 0.3f, 0.28f),
@@ -212,6 +216,12 @@ namespace AnimeShaders
 
         /** <summary>The colour of the ridges' edges facing the sun.</summary> */
         public Color RidgeLitEdge => ridgeLitEdge;
+
+        /** <summary>How high the mist at the ridges' feet reaches, in degrees.</summary> */
+        public float RidgeMistHeight => ridgeMistHeight;
+
+        /** <summary>How thick the mist at the ridges' feet is.</summary> */
+        public float RidgeMist => ridgeMist;
 
         /** <summary>Whether stars show.</summary> */
         public bool Stars => stars;

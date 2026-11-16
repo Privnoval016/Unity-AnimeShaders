@@ -40,6 +40,8 @@ MonoBehaviour:
     cloudShadowStrength: 0.4
     ridges: []
     ridgeLitEdge: {r: 1, g: 1, b: 1, a: 1}
+    ridgeMistHeight: 3
+    ridgeMist: 0.8
     stars: 0
     starDensity: 0.2
     starSize: 0.15

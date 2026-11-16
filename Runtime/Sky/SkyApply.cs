@@ -94,6 +94,7 @@ namespace AnimeShaders
             }
             sky.SetVector(Ids.RidgeDistance, distances);
             sky.SetColor(Ids.RidgeLitColor, state.RidgeLitEdge);
+            sky.SetVector(Ids.RidgeMist, new Vector4(Mathf.Sin(state.RidgeMistHeight * Mathf.Deg2Rad), state.RidgeMist, 0f, 0f));
             sky.SetFloat(Ids.StarDensity, state.StarDensity);
             sky.SetFloat(Ids.StarSize, state.StarSize);
             sky.SetFloat(Ids.Stars, state.Stars ? 1f : 0f);
