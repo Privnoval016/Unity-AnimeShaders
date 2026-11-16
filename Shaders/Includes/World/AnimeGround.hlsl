@@ -5,9 +5,10 @@
 // a ring; radius 0 for none), the circle. Each is painted from a packed detail map (AnimeDetailPacker: R shade with a
 // mean of 0.5, G mask, B and A the normal's X and Y) in world XZ: its shade picks a colour between the layer's dark and
 // light (or its second pair where the mask is off) and its normal tilts the surface. The pack's noise adds large soft
-// patches, bare earth and the circle's wobbly edge.
+// patches, the field's tinted patches, bare earth and the circle's wobbly edge.
 //
-// Reads: the noise once, then each layer's map only where that layer shows (once, or twice with Break Up Tiling).
+// Reads: the noise once (twice with a patch tint), then each layer's map only where that layer shows (once, or twice
+// with Break Up Tiling).
 // Those reads sit in branches, so every gradient they use is taken before the branches and everything that needs a
 // derivative (the steps, the lighting) runs after them.
 
@@ -191,10 +192,24 @@ half3 AnimeGroundTilt(half3 normalWS, half2 normalXY, half strength)
     return half3(normalize(tangent * tilt.x + bitangent * tilt.y + normal * z));
 }
 
+// The field's tinted patches: where the noise's fbm, read at the tint's own scale, passes 1 - cover, the colour takes
+// the tint's hue and keeps its own brightness, by the tint's alpha.
+half3 AnimeGroundPatchTint(half3 colour, half value)
+{
+    half from = 1.0h - _PatchTintCover;
+    half weight = smoothstep(from, from + max(_PatchTintSoftness, ANIME_GROUND_STEP_MIN_WIDTH), value) * _PatchTint.a;
+    half3 tinted = saturate(_PatchTint.rgb * (AnimeLuma(colour) / max(AnimeLuma(_PatchTint.rgb), ANIME_GROUND_STEP_MIN_WIDTH)));
+    return lerp(colour, tinted, weight);
+}
+
 void AnimeCustomSurface(float3 positionWS, float2 uv, inout AnimeSurface surface)
 {
     float2 p = positionWS.xz;
     half4 patch = AnimeGroundNoise(p * _PatchScale);
+    half tintNoise = 0.0h;
+    UNITY_BRANCH
+    if (_PatchTint.a > 0.0h)
+        tintNoise = AnimeGroundNoise(p * _PatchTintScale).g;
     half near = 1.0h - half(saturate((distance(positionWS, _WorldSpaceCameraPos) - _DetailFadeStart) / max(_DetailFadeRange, 0.01)));
 
     float fromCentre = distance(p, _GroundCircle.xy) + (patch.g - 0.5) * 2.0 * _GroundCircle.w;
@@ -219,7 +234,7 @@ void AnimeCustomSurface(float3 positionWS, float2 uv, inout AnimeSurface surface
         circle = AnimeGroundRead(TEXTURE2D_ARGS(_CircleDetail, sampler_CircleDetail), circleUV, _CircleBreakUp, patch.r, rotation);
 
     half shift = (patch.g - 0.5h) * _PatchStrength;
-    half3 fieldColour = AnimeGroundPaint(field, AnimeFieldLayer(), shift, near);
+    half3 fieldColour = AnimeGroundPatchTint(AnimeGroundPaint(field, AnimeFieldLayer(), shift, near), tintNoise);
     half earth = smoothstep(1.0h - _EarthAmount, 1.0h - _EarthAmount + ANIME_GROUND_EARTH_EDGE, patch.g);
     fieldColour = lerp(fieldColour, _EarthColor.rgb, earth);
     half3 circleColour = AnimeGroundPaint(circle, AnimeCircleLayer(), shift, near);

@@ -19,6 +19,12 @@ half4 AnimeSampleBase(float2 uv)
     return SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uv);
 }
 
+// A linear colour's brightness (Rec. 709 weights).
+half AnimeLuma(half3 colour)
+{
+    return dot(colour, half3(0.2126h, 0.7152h, 0.0722h));
+}
+
 void AnimeAlphaClip(half alpha)
 {
 #if defined(_ALPHATEST_ON)
@@ -32,7 +38,7 @@ void AnimeAlphaClip(half alpha)
 half3 AnimeApplyInsideTone(half3 albedo, float2 uv)
 {
     half3 tinted = albedo * _InsideTint.rgb;
-    half luma = dot(tinted, half3(0.2126h, 0.7152h, 0.0722h));
+    half luma = AnimeLuma(tinted);
     tinted = lerp(luma.xxx, tinted, _InsideSaturation);
     tinted *= 1.0h - _InsideDarken;
 

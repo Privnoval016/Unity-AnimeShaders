@@ -435,6 +435,30 @@ namespace AnimeShaders
             /** <summary>The property id of _EarthAmount.</summary> */
             public static readonly int EarthAmount = Shader.PropertyToID(EarthAmountName);
 
+            /** <summary>The name _PatchTint.</summary> */
+            public const string PatchTintName = "_PatchTint";
+
+            /** <summary>The property id of _PatchTint.</summary> */
+            public static readonly int PatchTint = Shader.PropertyToID(PatchTintName);
+
+            /** <summary>The name _PatchTintScale.</summary> */
+            public const string PatchTintScaleName = "_PatchTintScale";
+
+            /** <summary>The property id of _PatchTintScale.</summary> */
+            public static readonly int PatchTintScale = Shader.PropertyToID(PatchTintScaleName);
+
+            /** <summary>The name _PatchTintCover.</summary> */
+            public const string PatchTintCoverName = "_PatchTintCover";
+
+            /** <summary>The property id of _PatchTintCover.</summary> */
+            public static readonly int PatchTintCover = Shader.PropertyToID(PatchTintCoverName);
+
+            /** <summary>The name _PatchTintSoftness.</summary> */
+            public const string PatchTintSoftnessName = "_PatchTintSoftness";
+
+            /** <summary>The property id of _PatchTintSoftness.</summary> */
+            public static readonly int PatchTintSoftness = Shader.PropertyToID(PatchTintSoftnessName);
+
             /** <summary>The name _GroundCircle.</summary> */
             public const string GroundCircleName = "_GroundCircle";
 

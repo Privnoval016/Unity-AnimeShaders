@@ -145,6 +145,11 @@ namespace AnimeShaders.Tests
             return At(_stage.Render(), 0.5f, 0.5f).r;
         }
 
+        private static float Luminance(Color pixel)
+        {
+            return pixel.r * 0.2126729f + pixel.g * 0.7151522f + pixel.b * 0.0721750f;
+        }
+
         private static float Spread(IEnumerable<float> values)
         {
             float[] all = values.ToArray();
@@ -426,6 +431,40 @@ namespace AnimeShaders.Tests
             Assert.Greater(FrameReads.Count(_stage.Render(), pixel => FrameReads.Near(pixel, earth, 0.05f)), 0, "patches of earth");
         }
 
+        [Test]
+        public void PatchTint_TakesTheTintsHue_KeepsTheBrightness_OnlyOnTheField_WithStrengthAndCover()
+        {
+            var dim = new Color(0.3f, 0.3f, 0.3f);
+            Show(Layer.Field);
+            Colours(FieldColours, dim);
+            _material.SetFloat(Ids.PatchTintScale, 1f);
+            _material.SetFloat(Ids.PatchTintCover, 0.5f);
+            _material.SetFloat(Ids.PatchTintSoftness, 0.05f);
+            Color[] plain = _stage.Render();
+            Assert.Greater(FrameReads.Count(plain, FrameReads.Covered), 0, "the floor drew");
+
+            TestMaterials.SetLinear(_material, Ids.PatchTint, new Color(0.5f, 0.1f, 0.1f, 0f));
+            Assert.IsTrue(plain.SequenceEqual(_stage.Render()), "no strength, no tint");
+
+            TestMaterials.SetLinear(_material, Ids.PatchTint, new Color(0.5f, 0.1f, 0.1f, 1f));
+            Color[] tinted = _stage.Render();
+            Assert.Greater(Luminance(plain[0]) - 0.185f, 0.05f, "the tint is darker than the ground, so keeping the brightness shows");
+            int[] patches = Enumerable.Range(0, tinted.Length).Where(i => FrameReads.Covered(tinted[i]) && tinted[i].r > tinted[i].g + 0.1f).ToArray();
+            Assert.Greater(patches.Length, tinted.Length / 20, "patches take the tint's hue");
+            Assert.Less(patches.Length, tinted.Length * 19 / 20, "and only patches");
+            foreach (int i in patches)
+                Assert.AreEqual(Luminance(plain[i]), Luminance(tinted[i]), 0.03f, $"a tinted pixel keeps its brightness ({plain[i]} to {tinted[i]})");
+
+            _material.SetFloat(Ids.PatchTintCover, 0f);
+            Assert.IsTrue(plain.SequenceEqual(_stage.Render()), "no cover, no patches");
+
+            _material.SetFloat(Ids.PatchTintCover, 0.5f);
+            Show(Layer.Circle);
+            Colours(CircleColours, dim);
+            Color[] circle = _stage.Render();
+            Assert.AreEqual(0, circle.Count(pixel => FrameReads.Covered(pixel) && pixel.r > pixel.g + 0.1f), "the circle takes none");
+        }
+
         [TestCase(0f)]
         [TestCase(0.6f)]
         public void TheEdgeBand_HasNoStep(float wobble)
@@ -526,7 +565,8 @@ namespace AnimeShaders.Tests
             foreach (string derivative in new[] { "ddx(", "ddy(", "fwidth(", "SAMPLE_TEXTURE2D(" })
                 StringAssert.DoesNotContain(derivative, read, "a layer's reads take their gradients from outside the branch");
             string surface = Body(text, "void AnimeCustomSurface(");
-            Assert.AreEqual(1, Regex.Matches(surface, @"AnimeGroundNoise\(").Count, "one noise read");
+            Assert.AreEqual(2, Regex.Matches(surface, @"AnimeGroundNoise\(").Count, "two noise reads: the patches' and the tint's");
+            StringAssert.IsMatch(@"UNITY_BRANCH\s*if \(_PatchTint\.a > 0\.0h\)\s*tintNoise = AnimeGroundNoise\(", surface, "the tint's read only with a tint");
             Assert.AreEqual(2, Regex.Matches(surface, @"UNITY_BRANCH\s*if \([^)]*\)\s*\w+ = AnimeGroundRead\([^;]*;").Count,
                 "each layer's branch holds its read and nothing else, so painting, steps and the tilt run outside");
             Assert.AreEqual(2, Regex.Matches(read, @"SAMPLE_TEXTURE2D_GRAD\(").Count, "at most two reads a layer");

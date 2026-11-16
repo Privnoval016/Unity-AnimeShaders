@@ -63,6 +63,10 @@ Shader "Anime/Ground"
         _PatchStrength("Patch Strength", Range(0, 1)) = 0.15
         _EarthColor("Bare Earth Colour", Color) = (0.55, 0.45, 0.32, 1)
         _EarthAmount("Bare Earth Amount", Range(0, 0.5)) = 0.06
+        _PatchTint("Field Patch Tint (alpha: strength)", Color) = (0.42, 0.58, 0.36, 0)
+        _PatchTintScale("Field Patch Tint Scale (per metre)", Float) = 0.01
+        _PatchTintCover("Field Patch Tint Cover", Range(0, 1)) = 0.4
+        _PatchTintSoftness("Field Patch Tint Softness", Range(0.01, 0.5)) = 0.15
         _BreakUpScale("Break Up Second Read Scale", Range(0.1, 4)) = 0.43
         _BreakUpAngle("Break Up Second Read Angle", Range(0, 360)) = 37
 

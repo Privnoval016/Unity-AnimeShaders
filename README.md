@@ -136,8 +136,10 @@ takes no rim; a camera whose renderer lacks the feature draws none. XR single-pa
   the layer's **Dark** and **Light**, or its **Second** pair where the map's mask is off (blended in a perceptual space),
   optionally in **Shade Steps**; its normal tilts the surface by **Normal Strength**; **Break Up Tiling** blends a second
   read at another scale and angle by the noise, keeping the contrast, so a large field shows no repeat. The baked noise
-  adds soft patches (**Patch Strength**) and bare earth on the field. Reads: the noise once, then only the layer that
-  shows (once, or twice with break-up): 2 a pixel inside the circle, 3 outside, up to 5 on the edge band; the reads sit
+  adds soft patches (**Patch Strength**) and bare earth on the field; the field's **Patch Tint** (its alpha the strength;
+  its own scale, cover and softness) gives broad patches the tint's hue at the colour's own brightness. Reads: the noise
+  once (twice with a patch tint), then only the layer that shows (once, or twice with break-up): 2 a pixel inside the
+  circle, 3 outside, up to 5 on the edge band; the reads sit
   in branches with their gradients taken before them, each map with its own sampler; the steps, painting and tilt run
   after. Measured on the playground fight at 4K (2026-11-16): 10.1 ms median with the branches, 10.6 without. Far off
   (**Detail Fade**) the normal flattens and the steps smooth; the shade is left to the mips, which settle on each map's

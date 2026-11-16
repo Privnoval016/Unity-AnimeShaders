@@ -10,6 +10,11 @@
   read in uniform flow, a trig-free hash.
 - The haze (`Core/AnimeFog.hlsl`): distance and height fog with a glow toward the sun, in the pack's forward and outline
   passes in place of URP's fog behind `_ANIME_ATMOSPHERE`; URP's fog takes the same colour and reach for other shaders.
+- `Anime/Ground`: the field's **Patch Tint** (`_PatchTint`, alpha the strength; `_PatchTintScale`, `_PatchTintCover`,
+  `_PatchTintSoftness`): broad patches take the tint's hue at the colour's own brightness, from a second noise read
+  (fbm) only when the strength is above 0. `AnimeLuma` in `Core/AnimeSurface.hlsl` holds the brightness weights. Test:
+  no strength or cover is the plain frame, patches take the hue at the same brightness, the circle takes none; break
+  proofs.
 - The look pass (2c step F, part): the cloud field reads its noise twice at a scale and angle that never line up,
   blended to keep its contrast, so it never repeats (a test one noise tile on); stars as small dots from the value
   channel with a `starScale` in the state (the cell channel drew shards); Golden Hour, Dusk and Night retuned with Day's

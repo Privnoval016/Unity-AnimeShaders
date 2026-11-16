@@ -138,6 +138,7 @@ CBUFFER_START(UnityPerMaterial)
     half4 _CircleSecondDark;
     half4 _CircleSecondLight;
     half4 _EarthColor;
+    half4 _PatchTint;
     float4 _GroundCircle;
     float _FieldTile;
     float _CircleTile;
@@ -152,6 +153,9 @@ CBUFFER_START(UnityPerMaterial)
     float _PatchScale;
     half _PatchStrength;
     half _EarthAmount;
+    float _PatchTintScale;
+    half _PatchTintCover;
+    half _PatchTintSoftness;
     float _EdgeSoftness;
     float _DetailFadeStart;
     float _DetailFadeRange;
