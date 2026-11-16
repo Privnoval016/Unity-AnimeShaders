@@ -11,7 +11,8 @@ namespace AnimeShaders.Tests
     /**
      * <summary>A small lit scene for render tests: a camera looking along +Z from z = -5, one white directional light,
      * and the meshes a test adds, drawn by the active render pipeline into a linear half-float target and read back,
-     * so a pixel holds what the shader wrote.</summary>
+     * so a pixel holds what the shader wrote. The world's globals (clouds, haze) are held neutral while it stands, whatever
+     * scene the Editor has open; a test publishes its own.</summary>
      */
     public sealed class LitStage : IDisposable
     {
@@ -23,6 +24,7 @@ namespace AnimeShaders.Tests
         private readonly RenderTexture _target;
         private readonly Texture2D _frame;
         private readonly List<Object> _owned = new();
+        private readonly WorldGlobals _world;
 
         #endregion
 
@@ -45,6 +47,7 @@ namespace AnimeShaders.Tests
         public LitStage(int size = 128)
         {
             Size = size;
+            _world = new WorldGlobals();
             _scene = EditorSceneManager.NewPreviewScene();
             Camera = Place(new GameObject("LitStageCamera")).AddComponent<Camera>();
             Camera.scene = _scene;
@@ -140,6 +143,7 @@ namespace AnimeShaders.Tests
             Object.DestroyImmediate(_target);
             Object.DestroyImmediate(_frame);
             EditorSceneManager.ClosePreviewScene(_scene);
+            _world.Dispose();
         }
 
         #endregion

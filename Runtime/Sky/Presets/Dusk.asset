@@ -12,28 +12,47 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dfb173f56c79d4df6b6b1dcbe07fa7f1, type: 3}
   m_Name: Dusk
   m_EditorClassIdentifier: AnimeShaders::AnimeShaders.SkyPreset
-  _zenith: {r: 0.15, g: 0.15, b: 0.38, a: 1}
-  _horizon: {r: 0.85, g: 0.5, b: 0.55, a: 1}
-  _below: {r: 0.25, g: 0.2, b: 0.28, a: 1}
-  _horizonHeight: 0.3
-  _sunLight: {r: 0.9, g: 0.62, b: 0.62, a: 1}
-  _sunIntensity: 0.6
-  _sunElevation: 3
-  _sunAzimuth: -30
-  _discColor: {r: 1, g: 0.55, b: 0.4, a: 1}
-  _discSize: 0.04
-  _discStrength: 1.5
-  _haloStrength: 0.3
-  _cloudLit: {r: 0.95, g: 0.65, b: 0.7, a: 1}
-  _cloudShade: {r: 0.35, g: 0.3, b: 0.5, a: 1}
-  _cloudCover: 0.45
-  _cloudSpeed: 0.004
-  _wind: {x: 1, y: 0.3}
-  _stars: 0
-  _starDensity: 0.2
-  _ambientSky: {r: 0.35, g: 0.32, b: 0.5, a: 1}
-  _ambientEquator: {r: 0.45, g: 0.35, b: 0.42, a: 1}
-  _ambientGround: {r: 0.18, g: 0.15, b: 0.18, a: 1}
-  _fog: 1
-  _fogStart: 60
-  _fogEnd: 320
+  state:
+    zenith: {r: 0.15, g: 0.15, b: 0.38, a: 1}
+    horizon: {r: 0.85, g: 0.5, b: 0.55, a: 1}
+    below: {r: 0.25, g: 0.2, b: 0.28, a: 1}
+    horizonHeight: 0.3
+    sunLight: {r: 0.9, g: 0.62, b: 0.62, a: 1}
+    sunIntensity: 0.6
+    sunElevation: 3
+    sunAzimuth: -30
+    discColor: {r: 1, g: 0.55, b: 0.4, a: 1}
+    discSize: 0.04
+    discStrength: 1.5
+    haloSize: 0.25
+    haloStrength: 0.3
+    cloudLit: {r: 0.95, g: 0.65, b: 0.7, a: 1}
+    cloudShade: {r: 0.35, g: 0.3, b: 0.5, a: 1}
+    cloudCover: 0.45
+    cloudSoftness: 0.05
+    cloudSize: 400
+    cloudSimplicity: 1
+    cloudAltitude: 600
+    cloudSpeed: 2
+    wind: {x: 1, y: 0.3}
+    cloudShadeOffset: 40
+    cloudHorizonFade: 0.12
+    cloudShadowStrength: 0.4
+    ridges: []
+    ridgeLitEdge: {r: 1, g: 1, b: 1, a: 1}
+    stars: 0
+    starDensity: 0.2
+    starSize: 0.15
+    ambientSky: {r: 0.35, g: 0.32, b: 0.5, a: 1}
+    ambientEquator: {r: 0.45, g: 0.35, b: 0.42, a: 1}
+    ambientGround: {r: 0.18, g: 0.15, b: 0.18, a: 1}
+    haze: 1
+    hazeStart: 60
+    hazeDensity: 0.0073
+    hazeBase: 0
+    hazeFalloff: 0.02
+    hazeMaxOpacity: 0.85
+    hazeGlow: {r: 1, g: 0.92, b: 0.8, a: 1}
+    hazeGlowStrength: 0.4
+    hazeGlowSize: 0.6
+    skyDistance: 1500

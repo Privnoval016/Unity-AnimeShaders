@@ -9,6 +9,7 @@
 
 #include "../Core/AnimeLighting.hlsl"
 #include "../Core/AnimeFade.hlsl"
+#include "../Core/AnimeFog.hlsl"
 
 #if defined(_NORMALMAP)
     #define ANIME_REQUIRES_TANGENT_INTERPOLATOR
@@ -142,7 +143,7 @@ void AnimeForwardFragment(
     AnimeInitializeInputData(input, surface.normalWS, inputData);
 
     half3 color = AnimeShade(surface, inputData);
-    color = MixFog(color, inputData.fogCoord);
+    color = AnimeApplyFog(color, input.positionWS, inputData.fogCoord);
     outColor = half4(color, 1.0h);
 
 #if defined(_WRITE_RENDERING_LAYERS)

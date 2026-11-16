@@ -101,6 +101,18 @@ namespace AnimeShaders.Tests
         }
 
         [Test]
+        public void WorldTable_MatchesTheWorldBufferAndItsTexture()
+        {
+            string text = PackSources.IncludeText(Character(), "AnimeWorld.hlsl");
+            var expected = PackSources.BufferNames(text, "AnimeWorld");
+            expected.UnionWith(PackSources.TextureNames(text));
+            var table = PackSources.NameTable(typeof(AnimeShaderIds.World));
+            table.Remove(AnimeShaderIds.World.AtmosphereKeyword);
+            table.Remove(AnimeShaderIds.World.CloudShadowsKeyword);
+            CollectionAssert.AreEquivalent(expected, table);
+        }
+
+        [Test]
         public void KeywordTable_MatchesThePackShadersMaterialKeywords()
         {
             var local = LitShaders.SelectMany(name => Shader.Find(name).keywordSpace.keywords)

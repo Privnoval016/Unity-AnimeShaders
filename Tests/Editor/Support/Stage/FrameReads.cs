@@ -27,6 +27,18 @@ namespace AnimeShaders.Tests
             return pixel.a > 0.5f;
         }
 
+        /** <summary>Whether every channel of every pixel is a finite number (no NaN, no infinity).</summary> */
+        public static bool AllFinite(Color[] frame)
+        {
+            foreach (Color pixel in frame)
+            {
+                float sum = pixel.r + pixel.g + pixel.b + pixel.a;
+                if (float.IsNaN(sum) || float.IsInfinity(sum))
+                    return false;
+            }
+            return true;
+        }
+
         /** <summary>How many pixels of <paramref name="frame" /> pass <paramref name="test" />.</summary> */
         public static int Count(Color[] frame, Func<Color, bool> test)
         {

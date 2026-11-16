@@ -21,12 +21,13 @@ namespace AnimeShaders.Tests
         {
             "_MAIN_LIGHT_SHADOWS_CASCADE", "_CLUSTER_LIGHT_LOOP", "_SHADOWS_SOFT_HIGH", "_LIGHT_LAYERS",
             "_WRITE_RENDERING_LAYERS", "FOG_EXP2", "_CASTING_PUNCTUAL_LIGHT_SHADOW", "_GBUFFER_NORMALS_OCT",
+            AnimeShaderIds.World.AtmosphereKeyword,
         };
 
         private static readonly string[] PlainForward =
         {
             "_MAIN_LIGHT_SHADOWS", "_ADDITIONAL_LIGHTS", "_ADDITIONAL_LIGHT_SHADOWS", "_SHADOWS_SOFT", "FOG_LINEAR",
-            AnimeShaderIds.Keywords.ExtraLightsName,
+            AnimeShaderIds.Keywords.ExtraLightsName, AnimeShaderIds.World.AtmosphereKeyword,
         };
 
         private static readonly string[] ScreenShadows =

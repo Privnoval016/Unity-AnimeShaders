@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.3.0 (2026-11-16)
+
+- **Breaking:** `SkyState` is one serializable struct held by `SkyPreset` (the presets migrated); `SkyApply` also
+  publishes the world's globals (`AnimeShaderIds.World`); the sky's cloud cover, scale, speed and wind moved from its
+  material to the preset's cloud field.
+- The cloud field (`Core/AnimeClouds.hlsl`): one world-plane layer the sky draws and the cloud shadows will read.
+  `Anime/Sky` redrawn: the field's drawn clouds, up to three analytic ridges hazed by distance, the haze, every noise
+  read in uniform flow, a trig-free hash.
+- The haze (`Core/AnimeFog.hlsl`): distance and height fog with a glow toward the sun, in the pack's forward and outline
+  passes in place of URP's fog behind `_ANIME_ATMOSPHERE`; URP's fog takes the same colour and reach for other shaders.
+- `SkyPresetApplier`: a Play Mode copy of the sky material, the sun and reflection restored, the globals cleared when
+  switched off.
+- Tests: the sky's clouds, ridges (colour, haze by distance, the sun behind, a pixel-wide edge, a varied, steady
+  skyline), the haze (off, distance, height, orthographic, the glow, never twice, a wall at the sky's distance meeting
+  the sky), presets (every value and global, no noise, clearing, the applier, every preset migrated), the world table;
+  `WorldGlobals` in every stage, `MadeSky`, the finite scan. Break proofs.
+
 ## 0.2.0 (2026-11-16)
 
 - **Breaking:** `Anime/Ground` paints two layers (Field, Circle) from packed detail maps instead of procedural grass and

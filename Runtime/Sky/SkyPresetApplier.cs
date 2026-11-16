@@ -4,9 +4,11 @@ using UnityEngine.Rendering;
 namespace AnimeShaders
 {
     /**
-     * <summary>Sets a scene's sky, sun, ambient and fog from a <see cref="SkyPreset" /> when it is enabled, in Edit and
-     * Play Mode. No preset (Authored) leaves the scene as it was made. Switched off in Play Mode, it puts back what the
-     * scene had. It never changes the preset itself during play.</summary>
+     * <summary>Sets a scene's sky, sun, ambient, fog and the world's globals (clouds, haze) from a <see cref="SkyPreset" />
+     * when it is enabled, in Edit and Play Mode. No preset (Authored) leaves the scene as it was made. In Edit Mode it
+     * writes the sky material itself (what the preset makes of it); in Play Mode it draws through a copy, so the material
+     * stays as authored, and switched off it puts back everything it changed. Switched off in either mode, the world's
+     * globals are cleared.</summary>
      */
     [ExecuteAlways]
     [DisallowMultipleComponent]
@@ -29,6 +31,7 @@ namespace AnimeShaders
 
         private Authored _authored;
         private bool _recorded;
+        private Material _playCopy;
 
         #endregion
 
@@ -45,20 +48,34 @@ namespace AnimeShaders
         {
             if (_preset == null)
                 return;
+            Material sky = _sky;
             if (Application.isPlaying)
             {
                 _authored = Authored.Capture(_sun);
                 _recorded = true;
+                if (_sky != null)
+                {
+                    _playCopy = new Material(_sky) { name = _sky.name, hideFlags = HideFlags.DontSave };
+                    sky = _playCopy;
+                }
             }
-            SkyApply.Apply(_preset.Resolve(), _sky, _sun);
+            SkyApply.Apply(_preset.Resolve(), sky, _sun);
         }
 
         private void OnDisable()
         {
-            if (!_recorded)
-                return;
-            _authored.Restore(_sun);
-            _recorded = false;
+            if (_preset != null)
+                SkyApply.Unpublish();
+            if (_recorded)
+            {
+                _authored.Restore(_sun);
+                _recorded = false;
+            }
+            if (_playCopy != null)
+            {
+                Destroy(_playCopy);
+                _playCopy = null;
+            }
         }
 
         private void OnValidate()
@@ -78,6 +95,8 @@ namespace AnimeShaders
             private float _lightIntensity;
             private Quaternion _lightRotation;
             private Material _skybox;
+            private Light _sceneSun;
+            private Texture _reflection;
             private AmbientMode _ambientMode;
             private Color _ambientSky;
             private Color _ambientEquator;
@@ -93,7 +112,8 @@ namespace AnimeShaders
             {
                 var authored = new Authored
                 {
-                    _skybox = RenderSettings.skybox, _ambientMode = RenderSettings.ambientMode,
+                    _skybox = RenderSettings.skybox, _sceneSun = RenderSettings.sun,
+                    _reflection = RenderSettings.customReflectionTexture, _ambientMode = RenderSettings.ambientMode,
                     _ambientSky = RenderSettings.ambientSkyColor, _ambientEquator = RenderSettings.ambientEquatorColor,
                     _ambientGround = RenderSettings.ambientGroundColor,
                     _reflectionMode = RenderSettings.defaultReflectionMode, _fog = RenderSettings.fog,
@@ -112,6 +132,8 @@ namespace AnimeShaders
             public void Restore(Light sun)
             {
                 RenderSettings.skybox = _skybox;
+                RenderSettings.sun = _sceneSun;
+                RenderSettings.customReflectionTexture = _reflection;
                 RenderSettings.ambientMode = _ambientMode;
                 RenderSettings.ambientSkyColor = _ambientSky;
                 RenderSettings.ambientEquatorColor = _ambientEquator;

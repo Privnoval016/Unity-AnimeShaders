@@ -152,6 +152,7 @@ Shader "Anime/Character"
             #pragma multi_compile_fragment _ _LIGHT_LAYERS
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/RenderingLayers.hlsl"
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Fog.hlsl"
+            #pragma dynamic_branch_fragment _ _ANIME_ATMOSPHERE
 
             #include "Includes/Passes/AnimeForwardPass.hlsl"
             ENDHLSL
@@ -176,6 +177,7 @@ Shader "Anime/Character"
             #pragma shader_feature_local_fragment _ANIME_OUTLINE_BASETINT
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/RenderingLayers.hlsl"
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Fog.hlsl"
+            #pragma dynamic_branch_fragment _ _ANIME_ATMOSPHERE
 
             #include "Includes/Passes/AnimeOutline.hlsl"
             ENDHLSL

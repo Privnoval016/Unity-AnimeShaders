@@ -19,6 +19,7 @@
 #endif
 #include "../Core/AnimeDirector.hlsl"
 #include "../Core/AnimeFade.hlsl"
+#include "../Core/AnimeFog.hlsl"
 
 struct AnimeOutlineAttributes
 {
@@ -125,7 +126,7 @@ void AnimeOutlineFragment(
 #endif
 
     half fogCoord = InitializeInputDataFog(float4(input.positionWS, 1.0), input.fogFactor);
-    color = MixFog(color, fogCoord);
+    color = AnimeApplyFog(color, input.positionWS, fogCoord);
     outColor = half4(color, 1.0h);
 #if defined(_WRITE_RENDERING_LAYERS)
     outRenderingLayers = EncodeMeshRenderingLayer();

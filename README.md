@@ -5,8 +5,8 @@ two-tone look in the manner of modern anime games, outlines that hold up on two-
 as the head turns, and a light director so a project can set a mood per scene and relight a single shot. When it is
 done, everything will be tuned through a custom inspector with presets, with nothing needing code.
 
-**Status: in construction (0.2.0).** The lit core, the character shader, the depth-edge rim, the world, ground and sky
-shaders, sky presets and detail sets are written; the face, hair and foliage shaders, the full inspector, the director's
+**Status: in construction (0.3.0).** The lit core, the character shader, the depth-edge rim, the world, ground and sky
+shaders, sky presets with clouds, ridges and haze, and detail sets are written; the face, hair and foliage shaders, the full inspector, the director's
 runtime and look presets arrive in the order of the table below, each
 proved before the next.
 
@@ -38,7 +38,7 @@ normals, smoothed so hard edges don't crack the line. Those normals are baked on
 leaving the tangents free for normal maps. Width follows the camera's distance and field of view, can be painted per
 vertex, and has a global multiplier.
 
-## What exists now (0.2.0)
+## What exists now (0.3.0)
 
 | File | What it is |
 |---|---|
@@ -46,6 +46,7 @@ vertex, and has a global multiplier.
 | `Shaders/Includes/Core/AnimeProperties.hlsl` | The one `UnityPerMaterial` block every pass includes (SRP Batcher): a core plus feature groups a shader opts into in its `HLSLINCLUDE` (`ANIME_GROUP_BAND`, `_BODY`, `_EMISSION`, `_INSIDE`, `_RIM`, `_LINE`; the code reading a group compiles only with it, and the shader's Properties list holds exactly its groups); its own extra properties through `ANIME_ENTRY_PROPERTIES`; the dynamic-branch keyword macros |
 | `Shaders/Textures/AnimeNoise.png` | The pack's noise, baked by `Editor/AnimeNoiseBaker.cs` (Tools > Anime Shaders > Bake Noise Texture; our own code, deterministic, versioned): 1024 square, R value noise, G fbm, B distance to the nearest cell edge, A a value per cell, every channel tiling; held linear, uncompressed and mipmapped by `Editor/AnimeNoiseImport.cs` (label `AnimeNoise`) |
 | `Shaders/Includes/Core/AnimeDirector.hlsl` | The light director's global properties (below) |
+| `Shaders/Includes/Core/AnimeWorld.hlsl`, `AnimeClouds.hlsl`, `AnimeFog.hlsl` | The world's globals (published by a sky preset), the cloud field the sky and the cloud shadows share, and the haze that replaces URP's fog in the pack's shaders (below) |
 | `Shaders/Includes/Core/AnimeSurface.hlsl` | The surface struct, base and emission sampling, alpha clip, the inside tone |
 | `Shaders/Includes/Core/AnimeLighting.hlsl` | The ramp, cast shadows folded into it, the second band, additional lights, the rim, emission, ambient: `AnimeShade` |
 | `Shaders/Includes/Passes/AnimeForwardPass.hlsl`, `AnimeShadowCasterPass.hlsl`, `AnimeDepthOnlyPass.hlsl`, `AnimeDepthNormalsPass.hlsl` | One file per pass: structs, vertex, fragment |
@@ -61,9 +62,9 @@ vertex, and has a global multiplier.
 | `Editor/Detail/` | Detail sets (below): `AnimeDetailSet` (the asset), `AnimeDetailSetEditor` (Pack, out of date, video memory), `DetailMath` (the packing as pure image maths), `AnimeDetailPacker` (the sources read from disk, the map written and recorded, the neutral map), `AnimeDetailImport` (the label `AnimeDetail`), `DetailImage`, `DetailSources`, `DetailSettings`, `NormalConvention` |
 | `Shaders/Textures/AnimeDetailNeutral.png` | The neutral detail map (shade 0.5, mask 1, flat normal): the ground's default, so a layer with no set renders as its palette's middle (Tools > Anime Shaders > Make Neutral Detail Map) |
 | `Shaders/AnimeWorld.shader`, `AnimeGround.shader`, `AnimeSky.shader`; `Shaders/Includes/World/` | The world's shaders and the ground's and sky's own code (below) |
-| `Runtime/Sky/` | `SkyPreset`, `SkyState`, `SkyApply`, `SkyPresetApplier`, and the shipped presets in `Presets/` |
+| `Runtime/Sky/` | `SkyPreset`, `SkyState` (everything a preset sets, held once), `SkyRidge`, `SkyApply` (the one writer), `SkyPresetApplier`, and the shipped presets in `Presets/` |
 | `Editor/AnimeShaderGUI.cs` | The material inspector (thin for now): the shader's sections, a live preview of the two-tone ramp (the same maths the shader runs, tested against a render), and each feature's settings shown only while the feature is on |
-| `Tests/Editor/` | `Support/` (`LitStage`: a preview scene, camera and light rendering into a linear float target; `MadePipeline`: a URP asset made for a test with given features, swapped in and always put back; meshes, materials with colours as the shader reads them, frame reads, source readers, the director's globals held neutral, the batcher check), `Shader/` (passes, batcher, names and constants, every platform's compile, and `Probe/`: an entry shader adding its own property, and one through the surface hook), `Inspector/` (the feature map, the preview against a render), `Look/` (tones, band, rim, the depth rim, director, cast shadows, inside tone, fade, the surface hook), `World/` (the noise, the detail packer and its import, the ground, the sky, presets, world UVs), `Outline/` (the line, the baker) |
+| `Tests/Editor/` | `Support/` (in `Stage/`, `World/` and `Sources/`: `LitStage`: a preview scene, camera and light rendering into a linear float target; `MadePipeline`: a URP asset made for a test with given features, swapped in and always put back; meshes, materials with colours as the shader reads them, frame reads, source readers, the director's globals and the world's globals held neutral (`WorldGlobals`; every stage holds them), a sky preset made field by field (`MadeSky`), the finite scan, the batcher check), `Shader/` (passes, batcher, names and constants, every platform's compile, and `Probe/`: an entry shader adding its own property, and one through the surface hook), `Inspector/` (the feature map, the preview against a render), `Look/` (tones, band, rim, the depth rim, director, cast shadows, inside tone, fade, the surface hook), `World/` (the noise, world UVs; `Ground/`: the detail packer and its import, the ground; `Sky/`: the sky, its ridges and clouds, the haze, presets), `Outline/` (the line, the baker) |
 
 A thin entry shader (face, hair, world, or a project's own with extra passes) includes the same files, declares its own
 pragmas, and calls `AnimeShade`; it adds nothing else to the lighting. Its own material properties go in through
@@ -154,15 +155,27 @@ takes no rim; a camera whose renderer lacks the feature draws none. XR single-pa
   label. Its four channels compress worse than one: measured on the playground's sets (BC7 and ASTC 4x4 alike), a
   smooth stone keeps about 3° of normal and 4 of 255 shade levels, a noisy grass about 9° and 11; a set that needs better
   can be packed without its mask, or its normal split out (not built).
-- **`Anime/Sky`** (the skybox): the gradient, the sun disc and halo where the main light points (or the director's
-  override), cel clouds drifting with game time (frozen with hitstop), stars at night; everything but the disc stays
-  under **Brightest Sky** so it never blooms over what is in front of it.
-- **Sky presets** (`SkyPreset` assets: Day, Golden Hour, Dusk, Night in `Runtime/Sky/Presets/`): the sky's colours,
-  clouds and stars, the sun's colour, strength and angle, the ambient (Trilight) and the fog (linear, in the horizon
-  colour). `SkyApply.Apply` is the one writer (the sky material, the sun light, the scene's render settings; reflections
-  off, so a preset costs no sky-to-cubemap render). **`SkyPresetApplier`** applies one on enable in Edit and Play Mode;
-  no preset (Authored) leaves the scene alone; switched off in Play Mode it puts back what the scene had. Never applied
-  mid-fight. The light director (when built) becomes its caller.
+- **`Anime/Sky`** (the skybox): the gradient; the **cloud field** where the view ray meets its plane (a world plane at
+  the clouds' altitude, so they parallax with the camera; drawn shapes with an anti-aliased edge and one shade band
+  away from the sun; the same field the ground's cloud shadows read); stars at night; the sun's halo and disc where the
+  main light points (or the director's override); the haze at the sky's distance; and up to three **ridges** of hills on
+  the horizon, drawn analytically (no texture), farthest first, each hazed at its own distance, lit softly along its
+  line where it faces the sun, hiding the sun behind it. Everything but the disc stays under **Brightest Sky**. Every
+  noise read is in uniform flow.
+- **The haze** (`Core/AnimeFog.hlsl`): distance and height fog in the horizon colour, glowing toward the sun, applied
+  per pixel by the pack's forward and outline passes in place of URP's fog while a preset turns it on (the global
+  dynamic branch `_ANIME_ATMOSPHERE`); exact on orthographic cameras and transparents; off, URP's fog as before. The sky
+  reads it at the sky's distance and each ridge at its own, so far ground, ridges and sky meet.
+- **Sky presets** (`SkyPreset` assets: Day, Golden Hour, Dusk, Night in `Runtime/Sky/Presets/`): one `SkyState` each:
+  the sky's colours, the sun, the cloud field (cover, size, simplicity, softness, altitude, drift, shade, shadow
+  strength), the ridges, the stars, the ambient (Trilight) and the haze (start, density, base height and falloff, most
+  opacity, the glow toward the sun, the sky's distance). `SkyApply.Apply` is the one writer: the sky material, the sun
+  light, the scene's render settings (reflections off; URP's fog set to the haze's colour and reach for shaders outside
+  the pack) and the **world's globals** (`AnimeShaderIds.World`: the cloud field, the haze, the clouds' noise and two
+  keywords). **`SkyPresetApplier`** applies one on enable in Edit and Play Mode; no preset (Authored) leaves the scene
+  alone; in Edit Mode it writes the sky material itself, in Play Mode a copy (the material stays as authored) and
+  switched off it puts back everything it changed, the sun and reflection included; switched off in either mode it
+  clears the world's globals. Never applied mid-fight. The light director (when built) becomes its caller.
 
 ### The light director's globals
 

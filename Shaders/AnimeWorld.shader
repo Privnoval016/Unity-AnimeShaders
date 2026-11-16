@@ -87,6 +87,7 @@ Shader "Anime/World"
             #pragma multi_compile_fragment _ _LIGHT_LAYERS
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/RenderingLayers.hlsl"
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Fog.hlsl"
+            #pragma dynamic_branch_fragment _ _ANIME_ATMOSPHERE
 
             #include "Includes/Passes/AnimeForwardPass.hlsl"
             ENDHLSL
