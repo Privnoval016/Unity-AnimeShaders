@@ -108,6 +108,7 @@ namespace AnimeShaders
             Vector2 drift = state.Wind.sqrMagnitude > 0f ? state.Wind.normalized * state.CloudSpeed : Vector2.zero;
             Shader.SetGlobalVector(World.AnimeCloudShape, new Vector4(1f / Mathf.Max(state.CloudSize, 1f), cover, state.CloudSoftness, state.CloudAltitude));
             Shader.SetGlobalVector(World.AnimeCloudMotion, new Vector4(drift.x, drift.y, state.CloudSimplicity, state.CloudShadowStrength));
+            Shader.SetGlobalVector(World.AnimeCloudShadowClear, new Vector4(state.CloudShadowClearRadius, Mathf.Max(state.CloudShadowClearFade, 0.01f), 0f, 0f));
             Shader.SetGlobalTexture(World.AnimeCloudNoise, cloudNoise != null ? cloudNoise : Texture2D.grayTexture);
             Color haze = state.Horizon.linear;
             Color glow = state.HazeGlow.linear;
@@ -122,7 +123,7 @@ namespace AnimeShaders
         /** <summary>Clears the world's globals: no clouds, no haze, the scene's plain fog.</summary> */
         public static void Unpublish()
         {
-            foreach (int global in new[] { World.AnimeCloudShape, World.AnimeCloudMotion, World.AnimeHazeColor, World.AnimeHazeGlow, World.AnimeHazeShape, World.AnimeHazeSky })
+            foreach (int global in new[] { World.AnimeCloudShape, World.AnimeCloudMotion, World.AnimeCloudShadowClear, World.AnimeHazeColor, World.AnimeHazeGlow, World.AnimeHazeShape, World.AnimeHazeSky })
                 Shader.SetGlobalVector(global, Vector4.zero);
             Shader.SetGlobalTexture(World.AnimeCloudNoise, Texture2D.grayTexture);
             Shader.SetKeyword(GlobalKeyword.Create(World.AtmosphereKeyword), false);

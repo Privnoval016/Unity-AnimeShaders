@@ -15,7 +15,7 @@ namespace AnimeShaders.Tests
 
         private static readonly int[] Vectors =
         {
-            World.AnimeCloudShape, World.AnimeCloudMotion, World.AnimeHazeColor, World.AnimeHazeGlow,
+            World.AnimeCloudShape, World.AnimeCloudMotion, World.AnimeCloudShadowClear, World.AnimeHazeColor, World.AnimeHazeGlow,
             World.AnimeHazeShape, World.AnimeHazeSky,
         };
 

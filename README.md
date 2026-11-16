@@ -163,6 +163,12 @@ takes no rim; a camera whose renderer lacks the feature draws none. XR single-pa
   line where it faces the sun, hiding the sun behind it, its foot dissolving into the haze over the sky (the **mist**:
   how high it reaches and how thick, in the preset), so the far ground meets the hills softly. Everything but the disc stays under **Brightest Sky**. Every
   noise read is in uniform flow.
+- **Cloud shadows** (`Core/AnimeClouds.hlsl`, in the lighting): the cloud field read where the ray toward the sun meets
+  its plane, so a shadow lies under its cloud; it dims the lit tone toward the shadow tone softly (by the cloud's own
+  edge, not the ramp; not faded by the shadow distance); a body reads it once at its body-shadow point; a material's
+  **Cloud Shadow** sets how much it takes; none within the preset's clear radius round the camera, so a fight never
+  changes light; the sky's ridges take it where they stand. Behind the global dynamic branch `_ANIME_CLOUD_SHADOWS`
+  (on while a preset has cover and strength): off costs nothing, on one noise read a pixel.
 - **The haze** (`Core/AnimeFog.hlsl`): distance and height fog in the horizon colour, glowing toward the sun, applied
   per pixel by the pack's forward and outline passes in place of URP's fog while a preset turns it on (the global
   dynamic branch `_ANIME_ATMOSPHERE`); exact on orthographic cameras and transparents; off, URP's fog as before. The sky

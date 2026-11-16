@@ -41,6 +41,7 @@ Shader "Anime/Character"
         [Header(Shadows and Lights)]
         [ToggleOff(_RECEIVE_SHADOWS_OFF)] _ReceiveShadows("Receive Shadows", Float) = 1
         _CastShadowStrength("Cast Shadow Strength", Range(0, 1)) = 1
+        _CloudShadow("Cloud Shadow (how much the clouds shade it)", Range(0, 1)) = 1
         [Toggle(_ANIME_BODY_SHADOW)] _BodyShadow("Shadow The Whole Body", Float) = 0
         _BodyShadowReach("Body Shadow Reach (m toward the light)", Range(0, 5)) = 1.5
 
@@ -153,6 +154,7 @@ Shader "Anime/Character"
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/RenderingLayers.hlsl"
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Fog.hlsl"
             #pragma dynamic_branch_fragment _ _ANIME_ATMOSPHERE
+            #pragma dynamic_branch_fragment _ _ANIME_CLOUD_SHADOWS
 
             #include "Includes/Passes/AnimeForwardPass.hlsl"
             ENDHLSL

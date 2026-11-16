@@ -10,6 +10,11 @@
   read in uniform flow, a trig-free hash.
 - The haze (`Core/AnimeFog.hlsl`): distance and height fog with a glow toward the sun, in the pack's forward and outline
   passes in place of URP's fog behind `_ANIME_ATMOSPHERE`; URP's fog takes the same colour and reach for other shaders.
+- Cloud shadows (2c step B): the cloud field projected toward the sun dims the lit tone softly in every lit pack shader
+  (`_CloudShadow` on the core block, the material's response; `_ANIME_CLOUD_SHADOWS`); once per body at its shadow
+  point; a clear radius round the camera (`cloudShadowClearRadius`, `cloudShadowClearFade`; `_AnimeCloudShadowClear`);
+  the ridges shaded where they stand. Tests: off and no response, full and part cover, the clear radius, past the shadow
+  distance, one shade per body, the cloud overhead over its shadow, the ridges; break proofs.
 - Mist at the ridges' feet (`ridgeMistHeight`, `ridgeMist` in the state; `_RidgeMist` on the sky): each ridge dissolves
   into the haze toward its base, so far ground and hills meet with no line.
 - `SkyPresetApplier`: a Play Mode copy of the sky material, the sun and reflection restored, the globals cleared when

@@ -8,6 +8,7 @@
 //
 //   _AnimeCloudShape   x: 1 / a typical cloud's size (per metre)   y: cover 0..1   z: edge softness   w: altitude (m)
 //   _AnimeCloudMotion  xy: drift across x and z (m/s)   z: simplicity (a mip bias on the shape)   w: shadow strength
+//   _AnimeCloudShadowClear  x: no cloud shadow within this many metres of the camera   y: the metres they fade in over
 //   _AnimeHazeColor    rgb: the haze (the horizon colour), linear   a: its most opacity
 //   _AnimeHazeGlow     rgb: the haze toward the sun, linear   a: the glow's strength
 //   _AnimeHazeShape    x: start (m)   y: density per metre   z: base height (m)   w: falloff per metre above it
@@ -18,6 +19,7 @@
 CBUFFER_START(AnimeWorld)
     float4 _AnimeCloudShape;
     float4 _AnimeCloudMotion;
+    float4 _AnimeCloudShadowClear;
     float4 _AnimeHazeColor;
     float4 _AnimeHazeGlow;
     float4 _AnimeHazeShape;

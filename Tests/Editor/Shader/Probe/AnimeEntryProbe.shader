@@ -25,6 +25,7 @@ Shader "Hidden/AnimeShaders/Tests/EntryProbe"
         [Header(Shadows and Lights)]
         [ToggleOff(_RECEIVE_SHADOWS_OFF)] _ReceiveShadows("Receive Shadows", Float) = 1
         _CastShadowStrength("Cast Shadow Strength", Range(0, 1)) = 1
+        _CloudShadow("Cloud Shadow (how much the clouds shade it)", Range(0, 1)) = 1
         [Toggle(_ANIME_BODY_SHADOW)] _BodyShadow("Shadow The Whole Body", Float) = 0
         _BodyShadowReach("Body Shadow Reach (m toward the light)", Range(0, 5)) = 1.5
 

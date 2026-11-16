@@ -37,7 +37,9 @@ MonoBehaviour:
     wind: {x: 1, y: 0.3}
     cloudShadeOffset: 120
     cloudHorizonFade: 0.08
-    cloudShadowStrength: 0.4
+    cloudShadowStrength: 0.5
+    cloudShadowClearRadius: 40
+    cloudShadowClearFade: 80
     ridges:
     - colour: {r: 0.36, g: 0.45, b: 0.62, a: 1}
       height: 6

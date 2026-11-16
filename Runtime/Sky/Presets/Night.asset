@@ -38,6 +38,8 @@ MonoBehaviour:
     cloudShadeOffset: 40
     cloudHorizonFade: 0.12
     cloudShadowStrength: 0.4
+    cloudShadowClearRadius: 40
+    cloudShadowClearFade: 80
     ridges: []
     ridgeLitEdge: {r: 1, g: 1, b: 1, a: 1}
     ridgeMistHeight: 3

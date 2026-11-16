@@ -38,12 +38,17 @@ float2 AnimeCloudPlaneTowardSun(float3 positionWS, float3 towardSun)
     return positionWS.xz + towardSun.xz * ((_AnimeCloudShape.w - positionWS.y) / rise);
 }
 
-// How much a cloud shades <positionWS> from the sun, 0 to the published shadow strength (none below the plane's height or with the sun down).
+// How much a cloud shades <positionWS> from the sun, 0 to the published shadow strength: none above the plane or with
+// the sun down, and none within the clear radius round the camera (so a fight never changes light), coming in past it.
 half AnimeCloudShadow(float3 positionWS, float3 towardSun)
 {
     half density = AnimeCloudDensity(AnimeCloudPlaneTowardSun(positionWS, towardSun));
     half above = positionWS.y < _AnimeCloudShape.w && towardSun.y > 0.0 ? 1.0h : 0.0h;
-    return density * half(_AnimeCloudMotion.w) * above;
+    float fromCamera = distance(positionWS.xz, _WorldSpaceCameraPos.xz);
+    half past = _AnimeCloudShadowClear.x > 0.0
+        ? half(smoothstep(_AnimeCloudShadowClear.x, _AnimeCloudShadowClear.x + max(_AnimeCloudShadowClear.y, 0.01), fromCamera))
+        : 1.0h;
+    return density * half(_AnimeCloudMotion.w) * above * past;
 }
 
 #endif

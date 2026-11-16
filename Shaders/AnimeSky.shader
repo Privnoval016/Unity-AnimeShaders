@@ -66,6 +66,7 @@ Shader "Anime/Sky"
             #pragma fragment AnimeSkyFragment
             #pragma dynamic_branch_local_fragment _ _ANIME_SKY_STARS
             #pragma dynamic_branch_fragment _ _ANIME_ATMOSPHERE
+            #pragma dynamic_branch_fragment _ _ANIME_CLOUD_SHADOWS
 
             #include "Includes/World/AnimeSky.hlsl"
             ENDHLSL

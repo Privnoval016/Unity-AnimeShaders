@@ -127,7 +127,8 @@ float AnimeSkyRidgeLine(float around, float4 shape)
     return shape.x + shape.y * (sum / total * 2.0 - 1.0);
 }
 
-// Lays one ridge layer over <sky>: its colour (lit softly along its line where it faces the sun) hazed at its distance,
+// Lays one ridge layer over <sky>: its colour (lit softly along its line where it faces the sun, shaded by the clouds'
+// shadows where it stands) hazed at its distance,
 // dissolving toward its foot into the haze at the sky's distance (the mist), so the far ground meets it softly.
 half3 AnimeSkyRidge(half3 sky, half4 colour, float4 shape, float distance, float3 direction, float around, float3 sun)
 {
@@ -138,6 +139,14 @@ half3 AnimeSkyRidge(half3 sky, half4 colour, float4 shape, float distance, float
     half facing = half(saturate(dot(flatSun, flatView)));
     half edge = half(1.0 - saturate(below / ANIME_SKY_RIDGE_EDGE));
     half3 ridge = lerp(colour.rgb, _RidgeLitColor.rgb, facing * edge * _RidgeLitColor.a);
+#if defined(_ANIME_CLOUD_SHADOWS_KEYWORD_DECLARED) || defined(_ANIME_CLOUD_SHADOWS)
+    UNITY_BRANCH
+    if (ANIME_CLOUD_SHADOWS_ON)
+    {
+        float3 slope = _WorldSpaceCameraPos + direction * distance;
+        ridge *= 1.0h - AnimeCloudShadow(slope, sun);
+    }
+#endif
     half3 mist = _HorizonColor.rgb;
     if (ANIME_ATMOSPHERE_ON)
     {

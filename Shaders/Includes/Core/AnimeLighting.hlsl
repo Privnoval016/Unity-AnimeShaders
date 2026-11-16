@@ -2,12 +2,13 @@
 #define ANIME_LIGHTING_INCLUDED
 
 // The lighting every lit pack shader shares: an analytic two-tone ramp with the main light's cast shadow joined to
-// it, an optional second thin shadow band, additional lights through the same ramp, a fresnel rim, emission,
-// and a gentle ambient. The ramp is the single seam (AnimeToneWeight and its callers): a ramp texture could replace it
+// it, the clouds' shadows dimming its lit tone softly, an optional second thin shadow band, additional lights through
+// the same ramp, a fresnel rim, emission, and a gentle ambient. The ramp is the single seam (AnimeToneWeight and its callers): a ramp texture could replace it
 // later without touching a caller.
 
 #include "AnimeSurface.hlsl"
 #include "AnimeDirector.hlsl"
+#include "AnimeClouds.hlsl"
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
 // 0 below the threshold, 1 above it, smooth across softness (a width in ramp units, never zero).
@@ -71,6 +72,23 @@ half AnimeMainLightCast(InputData inputData, half3 lightDirectionWS, out half st
     half attenuation = MainLightRealtimeShadow(shadowCoord);
     strength = AnimeCastStrength(shadowPoint);
     return ANIME_BODY_SHADOW_ON ? attenuation : AnimeCastLit(attenuation);
+}
+
+// How much the clouds shade a pixel from the main light, 0 to the published strength times the material's response:
+// read once for a whole body at its shadow point (so a cloud's edge never slices a character), per pixel otherwise. Soft
+// by the cloud's own edge, not the ramp's, and not faded by the shadow distance. Off (the keyword), nothing.
+half AnimeCloudShade(float3 positionWS, half3 lightDirectionWS)
+{
+    half shade = 0.0h;
+#if defined(_ANIME_CLOUD_SHADOWS_KEYWORD_DECLARED) || defined(_ANIME_CLOUD_SHADOWS)
+    UNITY_BRANCH
+    if (ANIME_CLOUD_SHADOWS_ON)
+    {
+        float3 towardSun = AnimeDirectorLightDirection(lightDirectionWS);
+        shade = AnimeCloudShadow(AnimeShadowPoint(positionWS, lightDirectionWS), towardSun) * _CloudShadow;
+    }
+#endif
+    return shade;
 }
 
 half3 AnimeProbeAmbient()
@@ -147,6 +165,7 @@ half3 AnimeShade(AnimeSurface surface, InputData inputData)
     half castStrength;
     half castLit = AnimeMainLightCast(inputData, half3(mainLight.direction), castStrength);
     half litWeight = lerp(formWeight, min(formWeight, castLit), castStrength);
+    litWeight *= 1.0h - AnimeCloudShade(inputData.positionWS, half3(mainLight.direction));
     litWeight = mainMatches ? litWeight : 0.0h;
 
     half3 lightColor = mainMatches ? mainLight.color * AnimeDirectorLightColorMultiplier() : half3(0, 0, 0);

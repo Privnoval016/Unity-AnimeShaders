@@ -19,6 +19,7 @@ Shader "Anime/World"
         [Header(Shadows and Lights)]
         [ToggleOff(_RECEIVE_SHADOWS_OFF)] _ReceiveShadows("Receive Shadows", Float) = 1
         _CastShadowStrength("Cast Shadow Strength", Range(0, 1)) = 1
+        _CloudShadow("Cloud Shadow (how much the clouds shade it)", Range(0, 1)) = 1
         [Toggle(_ANIME_EXTRA_LIGHTS)] _ExtraLights("Use Additional Lights", Float) = 0
         _ExtraLightStrength("Additional Light Strength", Range(0, 2)) = 1
         _ExtraLightCap("Additional Light Cap", Range(0, 2)) = 0.6
@@ -88,6 +89,7 @@ Shader "Anime/World"
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/RenderingLayers.hlsl"
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Fog.hlsl"
             #pragma dynamic_branch_fragment _ _ANIME_ATMOSPHERE
+            #pragma dynamic_branch_fragment _ _ANIME_CLOUD_SHADOWS
 
             #include "Includes/Passes/AnimeForwardPass.hlsl"
             ENDHLSL

@@ -68,6 +68,10 @@ namespace AnimeShaders
         [Range(0.01f, 0.5f)] [SerializeField] private float cloudHorizonFade;
         [Tooltip("How dark the clouds' shadows on the ground are (0: none).")]
         [Range(0f, 1f)] [SerializeField] private float cloudShadowStrength;
+        [Tooltip("No cloud shadows within this many metres of the camera, so a fight and the people in it never change light; they drift over the field and hills beyond.")]
+        [Min(0f)] [SerializeField] private float cloudShadowClearRadius;
+        [Tooltip("Over how many metres past the clear radius the cloud shadows come in.")]
+        [Min(0.01f)] [SerializeField] private float cloudShadowClearFade;
 
         [Header("Ridges")]
         [Tooltip("Hills and mountains drawn on the horizon, farthest first; at most three.")]
@@ -130,7 +134,8 @@ namespace AnimeShaders
             discColor = new Color(1f, 0.96f, 0.88f), discSize = 0.04f, discStrength = 2f, haloSize = 0.25f, haloStrength = 0.3f,
             cloudLit = Color.white, cloudShade = new Color(0.8f, 0.84f, 0.93f), cloudCover = 0.45f, cloudSoftness = 0.05f,
             cloudSize = 400f, cloudSimplicity = 1f, cloudAltitude = 600f, cloudSpeed = 2f, wind = new Vector2(1f, 0.3f),
-            cloudShadeOffset = 40f, cloudHorizonFade = 0.12f, cloudShadowStrength = 0.4f,
+            cloudShadeOffset = 40f, cloudHorizonFade = 0.12f, cloudShadowStrength = 0.4f, cloudShadowClearRadius = 40f,
+            cloudShadowClearFade = 80f,
             ridges = Array.Empty<SkyRidge>(), ridgeLitEdge = Color.white, ridgeMistHeight = 3f, ridgeMist = 0.8f,
             stars = false, starDensity = 0.2f, starSize = 0.15f,
             ambientSky = new Color(0.55f, 0.62f, 0.75f), ambientEquator = new Color(0.45f, 0.5f, 0.55f),
@@ -210,6 +215,12 @@ namespace AnimeShaders
 
         /** <summary>How dark the clouds' shadows on the ground are.</summary> */
         public float CloudShadowStrength => cloudShadowStrength;
+
+        /** <summary>How far round the camera no cloud shadow falls, in metres.</summary> */
+        public float CloudShadowClearRadius => cloudShadowClearRadius;
+
+        /** <summary>Over how many metres past the clear radius the cloud shadows come in.</summary> */
+        public float CloudShadowClearFade => cloudShadowClearFade;
 
         /** <summary>The ridges on the horizon, farthest first (none when unset).</summary> */
         public SkyRidge[] Ridges => ridges ?? Array.Empty<SkyRidge>();

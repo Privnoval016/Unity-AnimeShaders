@@ -185,6 +185,17 @@ namespace AnimeShaders.Tests
         }
 
         [Test]
+        public void ARidge_TakesTheCloudsShadows()
+        {
+            _stage.LightFrom(new Vector3(0f, 1f, -0.5f));
+            _made.Ridges(Flat(Red, 12f, 500f)).Set("cloudShadowStrength", 0.6f).Set("cloudSize", 5000f);
+            Color clear = Above(Looking(Vector3.forward), 6f);
+            _made.Set("cloudCover", 1f);
+            Color shaded = Above(Looking(Vector3.forward), 6f);
+            Assert.Less(shaded.r, clear.r * 0.7f, $"under the clouds {shaded}, clear {clear}");
+        }
+
+        [Test]
         public void TheFartherRidge_IsPalerInTheHaze()
         {
             _made.Set("haze", true).Set("hazeStart", 0f).Set("hazeDensity", 0.002f).Set("hazeFalloff", 0f)

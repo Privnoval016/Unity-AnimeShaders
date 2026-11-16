@@ -166,6 +166,12 @@ namespace AnimeShaders
             /** <summary>The property id of _Band2Softness.</summary> */
             public static readonly int Band2Softness = Shader.PropertyToID(Band2SoftnessName);
 
+            /** <summary>The name _CloudShadow.</summary> */
+            public const string CloudShadowName = "_CloudShadow";
+
+            /** <summary>The property id of _CloudShadow.</summary> */
+            public static readonly int CloudShadow = Shader.PropertyToID(CloudShadowName);
+
             /** <summary>The name _CastShadowStrength.</summary> */
             public const string CastShadowStrengthName = "_CastShadowStrength";
 
@@ -804,6 +810,12 @@ namespace AnimeShaders
 
             /** <summary>The property id of _AnimeCloudMotion.</summary> */
             public static readonly int AnimeCloudMotion = Shader.PropertyToID(AnimeCloudMotionName);
+
+            /** <summary>The name _AnimeCloudShadowClear.</summary> */
+            public const string AnimeCloudShadowClearName = "_AnimeCloudShadowClear";
+
+            /** <summary>The property id of _AnimeCloudShadowClear.</summary> */
+            public static readonly int AnimeCloudShadowClear = Shader.PropertyToID(AnimeCloudShadowClearName);
 
             /** <summary>The name _AnimeHazeColor.</summary> */
             public const string AnimeHazeColorName = "_AnimeHazeColor";
