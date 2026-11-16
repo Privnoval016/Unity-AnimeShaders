@@ -169,6 +169,12 @@ namespace AnimeShaders
             /** <summary>The property id of _CastShadowStrength.</summary> */
             public static readonly int CastShadowStrength = Shader.PropertyToID(CastShadowStrengthName);
 
+            /** <summary>The name _BodyShadowReach.</summary> */
+            public const string BodyShadowReachName = "_BodyShadowReach";
+
+            /** <summary>The property id of _BodyShadowReach.</summary> */
+            public static readonly int BodyShadowReach = Shader.PropertyToID(BodyShadowReachName);
+
             /** <summary>The name _LightInfluence.</summary> */
             public const string LightInfluenceName = "_LightInfluence";
 
@@ -318,6 +324,12 @@ namespace AnimeShaders
             /** <summary>The property id of _ReceiveShadows.</summary> */
             public static readonly int ReceiveShadows = Shader.PropertyToID(ReceiveShadowsName);
 
+            /** <summary>The toggle for reading the cast shadow once for the whole body instead of per surface.</summary> */
+            public const string BodyShadowName = "_BodyShadow";
+
+            /** <summary>The property id of _BodyShadow.</summary> */
+            public static readonly int BodyShadow = Shader.PropertyToID(BodyShadowName);
+
             /** <summary>The toggle for additional lights.</summary> */
             public const string ExtraLightsName = "_ExtraLights";
 
@@ -424,6 +436,9 @@ namespace AnimeShaders
 
             /** <summary>The name _ANIME_INSIDE_TONE.</summary> */
             public const string InsideToneName = "_ANIME_INSIDE_TONE";
+
+            /** <summary>The name _ANIME_BODY_SHADOW.</summary> */
+            public const string BodyShadowName = "_ANIME_BODY_SHADOW";
 
             /** <summary>The name _ANIME_INSIDE_FADE.</summary> */
             public const string InsideFadeName = "_ANIME_INSIDE_FADE";

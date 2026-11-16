@@ -68,7 +68,11 @@ Two tones from an analytic ramp: the lit tone is the base colour times the light
 `_ShadowSoftness` is the width of the smoothstep. The main light's cast shadow is a second weight with its edge where
 the shadow map crosses one half, as hard or soft as the ramp, joined to the tone by `min`; `_CastShadowStrength` blends
 it in linearly (0.5 lands halfway between the tones), and URP's own fade toward the shadow distance lowers that strength
-smoothly. Additional lights cast their shadows when the pipeline gives them. Additional lights go through the same ramp
+smoothly. *Shadow The Whole Body* (`_ANIME_BODY_SHADOW`, a dynamic branch, off by default as every toggle) reads that
+shadow once per renderer instead of per pixel: at its bounds' centre moved `_BodyShadowReach` metres toward the light,
+outside the body, so a hat, hair or an arm never shades it and nothing crawls as it animates, while scenery between it
+and the light still does; the body then fades into shade with the shadow map's own filtering. Under screen-space
+shadows it falls back to the surface. Additional lights cast their shadows when the pipeline gives them. Additional lights go through the same ramp
 at `_ExtraLightStrength`, capped by `_ExtraLightCap` (a toggle, off by default). The rim is a fresnel band. Emission is
 added after the tones and is never darkened. Ambient is the probe's average, or the director's tint, added gently to the
 shadow tone.

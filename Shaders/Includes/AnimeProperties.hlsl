@@ -45,6 +45,13 @@
 #else
     #define ANIME_INSIDE_TONE_ON false
 #endif
+#if defined(_ANIME_BODY_SHADOW_KEYWORD_DECLARED)
+    #define ANIME_BODY_SHADOW_ON (_ANIME_BODY_SHADOW)
+#elif defined(_ANIME_BODY_SHADOW)
+    #define ANIME_BODY_SHADOW_ON true
+#else
+    #define ANIME_BODY_SHADOW_ON false
+#endif
 #if defined(_ANIME_INSIDE_FADE_KEYWORD_DECLARED)
     #define ANIME_INSIDE_FADE_ON (_ANIME_INSIDE_FADE)
 #elif defined(_ANIME_INSIDE_FADE)
@@ -76,6 +83,7 @@ CBUFFER_START(UnityPerMaterial)
     half _Band2Offset;
     half _Band2Softness;
     half _CastShadowStrength;
+    half _BodyShadowReach;
     half _LightInfluence;
     half _AmbientStrength;
     half _ExtraLightStrength;

@@ -13,8 +13,8 @@ Shader "Anime/Character"
     //
     // Variants. Static material keywords: _NORMALMAP, _RECEIVE_SHADOWS_OFF, _ALPHATEST_ON, _ANIME_EXTRA_LIGHTS in the
     // forward pass (16 combinations at most), _ALPHATEST_ON in the depth passes, _ALPHATEST_ON, _ANIME_OUTLINE_BAKED,
-    // _ANIME_OUTLINE_VCOLOR and _ANIME_OUTLINE_BASETINT in the outline pass. Rim, emission, emission map, second band and
-    // the inside tone and its fade are dynamic branches: no variants. Scene keywords in the forward pass: main light
+    // _ANIME_OUTLINE_VCOLOR and _ANIME_OUTLINE_BASETINT in the outline pass. Rim, emission, emission map, second band,
+    // the inside tone and its fade, and the whole-body shadow are dynamic branches: no variants. Scene keywords in the forward pass: main light
     // shadows (4) x soft shadow quality (5) x additional lights (2) x their shadows (2) x Forward+ (2) x light layers (2)
     // x rendering layers write (2) x fog (4) = 2560 fragment variants before the render pipeline strips what its assets
     // never use; the vertex stage varies only by main light shadows, fog and the material keywords. No GPU
@@ -41,6 +41,8 @@ Shader "Anime/Character"
         [Header(Shadows and Lights)]
         [ToggleOff(_RECEIVE_SHADOWS_OFF)] _ReceiveShadows("Receive Shadows", Float) = 1
         _CastShadowStrength("Cast Shadow Strength", Range(0, 1)) = 1
+        [Toggle(_ANIME_BODY_SHADOW)] _BodyShadow("Shadow The Whole Body", Float) = 0
+        _BodyShadowReach("Body Shadow Reach (m toward the light)", Range(0, 5)) = 1.5
 
         [Toggle(_ANIME_EXTRA_LIGHTS)] _ExtraLights("Use Additional Lights", Float) = 0
         _ExtraLightStrength("Additional Light Strength", Range(0, 2)) = 1
@@ -128,6 +130,7 @@ Shader "Anime/Character"
             #pragma dynamic_branch_local_fragment _ _ANIME_EMISSION_MAP
             #pragma dynamic_branch_local_fragment _ _ANIME_INSIDE_TONE
             #pragma dynamic_branch_local_fragment _ _ANIME_INSIDE_FADE
+            #pragma dynamic_branch_local_fragment _ _ANIME_BODY_SHADOW
 
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
             #pragma multi_compile_fragment _ _ADDITIONAL_LIGHTS

@@ -41,6 +41,38 @@ half AnimeCastStrength(float3 positionWS)
     return strength;
 }
 
+// Where the main light's shadow is read. Per surface: the pixel itself. As a whole body: one point for the whole
+// renderer, its bounds' centre moved _BodyShadowReach toward the light, outside the body, so the body's own parts
+// (a hat, hair, an arm) never shade it and nothing crawls as it moves, while scenery between it and the light still
+// does. Screen-space shadows have no shadow map to read at another point: there the surface is used.
+float3 AnimeShadowPoint(float3 positionWS, half3 lightDirectionWS)
+{
+#if !defined(_MAIN_LIGHT_SHADOWS_SCREEN)
+    if (ANIME_BODY_SHADOW_ON)
+    {
+        float3 centre = (unity_RendererBounds_Min.xyz + unity_RendererBounds_Max.xyz) * 0.5;
+        return GetCameraRelativePositionWS(centre) + float3(lightDirectionWS) * _BodyShadowReach;
+    }
+#endif
+    return positionWS;
+}
+
+// The main light's cast shadow, 0 (shadowed) to 1 (lit), and how strongly it darkens (strength). A whole body's
+// shadow follows the shadow map's own filtering, so it fades smoothly as the body walks into shade; a surface's takes
+// the ramp's edge.
+half AnimeMainLightCast(InputData inputData, half3 lightDirectionWS, out half strength)
+{
+    float3 shadowPoint = AnimeShadowPoint(inputData.positionWS, lightDirectionWS);
+    float4 shadowCoord = inputData.shadowCoord;
+#if defined(MAIN_LIGHT_CALCULATE_SHADOWS) && !defined(_MAIN_LIGHT_SHADOWS_SCREEN)
+    if (ANIME_BODY_SHADOW_ON)
+        shadowCoord = TransformWorldToShadowCoord(shadowPoint);
+#endif
+    half attenuation = MainLightRealtimeShadow(shadowCoord);
+    strength = AnimeCastStrength(shadowPoint);
+    return ANIME_BODY_SHADOW_ON ? attenuation : AnimeCastLit(attenuation);
+}
+
 half3 AnimeProbeAmbient()
 {
     return max(half3(0, 0, 0), half3(unity_SHAr.w, unity_SHAg.w, unity_SHAb.w));
@@ -110,8 +142,9 @@ half3 AnimeShade(AnimeSurface surface, InputData inputData)
     half3 lightDirection = half3(AnimeDirectorLightDirection(mainLight.direction));
     half x = AnimeHalfLambert(surface.normalWS, lightDirection);
     half formWeight = AnimeToneWeight(x, _ShadowThreshold, _ShadowSoftness);
-    half castLit = AnimeCastLit(MainLightRealtimeShadow(inputData.shadowCoord));
-    half litWeight = lerp(formWeight, min(formWeight, castLit), AnimeCastStrength(inputData.positionWS));
+    half castStrength;
+    half castLit = AnimeMainLightCast(inputData, half3(mainLight.direction), castStrength);
+    half litWeight = lerp(formWeight, min(formWeight, castLit), castStrength);
     litWeight = mainMatches ? litWeight : 0.0h;
 
     half3 lightColor = mainMatches ? mainLight.color * AnimeDirectorLightColorMultiplier() : half3(0, 0, 0);

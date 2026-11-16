@@ -136,5 +136,34 @@ namespace AnimeShaders.Tests
             Assert.Greater(partial.grayscale, full.grayscale + Tolerance, $"faded {partial}, solid {full}");
             Assert.Less(partial.grayscale, Base.grayscale - Tolerance, $"faded {partial}, lit {Base}");
         }
+
+        [Test]
+        public void AsAWholeBody_ShadeOverItsCentre_ShadesEvenTheUncoveredSide()
+        {
+            _boardRenderer.transform.position = new Vector3(-1.4f, 2f, 0f);
+            _boardRenderer.transform.localScale = Vector3.one * 3.2f;
+            _material.SetFloat(Ids.CastShadowStrength, 1f);
+            Color perSurface = UpperRight(_stage.Render());
+            AnimeMaterials.SetFeature(_material, AnimeShaderIds.Keywords.BodyShadowName, AnimeShaderIds.Switches.BodyShadow, true);
+            _material.SetFloat(Ids.BodyShadowReach, 1.5f);
+            Color[] frame = _stage.Render();
+            Assert.IsTrue(FrameReads.Near(perSurface, Base, Tolerance), $"per surface the uncovered side is lit: {perSurface}");
+            Assert.IsTrue(FrameReads.Near(UpperRight(frame), Shadow, Tolerance), $"as a whole body it is shaded: {UpperRight(frame)}");
+            Assert.IsTrue(FrameReads.Near(UpperLeft(frame), Shadow, Tolerance), $"and so is the covered side: {UpperLeft(frame)}");
+        }
+
+        [Test]
+        public void AsAWholeBody_AHatJustAboveIt_CastsNothing()
+        {
+            _boardRenderer.transform.SetPositionAndRotation(new Vector3(0f, 1.1f, 0f), Quaternion.Euler(90f, 0f, 0f));
+            _boardRenderer.transform.localScale = Vector3.one * 1.5f;
+            _material.SetFloat(Ids.CastShadowStrength, 1f);
+            Color perSurface = UpperRight(_stage.Render());
+            AnimeMaterials.SetFeature(_material, AnimeShaderIds.Keywords.BodyShadowName, AnimeShaderIds.Switches.BodyShadow, true);
+            _material.SetFloat(Ids.BodyShadowReach, 1.5f);
+            Color whole = UpperRight(_stage.Render());
+            Assert.IsTrue(FrameReads.Near(perSurface, Shadow, Tolerance), $"per surface the hat shades it: {perSurface}");
+            Assert.IsTrue(FrameReads.Near(whole, Base, Tolerance), $"as a whole body it reads past the hat: {whole}");
+        }
     }
 }
