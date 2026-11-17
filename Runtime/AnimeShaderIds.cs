@@ -28,6 +28,12 @@ namespace AnimeShaders
         /** <summary>The light mode of the hair's depth pass, drawn by <c>AnimeHairDepthFeature</c>.</summary> */
         public const string HairDepthLightMode = "AnimeHairDepth";
 
+        /** <summary>The eyes and brows shader's name.</summary> */
+        public const string EyesShader = "Anime/Eyes";
+
+        /** <summary>The light mode of the eyes' pass over their fringe, drawn by <c>AnimeHairDepthFeature</c>.</summary> */
+        public const string EyesOverHairLightMode = "AnimeEyesOverHair";
+
         #endregion
 
         /** <summary>The head frame's per-renderer values (set through <see cref="AnimeBlocks" /> by <see cref="AnimeHeadFrame" />): world space.</summary> */
@@ -637,6 +643,66 @@ namespace AnimeShaders
 
             /** <summary>The property id of _RingStrandGap.</summary> */
             public static readonly int RingStrandGap = Shader.PropertyToID(RingStrandGapName);
+
+            /** <summary>The name _RingLift.</summary> */
+            public const string RingLiftName = "_RingLift";
+
+            /** <summary>The property id of _RingLift.</summary> */
+            public static readonly int RingLift = Shader.PropertyToID(RingLiftName);
+
+            /** <summary>The name _HairOverEyes.</summary> */
+            public const string HairOverEyesName = "_HairOverEyes";
+
+            /** <summary>The property id of _HairOverEyes.</summary> */
+            public static readonly int HairOverEyes = Shader.PropertyToID(HairOverEyesName);
+
+            /** <summary>The name _EyeHairDistance.</summary> */
+            public const string EyeHairDistanceName = "_EyeHairDistance";
+
+            /** <summary>The property id of _EyeHairDistance.</summary> */
+            public static readonly int EyeHairDistance = Shader.PropertyToID(EyeHairDistanceName);
+
+            /** <summary>The name _EyeStencilBit.</summary> */
+            public const string EyeStencilBitName = "_EyeStencilBit";
+
+            /** <summary>The property id of _EyeStencilBit.</summary> */
+            public static readonly int EyeStencilBit = Shader.PropertyToID(EyeStencilBitName);
+
+            /** <summary>The name _EyeThinHair.</summary> */
+            public const string EyeThinHairName = "_EyeThinHair";
+
+            /** <summary>The property id of _EyeThinHair.</summary> */
+            public static readonly int EyeThinHair = Shader.PropertyToID(EyeThinHairName);
+
+            /** <summary>The name _EyeThinHairNeed.</summary> */
+            public const string EyeThinHairNeedName = "_EyeThinHairNeed";
+
+            /** <summary>The property id of _EyeThinHairNeed.</summary> */
+            public static readonly int EyeThinHairNeed = Shader.PropertyToID(EyeThinHairNeedName);
+
+            /** <summary>The name _EyeYawLimit.</summary> */
+            public const string EyeYawLimitName = "_EyeYawLimit";
+
+            /** <summary>The property id of _EyeYawLimit.</summary> */
+            public static readonly int EyeYawLimit = Shader.PropertyToID(EyeYawLimitName);
+
+            /** <summary>The name _EyePitchLimit.</summary> */
+            public const string EyePitchLimitName = "_EyePitchLimit";
+
+            /** <summary>The property id of _EyePitchLimit.</summary> */
+            public static readonly int EyePitchLimit = Shader.PropertyToID(EyePitchLimitName);
+
+            /** <summary>The name _EyeHairFade.</summary> */
+            public const string EyeHairFadeName = "_EyeHairFade";
+
+            /** <summary>The property id of _EyeHairFade.</summary> */
+            public static readonly int EyeHairFade = Shader.PropertyToID(EyeHairFadeName);
+
+            /** <summary>The name _EyeThroughTint.</summary> */
+            public const string EyeThroughTintName = "_EyeThroughTint";
+
+            /** <summary>The property id of _EyeThroughTint.</summary> */
+            public static readonly int EyeThroughTint = Shader.PropertyToID(EyeThroughTintName);
 
             /** <summary>The name _RingBrightest.</summary> */
             public const string RingBrightestName = "_RingBrightest";

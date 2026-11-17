@@ -5,11 +5,17 @@
 // and, before this include, void AnimeCustomSurface(float3 positionWS, float2 uv, inout AnimeSurface surface) to change
 // the surface once its base colour, faced normal and emission are set (the ground paints its colour and tilts its
 // normal); with a hook, the alpha clip waits until after it, so the hook's derivatives never follow a discard. Characters ignore lightmaps, reflection probes,
-// decals and vertex lights; the ambient comes from the probe's average (or the director's tint).
+// decals and vertex lights; the ambient comes from the probe's average (or the director's tint). An entry shader's pass
+// may define ANIME_FORWARD_ALPHA (an expression over the fragment's input and inputData) for the colour's alpha, for a
+// blended pass; otherwise it is 1.
 
 #include "../Core/AnimeLighting.hlsl"
 #include "../Core/AnimeFade.hlsl"
 #include "../Core/AnimeFog.hlsl"
+
+#if !defined(ANIME_FORWARD_ALPHA)
+    #define ANIME_FORWARD_ALPHA 1.0h
+#endif
 
 #if defined(_NORMALMAP)
     #define ANIME_REQUIRES_TANGENT_INTERPOLATOR
@@ -147,7 +153,7 @@ void AnimeForwardFragment(
 
     half3 color = AnimeShade(surface, inputData);
     color = AnimeApplyFog(color, input.positionWS, inputData.fogCoord);
-    outColor = half4(color, 1.0h);
+    outColor = half4(color, ANIME_FORWARD_ALPHA);
 
 #if defined(_WRITE_RENDERING_LAYERS)
     outRenderingLayers = EncodeMeshRenderingLayer();

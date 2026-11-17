@@ -6,14 +6,11 @@
 // same at any distance; it shrinks to nothing as the light lines up with the view). Where hair there is nearer than the
 // face by more than Hair Shadow Bias, the face is in its shadow, softened over Hair Shadow Softness (metres) and faded
 // near the screen's edge. The four nearest texels are each compared and the results blended by position (a bilinear
-// comparison), so the edge is smooth across a texel instead of stepping at the half resolution: four reads. With no hair drawn the texture is cleared; without the feature _AnimeHairDepthOn is 0 (a
-// global never set reads 0): no shadow either way.
+// comparison), so the edge is smooth across a texel instead of stepping at the half resolution: four reads. With no
+// hair drawn, or without the feature, there is no shadow (AnimeHairDepth.hlsl).
 
 #include "../Core/AnimeLighting.hlsl"
-
-TEXTURE2D(_AnimeHairDepth);
-float _AnimeHairDepthOn;
-float4 _AnimeHairDepthSize;
+#include "AnimeHairDepth.hlsl"
 
 // Within this share of the screen's edge, the shadow fades out (the moved point may fall off screen).
 #define ANIME_HAIR_SHADOW_EDGE 0.02
@@ -21,9 +18,7 @@ float4 _AnimeHairDepthSize;
 // How far the face at faceDepth is behind the hair at one texel of the hair's depth, 0 to 1.
 half AnimeHairShadowTap(int2 texel, float faceDepth)
 {
-    texel = clamp(texel, int2(0, 0), int2(_AnimeHairDepthSize.xy) - 1);
-    float inverseDepth = LOAD_TEXTURE2D_LOD(_AnimeHairDepth, texel, 0).r;
-    float hairDepth = inverseDepth > 1e-4 ? rcp(inverseDepth) : 1e6;
+    float hairDepth = AnimeHairDepthAt(texel);
     return half(saturate((faceDepth - _HairShadowBias - hairDepth) / max(_HairShadowSoftness, 1e-4)));
 }
 
@@ -45,7 +40,7 @@ half AnimeHairShadow(float3 positionWS, float3 towardLight)
     half shade = lerp(below, above, blend.y);
 
     float2 edge = min(uv, 1.0 - uv);
-    return shade * half(saturate(min(edge.x, edge.y) / ANIME_HAIR_SHADOW_EDGE)) * half(_AnimeHairDepthOn);
+    return shade * half(saturate(min(edge.x, edge.y) / ANIME_HAIR_SHADOW_EDGE));
 }
 
 #endif

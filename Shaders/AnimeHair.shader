@@ -3,7 +3,8 @@ Shader "Anime/Hair"
     // Hair: Anime/Character's look and passes, plus a HairDepth pass (LightMode AnimeHairDepth) that the Anime Hair
     // Depth renderer feature draws before the opaques, so a face on Anime/Face can take the front hair's shadow, and the
     // angel ring round the head frame (AnimeHeadFrame, the hair listed among its renderers). Group: hair. Variants: as
-    // Anime/Character's; the ring adds none; the depth pass varies only by alpha clip.
+    // Anime/Character's; the ring adds none; the depth pass varies only by alpha clip. Queue Geometry+20: after the eyes and
+    // brows (Anime/Eyes, Geometry+10), so they can mark where they show through it.
     Properties
     {
         [Header(Surface)]
@@ -18,22 +19,23 @@ Shader "Anime/Hair"
         _AmbientStrength("Ambient Strength", Range(0, 1)) = 0.25
 
         [Header(Angel Ring)]
-        _RingStrength("Ring Strength", Range(0, 2)) = 0.15
+        _RingStrength("Ring Strength (with Lift 1: how many times the hair's own brightness it adds)", Range(0, 3)) = 0.8
+        _RingLift("Ring Lift (0 added light, 1 the hair's own colour brightened)", Range(0, 1)) = 1
         [HDR] _RingColor("Ring Colour", Color) = (1, 0.97, 0.92, 1)
-        _RingHairTint("Ring Hair Tint (takes the hair's hue)", Range(0, 1)) = 0.5
+        _RingHairTint("Ring Hair Tint (takes the hair's hue, texel by texel)", Range(0, 1)) = 0
         _RingLightColor("Ring Light Colour (takes the light's colour)", Range(0, 1)) = 0.5
         _RingHeight("Ring Height (latitude on the head, -1 to 1)", Range(-1, 1)) = 0.5
-        _RingWidth("Ring Width (half the band)", Range(0.005, 0.3)) = 0.06
-        _RingSoftness("Ring Softness (how far the top edge fades up)", Range(0, 1)) = 0.6
+        _RingWidth("Ring Width (half the band)", Range(0.005, 0.3)) = 0.04
+        _RingSoftness("Ring Softness (how far both edges fade)", Range(0, 1)) = 1
         _RingTilt("Ring Tilt (toward the front)", Range(-1, 1)) = 0
         _RingSphereBlend("Ring Sphere Blend (0 the hair's normals, 1 a smooth sphere)", Range(0, 1)) = 1
-        _RingFacing("Ring Facing (brighter toward the view)", Range(0, 1)) = 1
+        _RingFacing("Ring Facing (brighter toward the view)", Range(0, 1)) = 0
         _RingFollowsView("Ring Follows View (0 fixed on the head, 1 sliding with the view)", Range(0, 1)) = 0
         _RingGlow("Ring Outer Glow", Range(0, 1)) = 0.05
-        _RingBreakup("Ring Breakup (each strand's stroke its own height and length)", Range(0, 1)) = 0.5
+        _RingBreakup("Ring Breakup (each strand's stroke its own height and length)", Range(0, 1)) = 0
         _RingBreakupCount("Ring Breakup Count (strands round the head)", Range(1, 300)) = 140
-        _RingBreakupShape("Ring Breakup Shape (square dashes to needles pointed top and bottom)", Range(0, 1)) = 0.8
-        _RingStrandGap("Ring Strand Gap (thin lines between strands)", Range(0, 0.6)) = 0.12
+        _RingBreakupShape("Ring Breakup Shape (square dashes to needles pointed top and bottom)", Range(0, 1)) = 0
+        _RingStrandGap("Ring Strand Gap (thin lines between strands)", Range(0, 0.6)) = 0
         _RingBrightest("Ring Brightest (cap on what it adds)", Range(0, 2)) = 1
         [NoScaleOffset] _RingMask("Ring Mask (R, optional)", 2D) = "white" {}
 
@@ -113,7 +115,7 @@ Shader "Anime/Hair"
         {
             "RenderType" = "Opaque"
             "RenderPipeline" = "UniversalPipeline"
-            "Queue" = "Geometry"
+            "Queue" = "Geometry+20"
             "IgnoreProjector" = "True"
         }
         LOD 300

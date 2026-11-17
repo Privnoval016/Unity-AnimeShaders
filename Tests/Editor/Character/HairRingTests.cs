@@ -11,7 +11,8 @@ namespace AnimeShaders.Tests
      * sits at its height on the head and nowhere well away from it; none in shade, at strength 0 (as Anime/Character) or
      * without a head frame; following the view moves it to where the hair meets the view at that height; the breakup
      * gives each strand's stroke its own height and length; the strand gap draws thin lines through the band; what it adds
-     * never passes the cap; the hair's tint gives it the hair's hue.</summary>
+     * never passes the cap; the hair's tint gives it the hair's hue; with Lift it brightens the hair's own colour, so on
+     * dark hair it adds in proportion to the hair's brightness.</summary>
      */
     public class HairRingTests
     {
@@ -106,6 +107,7 @@ namespace AnimeShaders.Tests
             _hair.SetFloat(Ids.RingFacing, 0f);
             _hair.SetFloat(Ids.RingHairTint, 0f);
             _hair.SetFloat(Ids.RingLightColor, 0f);
+            _hair.SetFloat(Ids.RingLift, 0f);
             _renderer = _stage.Add(TestMeshes.Sphere(), _hair, Vector3.zero, Quaternion.identity, Vector3.one * 2f);
             HeadFrame();
         }
@@ -217,6 +219,22 @@ namespace AnimeShaders.Tests
             TestMaterials.SetLinear(_hair, Ids.BaseColor, new Color(0.8f, 0.3f, 0.3f));
             Color added = Added()[Row(Height) * _stage.Size + _stage.Size / 2];
             Assert.Greater(added.r, added.g * 2f, $"redder, as the hair: {added}");
+        }
+
+        [Test]
+        public void WithLift_ItBrightensTheHairsOwnColour_InProportion()
+        {
+            _hair.SetFloat(Ids.RingLift, 1f);
+            _hair.SetFloat(Ids.RingBrightest, 2f);
+            float AddedOn(Color albedo)
+            {
+                TestMaterials.SetLinear(_hair, Ids.BaseColor, albedo);
+                return Added()[Row(Height) * _stage.Size + _stage.Size / 2].g;
+            }
+            float light = AddedOn(new Color(0.8f, 0.8f, 0.8f));
+            float dark = AddedOn(new Color(0.1f, 0.1f, 0.1f));
+            Assert.Greater(light, 0.1f, "visible on light hair");
+            Assert.AreEqual(0.1f / 0.8f, dark / light, 0.03f, "on dark hair, as much less as the hair is darker");
         }
     }
 }

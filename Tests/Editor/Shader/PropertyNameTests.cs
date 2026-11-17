@@ -15,7 +15,7 @@ namespace AnimeShaders.Tests
     {
         #region Private Fields
 
-        private static readonly string[] LitShaders = { "Anime/Character", "Anime/World", "Anime/Ground", AnimeShaderIds.FaceShader, AnimeShaderIds.HairShader };
+        private static readonly string[] LitShaders = { "Anime/Character", "Anime/World", "Anime/Ground", AnimeShaderIds.FaceShader, AnimeShaderIds.HairShader, AnimeShaderIds.EyesShader };
 
         #endregion
 
@@ -65,6 +65,7 @@ namespace AnimeShaders.Tests
         [TestCase("Anime/Ground")]
         [TestCase(AnimeShaderIds.FaceShader)]
         [TestCase(AnimeShaderIds.HairShader)]
+        [TestCase(AnimeShaderIds.EyesShader)]
         public void EveryVariableOfTheShadersGroups_IsOneOfItsProperties(string name)
         {
             Shader shader = Shader.Find(name);
@@ -78,6 +79,7 @@ namespace AnimeShaders.Tests
         [TestCase("Anime/Ground")]
         [TestCase(AnimeShaderIds.FaceShader)]
         [TestCase(AnimeShaderIds.HairShader)]
+        [TestCase(AnimeShaderIds.EyesShader)]
         public void EveryPropertyOfTheShader_BelongsToItsGroups_IsATexture_OrASwitch(string name)
         {
             Shader shader = Shader.Find(name);

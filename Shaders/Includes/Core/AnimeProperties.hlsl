@@ -206,7 +206,19 @@ CBUFFER_START(UnityPerMaterial)
     half _RingBreakupCount;
     half _RingBreakupShape;
     half _RingStrandGap;
+    half _RingLift;
     half _RingBrightest;
+#endif
+#if defined(ANIME_GROUP_EYES)
+    half4 _EyeThroughTint;
+    half _HairOverEyes;
+    float _EyeHairDistance;
+    float _EyeHairFade;
+    half _EyeYawLimit;
+    half _EyePitchLimit;
+    float _EyeThinHair;
+    half _EyeThinHairNeed;
+    float _EyeStencilBit;
 #endif
 #if defined(ANIME_GROUP_LINE)
     half4 _OutlineColor;

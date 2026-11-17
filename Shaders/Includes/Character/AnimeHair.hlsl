@@ -8,10 +8,12 @@
 // instead (where the normal meets the view at Ring Height), the prototype's first style. The band is drawn as strokes,
 // one per strand round the head (Ring Breakup Count), as drawn highlights are: a clean top edge, thin lines between the
 // strands (Ring Strand Gap), and a lower edge that breaks into spikes, each strand's reaching down its own length (Ring
-// Breakup: most short, a few long) and narrowing to a point by Ring Breakup Shape (0 square ends, 1 sharp tips). The top
-// edge fades up into the hair by Ring Softness; the spikes stay crisp, anti-aliased to a pixel. Brighter toward the view (Ring Facing); a softer wide lobe (Ring Glow).
+// Breakup: most short, a few long) and narrowing to a point by Ring Breakup Shape (0 square ends, 1 sharp tips). Both
+// edges fade into the hair by Ring Softness (a soft streak, as drawn rings are; 0 crisp, anti-aliased to a pixel). Brighter toward the view (Ring Facing); a softer wide lobe (Ring Glow).
 // Its colour is Ring Colour, taking the hair's own hue by Ring Hair Tint and the light's by Ring Light Colour, times
-// Ring Strength and the Ring Mask, capped at Ring Brightest. Without a head frame there is no ring.
+// Ring Strength and the Ring Mask, capped at Ring Brightest. Ring Lift turns it from added light (0) into the hair's own
+// colour brightened (1: the hair under it times one plus the ring, so it fades into dark hair as a deeper sheen). Without
+// a head frame there is no ring.
 //
 // Reads: the ring mask once.
 
@@ -61,9 +63,9 @@ half AnimeRingStroke(half coordinate, half3 strand)
     half edge = max(half(fwidth(side)), 1e-3h);
     half across = 1.0h - smoothstep(wide, wide + edge, side);
     half pixel = max(half(fwidth(coordinate)), 1e-4h);
-    half below = smoothstep(tip - pixel, tip + pixel, coordinate);
-    half fade = max(_RingWidth * _RingSoftness * 2.0h, pixel);
-    half above = 1.0h - smoothstep(top - fade, top, coordinate);
+    half fade = max(_RingWidth * _RingSoftness, pixel);
+    half below = smoothstep(tip - pixel, tip + fade, coordinate);
+    half above = 1.0h - smoothstep(top - fade, top + pixel, coordinate);
     return below * above * across;
 }
 
@@ -94,6 +96,7 @@ void AnimeCustomSurface(float3 positionWS, float2 uv, inout AnimeSurface surface
     half3 hue = surface.albedo / max(AnimeLuma(surface.albedo), ANIME_RING_DARKEST);
     half3 colour = _RingColor.rgb * lerp(half3(1, 1, 1), hue, _RingHairTint);
     colour *= lerp(half3(1, 1, 1), GetMainLight().color, _RingLightColor);
+    colour = lerp(colour, colour * surface.albedo, _RingLift);
     surface.litHighlight = min(colour * (amount * _RingStrength), _RingBrightest);
 }
 

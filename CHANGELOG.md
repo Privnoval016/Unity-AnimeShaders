@@ -16,6 +16,16 @@
   whose bone axes differ from the model's, turning, still and moving, letting go; break proofs.
 - The head frame reads the model's front from the character root (`BindAxes` takes it; `MeshFromModel`): Blender's
   meshes import turned 270° about X from their root, so the mesh's own +Z was up. The test rig's mesh is turned the same way.
+- Eyes and brows through their fringe (step 3, B6): `Anime/Eyes` (EyeMark marks the stencil where their own fringe is
+  just in front; `AnimeHairDepthFeature` draws EyesOverHair after the opaques), `AnimeEyesOverHairPass`, the rules in
+  `Includes/Character/AnimeEyes.hlsl` (Hair Over Eyes, Eye Yaw Limit, Eye Pitch Limit, Eye Hair Distance, Eye Hair Fade,
+  Eye Thin Hair, Eye Thin Hair Need, Eye Through Tint, Eye Stencil Bit), the hair depth reads shared
+  (`AnimeHairDepth.hlsl`), `ANIME_FORWARD_ALPHA` for a blended forward pass; `Anime/Hair` at Geometry+20. The ring after
+  round 5 and Pranav's look at it: one soft streak on the head's sphere (Sphere Blend 1, no strokes, Facing 0), both
+  edges fading by Ring Softness (1), and **Ring Lift** (1 by default): the hair's own colour brightened rather than light
+  added, so it fades into dark hair; Hair Tint 0 (the texel-by-texel hue read as blotchy greens on dark hair). Tests: by
+  Hair Over Eyes, without the feature, through far hair, behind something else, the head's turn, the fade, the thin-hair
+  rule, the tint; Lift in proportion to the hair's brightness; break proofs.
 - The angel ring (step 3, B5) on `Anime/Hair` (`Includes/Character/AnimeHair.hlsl`, group `ANIME_GROUP_HAIR`): Ring
   Strength, Colour, Hair Tint, Light Colour, Height, Width, Softness, Tilt, Sphere Blend, Facing, Follows View, Outer
   Glow, Breakup, Breakup Count, Breakup Shape, Strand Gap, Brightest, Mask (drawn as strand strokes: a top edge fading up,
