@@ -85,7 +85,7 @@ half AnimeCloudShade(float3 positionWS, half3 lightDirectionWS)
     UNITY_BRANCH
     if (ANIME_CLOUD_SHADOWS_ON)
     {
-        float3 towardSun = AnimeDirectorLightDirection(lightDirectionWS);
+        float3 towardSun = normalize(lightDirectionWS);
         shade = AnimeCloudShadow(AnimeShadowPoint(positionWS, lightDirectionWS), towardSun) * _CloudShadow;
     }
 #endif

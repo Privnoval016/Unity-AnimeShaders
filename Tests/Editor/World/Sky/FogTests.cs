@@ -9,7 +9,8 @@ namespace AnimeShaders.Tests
     /**
      * <summary>The pack's haze, published from a made sky state and seen on black surfaces drawn by Anime/World (so a
      * pixel's brightness is how much haze lies over it): off, nothing changes; it thickens with distance and thins with
-     * height, on perspective and orthographic cameras; it glows toward the sun; the scene's own fog on as well fogs
+     * height, on perspective and orthographic cameras; it glows toward the sun, on a character toward the real sun whatever
+     * the characters' light; the scene's own fog on as well fogs
      * nothing twice; and a wall at the sky's distance takes the colour of the sky beside it, so far ground and sky
      * meet. The scene's fog settings are put back after.</summary>
      */
@@ -196,6 +197,36 @@ namespace AnimeShaders.Tests
             Color[] frame = Render();
             Color away = At(frame, 0.2f, 0.5f), toward = At(frame, 0.8f, 0.5f);
             Assert.Greater(toward.g - toward.r, away.g - away.r + 0.1f, $"toward the sun {toward}, away {away}");
+        }
+
+        [Test]
+        public void OnACharacter_TheGlowFollowsTheSun_NotTheCharactersLight()
+        {
+            Material character = TestMaterials.Character(Color.black, Color.black);
+            LightSet turned = ScriptableObject.CreateInstance<LightSet>();
+            turned.Characters.Direction.Overrides = true;
+            turned.Characters.Direction.Yaw = -63f;
+            turned.Characters.Direction.Pitch = 0f;
+            try
+            {
+                using (AnimeLightDirector.Isolate())
+                {
+                    AnimeLightDirector.Push(turned, LightLevel.Shot);
+                    _made.Set("hazeGlow", Color.green).Set("hazeGlowStrength", 1f).Set("hazeGlowSize", 1f);
+                    _stage.LightFrom(new Vector3(1f, 0f, 0.5f));
+                    LookFromOrigin();
+                    _stage.Add(_quad, character, new Vector3(-40f, 0f, 100f), Quaternion.identity, Vector3.one * 30f);
+                    _stage.Add(_quad, character, new Vector3(40f, 0f, 100f), Quaternion.identity, Vector3.one * 30f);
+                    Color[] frame = Render();
+                    Color away = At(frame, 0.2f, 0.5f), toward = At(frame, 0.8f, 0.5f);
+                    Assert.Greater(toward.g - toward.r, away.g - away.r + 0.1f, $"toward the real sun {toward}, away {away}");
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(character);
+                Object.DestroyImmediate(turned);
+            }
         }
 
         [Test]

@@ -5,10 +5,10 @@ two-tone look in the manner of modern anime games, outlines that hold up on two-
 as the head turns, and a light director so a project can set a mood per scene and relight a single shot. When it is
 done, everything will be tuned through a custom inspector with presets, with nothing needing code.
 
-**Status: in construction (0.3.0).** The lit core, the character shader, the depth-edge rim, the world, ground and sky
-shaders, sky presets with clouds, ridges and haze, and detail sets are written; the face, hair and foliage shaders, the full inspector, the director's
-runtime and look presets arrive in the order of the table below, each
-proved before the next.
+**Status: in construction (0.4.0).** The lit core, the character, face, hair and eye shaders, the depth-edge rim, the
+world, ground and sky shaders, sky presets with clouds, ridges and haze, detail sets and the light director are written;
+the foliage shader, the full inspector and look presets arrive in the order of the table below, each proved before the
+next.
 
 - **Requires:** Unity 6, URP 17, the Forward or Forward+ renderer with depth priming off. Deferred is not supported
   (it would draw the line but not the body), and depth priming would test the line against the body's primed depth and
@@ -38,7 +38,7 @@ normals, smoothed so hard edges don't crack the line. Those normals are baked on
 leaving the tangents free for normal maps. Width follows the camera's distance and field of view, can be painted per
 vertex, and has a global multiplier.
 
-## What exists now (0.3.0)
+## What exists now (0.4.0)
 
 | File | What it is |
 |---|---|
@@ -50,7 +50,7 @@ vertex, and has a global multiplier.
 | `Runtime/Rendering/AnimeHairDepthFeature.cs`, `AnimeHairDepthPass.cs`; `Shaders/Includes/Character/AnimeHairShadow.hlsl` | The front hair's shadow: the feature draws every HairDepth pass in view before the opaques into `_AnimeHairDepth` (half resolution, or full with **Full Resolution**; cleared to 0, its own 16-bit depth buffer with no stencil), with `_AnimeHairDepthOn` and `_AnimeHairDepthSize`; every camera starts with it black and off, so a camera it skips (previews, reflections, a renderer without it) never reads another's. The face reads it at its point moved toward the light across the screen by **Hair Shadow Reach** (metres), shaded where hair is nearer by more than **Hair Shadow Bias**, over **Hair Shadow Softness**, by **Hair Shadow Strength**, and none from hair farther in front than **Hair Shadow Range** (another's, metres away); the four nearest texels compared and blended, so the edge is smooth across a texel. With no feature drawing on a camera, nothing is read. Game and Scene cameras; not XR |
 | `Shaders/Includes/Core/AnimeProperties.hlsl` | The one `UnityPerMaterial` block every pass includes (SRP Batcher): a core plus feature groups a shader opts into in its `HLSLINCLUDE` (`ANIME_GROUP_BAND`, `_BODY`, `_EMISSION`, `_INSIDE`, `_RIM`, `_LINE`, `_GROUND`, `_FACE`, `_HAIR`, `_EYES`, `_COLOUR`; the code reading a group compiles only with it, and the shader's Properties list holds exactly its groups); its own extra properties through `ANIME_ENTRY_PROPERTIES`; the dynamic-branch keyword macros |
 | `Shaders/Textures/AnimeNoise.png` | The pack's noise, baked by `Editor/AnimeNoiseBaker.cs` (Tools > Anime Shaders > Bake Noise Texture; our own code, deterministic, versioned): 1024 square, R value noise, G fbm, B distance to the nearest cell edge, A a value per cell, every channel tiling; held linear, uncompressed and mipmapped by `Editor/AnimeNoiseImport.cs` (label `AnimeNoise`) |
-| `Shaders/Includes/Core/AnimeDirector.hlsl` | The light director's global properties (below) |
+| `Shaders/Includes/Core/AnimeDirector.hlsl` | The light director's global properties, in two channels: the characters' and the world's (below) |
 | `Shaders/Includes/Core/AnimeColour.hlsl` | Group `ANIME_GROUP_COLOUR` (taken by `Anime/Character`, `Anime/Face`, `Anime/Hair`, `Anime/Eyes`, never the world's shaders): **Brightness** scales the shaded colour and **Saturation** moves it from its own grey (0 grey, 1 unchanged, above 1 richer), before the haze, so a shader can lift what it draws over what doesn't; a few ALU a pixel |
 | `Shaders/Includes/Core/AnimeWorld.hlsl`, `AnimeClouds.hlsl`, `AnimeFog.hlsl` | The world's globals (published by a sky preset), the cloud field the sky and the cloud shadows share, and the haze that replaces URP's fog in the pack's shaders (below) |
 | `Shaders/Includes/Core/AnimeSurface.hlsl` | The surface struct (with a form override and its weight: an entry shader's lit weight in place of the normal's; and a lit highlight added by the lit weight, as the hair's ring; zero for every other shader), base and emission sampling, alpha clip, the inside tone |
@@ -72,6 +72,7 @@ vertex, and has a global multiplier.
 | `Shaders/AnimeWorld.shader`, `AnimeGround.shader`, `AnimeSky.shader`; `Shaders/Includes/World/` | The world's shaders and the ground's and sky's own code (below) |
 | `Runtime/Blocks/` | `AnimeBlocks` (every owner's values on each renderer slot written as one property block, so no writer wipes another's; a slot no one holds goes back to no block; a destroyed renderer's slot is dropped as an owner lets go, and the store empties as play starts), `AnimeBlockValues`, `IAnimeBlockOwner` |
 | `Runtime/Character/` | `AnimeHeadFrame`: the head's centre, forward, right and up (the model's own front and up at rest: the character root's forward and up, carried through the bind pose by the head bone, whatever the bone's or the mesh's axes; Blender's meshes import turned from their root) measured each frame, after animation and cloth, and written into the face, hair, eye and brow renderers' blocks once it changes, just before a camera that can see one of them draws (its layers, scene and view), so a hidden figure pays only the measuring (`Refresh` measures and writes now, for a body posed offscreen); it tries once more after everything woke and warns once if it found no head; Reset lists the children with face, hair or eye materials; gizmos in the Scene view. Its Inspector (`Editor/Character/AnimeHeadFrameEditor`) warns when it found no head, lists nothing, or lists a renderer that reads no head frame |
+| `Runtime/Director/` | The light director (below): `LightSet` (the asset) and its groups (`LightGroups.cs`), `AnimeLightDirector` (the stack and the one writer), `LightLevel`, `LightToken`, `LightArea` (an interior's light), `AnimeLightExempt` (a camera keeping its own light) |
 | `Runtime/Sky/` | `SkyPreset`, `SkyState` (everything a preset sets, held once), `SkyRidge`, `SkyApply` (the one writer), `SkyPresetApplier`, and the shipped presets in `Presets/` |
 | `Editor/AnimeShaderGUI.cs` | The material inspector (thin for now): the shader's sections, a live preview of the two-tone ramp (the same maths the shader runs, tested against a render), each feature's settings shown only while the feature is on, and warnings under a slot holding the wrong kind of map (detail, stone, face) or a face with none |
 | `Tests/Editor/` | `Support/` (in `Stage/`, `World/` and `Sources/`: `LitStage`: a preview scene, camera and light rendering into a linear float target; `MadePipeline`: a URP asset made for a test with given features, swapped in and always put back; meshes, materials with colours as the shader reads them, frame reads, source readers, the director's globals and the world's globals held neutral (`WorldGlobals`; every stage holds them), a sky preset made field by field (`MadeSky`), a volume only the stage camera sees (`MadeVolume`), the finite scan, the batcher check), `Shader/` (passes, batcher, names and constants, every platform's compile, and `Probe/`: an entry shader adding its own property, and one through the surface hook), `Inspector/` (the feature map, the preview against a render), `Character/` (the block store, the head frame, the face against Lambert round the horizon, the front hair's shadow, the angel ring, eyes through their fringe), `Face/` (the face map's bake on made faces, against Lambert; its import and hash), `Look/` (tones, band, rim, director, cast shadows, cloud shadows, contact shading, inside tone, fade, the surface hook; `Screen/`: the depth rim, the sun shafts), `World/` (the noise, world UVs; `Ground/`: the detail packer and its import, the ground; `Sky/`: the sky, its ridges and clouds, the haze, presets), `Outline/` (the line, the baker) |
@@ -231,21 +232,41 @@ takes no rim; a camera whose renderer lacks the feature draws none. XR single-pa
   alone; in Edit Mode it writes the sky material itself, in Play Mode a copy (the material stays as authored) and
   switched off it puts back everything it changed, the sun and reflection included; switched off in either mode it
   clears the world's globals; only the applier enabled last clears or restores, so a scene change leaves the new
-  scene's sky alone. Applied between moments of play, never during one. The light director (when built) becomes its
-  caller.
+  scene's sky alone. Applied between moments of play, never during one. A preset's **Light** (a `LightSet`) is the
+  director's base light: the applier that owns the sky pushes it and removes it when switched off.
 
-### The light director's globals
+### The light director
 
-Never set, all are zero and mean no change. Set them with `Shader.SetGlobalVector` (names and ids in
-`AnimeShaderIds.Director`).
+A **`LightSet`** (Create > Anime Shaders > Light Set) holds a light for the characters and one for the world, in
+groups, each with its own **Overrides** switch; a group switched off leaves what lies beneath. The characters':
+**Direction** (yaw and pitch toward the light, world space, and how much of it replaces the scene's light),
+**Colours** (light and shadow, multipliers: white changes nothing), **Ambient** (a colour and how much it replaces the
+probe's) and **Strengths** (cast shadow, rim and line width, multipliers). The world's: Colours, Ambient and its cast
+shadow, adjusting the sky preset's light, never its direction (the sun's angle is the preset's).
+
+**`AnimeLightDirector`** keeps the lights pushed (`Push(set, level)` returns a `LightToken`; disposing it removes that
+light, and disposing again or late does nothing). Each group comes from the highest light switching it on; levels are
+**Base** (a sky preset's, pushed by its applier), **Area** (a `LightArea`) and **Shot** (a project's, a cut in a
+sequence); at one level the later push wins. It writes the globals only when a light is pushed, removed or edited
+(`Changed`, called by the set's `OnValidate`), and zeroes them on a domain reload and as Play Mode starts.
+`Suspend()` (or `BeginSuspend`/`EndSuspend`) renders with no director light until the last scope ends, for offscreen
+stages; `Isolate()` sets the lights aside and starts with none, putting back those not removed meanwhile, for tests.
+
+A **`LightArea`** (a box) pushes its set at Area while what it tracks (empty: the main camera) is inside, and removes
+it once that is past the box by its **Edge Margin** or as it is switched off (Play Mode). An **`AnimeLightExempt`** on a
+camera renders that camera with no director light (a figure framed on its own, a portrait).
+
+Never set, every global is zero and means no change. Names and ids in `AnimeShaderIds.Director`. The character shaders
+read the characters' channel; a shader defining `ANIME_DIRECTOR_WORLD` in its `HLSLINCLUDE` (`Anime/World`,
+`Anime/Ground`) reads the world's. The haze, the sky and cloud shadows take the real sun's direction.
 
 | Global | Encoding |
 |---|---|
-| `_AnimeDirectorLightDirection` | xyz: world direction toward the light; w: weight 0..1 (0 = the scene's main light). Steers tones, rim and additional lights; cast shadows still come from the real light |
-| `_AnimeDirectorLightColor` | rgb: light colour multiplier minus 1 |
-| `_AnimeDirectorShadowColor` | rgb: shadow tone multiplier minus 1 |
-| `_AnimeDirectorAmbient` | rgb: ambient colour; w: weight 0..1 of replacing the probe's ambient |
-| `_AnimeDirectorScalars` | x: cast shadow strength multiplier minus 1; y: rim strength multiplier minus 1; z: line width multiplier minus 1; w: reserved |
+| `_AnimeDirectorLightDirection` | Characters only. xyz: world direction toward the light; w: weight 0..1 (0 = the scene's main light). Steers tones, rim and additional lights; cast shadows still come from the real light |
+| `_AnimeDirectorLightColor`, `_AnimeDirectorWorldLightColor` | rgb: light colour multiplier minus 1 |
+| `_AnimeDirectorShadowColor`, `_AnimeDirectorWorldShadowColor` | rgb: shadow tone multiplier minus 1 |
+| `_AnimeDirectorAmbient`, `_AnimeDirectorWorldAmbient` | rgb: ambient colour; w: weight 0..1 of replacing the probe's ambient |
+| `_AnimeDirectorScalars`, `_AnimeDirectorWorldScalars` | x: cast shadow strength multiplier minus 1; y: rim and z: line width multipliers minus 1 (characters only); w: reserved |
 
 ### The dither fade
 

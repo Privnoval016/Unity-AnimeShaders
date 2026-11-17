@@ -59,6 +59,7 @@ Shader "Anime/World"
         #define ANIME_GROUP_BAND
         #define ANIME_GROUP_EMISSION
         #define ANIME_NO_FADE
+        #define ANIME_DIRECTOR_WORLD
         ENDHLSL
 
         Pass

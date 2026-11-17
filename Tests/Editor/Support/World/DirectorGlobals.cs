@@ -10,7 +10,10 @@ namespace AnimeShaders.Tests
         #region Private Fields
 
         private static readonly int[] All =
-            { Director.LightDirection, Director.LightColor, Director.ShadowColor, Director.Ambient, Director.Scalars };
+        {
+            Director.LightDirection, Director.LightColor, Director.ShadowColor, Director.Ambient, Director.Scalars,
+            Director.WorldLightColor, Director.WorldShadowColor, Director.WorldAmbient, Director.WorldScalars,
+        };
 
         private readonly Vector4[] _before = new Vector4[All.Length];
 

@@ -1,9 +1,11 @@
+using System;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Ids = AnimeShaders.AnimeShaderIds.Sky;
 using World = AnimeShaders.AnimeShaderIds.World;
+using Object = UnityEngine.Object;
 
 namespace AnimeShaders.Tests
 {
@@ -11,7 +13,8 @@ namespace AnimeShaders.Tests
      * <summary>A sky preset written to a scene by its one writer (in the test runner's own scene, its render settings and
      * the world's globals snapshot and put back): every value lands on the sky, the sun, the scene and the globals; the
      * scene's fog takes the haze; clouds need a noise; clearing the globals clears them; the component with no preset
-     * (Authored) writes nothing, and switched off clears the globals; every shipped preset carries its state.</summary>
+     * (Authored) writes nothing, and switched off clears the globals; a preset's light is the base while its applier owns
+     * the sky, replaced by the next and removed with it; every shipped preset carries its state.</summary>
      */
     public class SkyPresetTests
     {
@@ -48,6 +51,13 @@ namespace AnimeShaders.Tests
             serialized.FindProperty("_preset").objectReferenceValue = preset;
             serialized.FindProperty("_sun").objectReferenceValue = _sun;
             serialized.FindProperty("_sky").objectReferenceValue = _sky;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void LitBy(SkyPreset preset, LightSet light)
+        {
+            var serialized = new SerializedObject(preset);
+            serialized.FindProperty("light").objectReferenceValue = light;
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
@@ -201,6 +211,52 @@ namespace AnimeShaders.Tests
                 Object.DestroyImmediate(second);
                 cloudy.Dispose();
                 clear.Dispose();
+            }
+        }
+
+        [Test]
+        public void APresetsLight_IsTheBase_WhileItsApplierOwnsTheSky_AndTheNextOneReplacesIt()
+        {
+            var first = new GameObject("First Sky");
+            var second = new GameObject("Second Sky");
+            var day = new MadeSky();
+            var dusk = new MadeSky();
+            var dayLight = ScriptableObject.CreateInstance<LightSet>();
+            var duskLight = ScriptableObject.CreateInstance<LightSet>();
+            var director = new DirectorGlobals();
+            IDisposable isolated = AnimeLightDirector.Isolate();
+            try
+            {
+                LitBy(day.Preset, dayLight);
+                LitBy(dusk.Preset, duskLight);
+                Applier(first, day.Preset);
+                Applier(second, dusk.Preset);
+
+                first.SetActive(true);
+                Assert.AreEqual(1, AnimeLightDirector.Pushed.Count, "the first sky's light is pushed");
+                Assert.AreSame(dayLight, AnimeLightDirector.Pushed[0].Set);
+                Assert.AreEqual(LightLevel.Base, AnimeLightDirector.Pushed[0].Level, "as the base");
+
+                second.SetActive(true);
+                Assert.AreEqual(1, AnimeLightDirector.Pushed.Count, "the next sky replaces it, never stacks on it");
+                Assert.AreSame(duskLight, AnimeLightDirector.Pushed[0].Set);
+
+                first.SetActive(false);
+                Assert.AreSame(duskLight, AnimeLightDirector.Pushed[0].Set, "the old sky switched off leaves the new one's light");
+
+                second.SetActive(false);
+                Assert.AreEqual(0, AnimeLightDirector.Pushed.Count, "the owner switched off removes it");
+            }
+            finally
+            {
+                Object.DestroyImmediate(first);
+                Object.DestroyImmediate(second);
+                isolated.Dispose();
+                director.Dispose();
+                day.Dispose();
+                dusk.Dispose();
+                Object.DestroyImmediate(dayLight);
+                Object.DestroyImmediate(duskLight);
             }
         }
 

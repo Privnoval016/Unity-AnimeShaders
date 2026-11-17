@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.4.0 (2026-11-17)
+
+- The light director (`Runtime/Director/`): `LightSet` (a characters' and a world's light in groups, each with an
+  Overrides switch), `AnimeLightDirector` (a stack by level, Base, Area and Shot; tokens; globals written only on a
+  change; `Suspend`, `Isolate`), `LightArea` (an interior's light, with an edge margin), `AnimeLightExempt` (a camera
+  keeping its own light). A sky preset's **Light** is the base, pushed by the applier owning the sky.
+- Two channels: the world's director globals (`_AnimeDirectorWorld*`: light and shadow colour, ambient, cast shadow)
+  read by `Anime/World` and `Anime/Ground` (`ANIME_DIRECTOR_WORLD`); the characters keep the existing names. The haze,
+  the sky and cloud shadows take the real sun's direction, never the characters' override.
+- Tests: the stack (levels, either push order, equal levels, groups only where switched, dispose in any order, twice
+  or stale, edits rewrite, writes counted, suspension nested, isolation); each channel's shade only on its shaders and
+  the characters' direction only on theirs; the light area's margin and switch-off; an exempt camera alone; the sky
+  preset's base pushed, replaced and removed; break proofs.
+
 ## 0.3.0 (2026-11-16)
 
 - **Breaking:** `SkyState` is one serializable struct held by `SkyPreset` (the presets migrated); `SkyApply` also

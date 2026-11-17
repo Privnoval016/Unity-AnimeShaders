@@ -95,7 +95,7 @@ namespace AnimeShaders
             public static readonly int Size = Shader.PropertyToID(SizeName);
         }
 
-        /** <summary>The light director's global properties: all zero when never set, which means no change.</summary> */
+        /** <summary>The light director's global properties, the characters' channel and the world's: all zero when never set, which means no change.</summary> */
         public static class Director
         {
             #region Properties
@@ -129,6 +129,30 @@ namespace AnimeShaders
 
             /** <summary>The property id of _AnimeDirectorScalars.</summary> */
             public static readonly int Scalars = Shader.PropertyToID(ScalarsName);
+
+            /** <summary>The name _AnimeDirectorWorldLightColor.</summary> */
+            public const string WorldLightColorName = "_AnimeDirectorWorldLightColor";
+
+            /** <summary>The property id of _AnimeDirectorWorldLightColor.</summary> */
+            public static readonly int WorldLightColor = Shader.PropertyToID(WorldLightColorName);
+
+            /** <summary>The name _AnimeDirectorWorldShadowColor.</summary> */
+            public const string WorldShadowColorName = "_AnimeDirectorWorldShadowColor";
+
+            /** <summary>The property id of _AnimeDirectorWorldShadowColor.</summary> */
+            public static readonly int WorldShadowColor = Shader.PropertyToID(WorldShadowColorName);
+
+            /** <summary>The name _AnimeDirectorWorldAmbient.</summary> */
+            public const string WorldAmbientName = "_AnimeDirectorWorldAmbient";
+
+            /** <summary>The property id of _AnimeDirectorWorldAmbient.</summary> */
+            public static readonly int WorldAmbient = Shader.PropertyToID(WorldAmbientName);
+
+            /** <summary>The name _AnimeDirectorWorldScalars.</summary> */
+            public const string WorldScalarsName = "_AnimeDirectorWorldScalars";
+
+            /** <summary>The property id of _AnimeDirectorWorldScalars.</summary> */
+            public static readonly int WorldScalars = Shader.PropertyToID(WorldScalarsName);
 
             #endregion
         }

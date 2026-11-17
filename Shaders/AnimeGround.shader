@@ -97,6 +97,7 @@ Shader "Anime/Ground"
         #define ANIME_GROUP_GROUND
         #define ANIME_CUSTOM_SURFACE
         #define ANIME_NO_FADE
+        #define ANIME_DIRECTOR_WORLD
         ENDHLSL
 
         Pass

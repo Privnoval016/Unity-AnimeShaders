@@ -7,7 +7,6 @@
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 #include "AnimeWorld.hlsl"
-#include "AnimeDirector.hlsl"
 
 // The largest exponent the height term takes, so a long ray up or down never overflows.
 #define ANIME_HAZE_MAX_EXPONENT 60.0
@@ -24,7 +23,7 @@ half3 AnimeHazeAlong(half3 colour, float3 origin, float3 ray, float distance)
     float amount = _AnimeHazeShape.y * travelled * exp(-falloff * max(startHeight, 0.0)) * heightTerm;
     half cover = min(half(1.0 - exp(-max(amount, 0.0))), half(_AnimeHazeColor.a));
 
-    float3 sun = AnimeDirectorLightDirection(_MainLightPosition.xyz);
+    float3 sun = normalize(_MainLightPosition.xyz);
     float away = 1.0 - dot(ray, sun);
     half glow = half(exp(-away / max(_AnimeHazeSky.y * _AnimeHazeSky.y * 0.5, 1e-4))) * half(_AnimeHazeGlow.a);
     half3 haze = lerp(half3(_AnimeHazeColor.rgb), half3(_AnimeHazeGlow.rgb), glow);

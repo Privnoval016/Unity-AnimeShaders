@@ -7,7 +7,6 @@
 // the horizon, each hazed at its own distance, farthest first. Every noise read is in uniform flow.
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-#include "../Core/AnimeDirector.hlsl"
 #include "../Core/AnimeClouds.hlsl"
 #include "../Core/AnimeHash.hlsl"
 #include "../Core/AnimeFog.hlsl"
@@ -184,7 +183,7 @@ half4 AnimeSkyFragment(AnimeSkyVaryings input) : SV_Target
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
     float3 direction = normalize(input.direction);
     float height = direction.y;
-    float3 sun = AnimeDirectorLightDirection(_MainLightPosition.xyz);
+    float3 sun = normalize(_MainLightPosition.xyz);
     half3 sky = AnimeSkyGradient(height);
 
     float2 plane = AnimeCloudPlaneAlongView(_WorldSpaceCameraPos, direction);
