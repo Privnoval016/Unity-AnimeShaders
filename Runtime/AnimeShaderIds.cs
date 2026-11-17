@@ -19,6 +19,9 @@ namespace AnimeShaders
         /** <summary>The light mode of the depth-edge rim pass, drawn by <c>AnimeRimFeature</c>.</summary> */
         public const string RimLightMode = "AnimeRim";
 
+        /** <summary>The face shader's name.</summary> */
+        public const string FaceShader = "Anime/Face";
+
         #endregion
 
         /** <summary>The head frame's per-renderer values (set through <see cref="AnimeBlocks" /> by <see cref="AnimeHeadFrame" />): world space.</summary> */
@@ -450,6 +453,36 @@ namespace AnimeShaders
 
             /** <summary>The property id of _CircleStones.</summary> */
             public static readonly int CircleStones = Shader.PropertyToID(CircleStonesName);
+
+            /** <summary>The name _FaceMap.</summary> */
+            public const string FaceMapName = "_FaceMap";
+
+            /** <summary>The property id of _FaceMap.</summary> */
+            public static readonly int FaceMap = Shader.PropertyToID(FaceMapName);
+
+            /** <summary>The name _FaceMapStrength.</summary> */
+            public const string FaceMapStrengthName = "_FaceMapStrength";
+
+            /** <summary>The property id of _FaceMapStrength.</summary> */
+            public static readonly int FaceMapStrength = Shader.PropertyToID(FaceMapStrengthName);
+
+            /** <summary>The name _FaceShadowSoftness.</summary> */
+            public const string FaceShadowSoftnessName = "_FaceShadowSoftness";
+
+            /** <summary>The property id of _FaceShadowSoftness.</summary> */
+            public static readonly int FaceShadowSoftness = Shader.PropertyToID(FaceShadowSoftnessName);
+
+            /** <summary>The name _FaceShadowBias.</summary> */
+            public const string FaceShadowBiasName = "_FaceShadowBias";
+
+            /** <summary>The property id of _FaceShadowBias.</summary> */
+            public static readonly int FaceShadowBias = Shader.PropertyToID(FaceShadowBiasName);
+
+            /** <summary>The name _FaceLightHeight.</summary> */
+            public const string FaceLightHeightName = "_FaceLightHeight";
+
+            /** <summary>The property id of _FaceLightHeight.</summary> */
+            public static readonly int FaceLightHeight = Shader.PropertyToID(FaceLightHeightName);
 
             /** <summary>The name _CircleStoneShade.</summary> */
             public const string CircleStoneShadeName = "_CircleStoneShade";

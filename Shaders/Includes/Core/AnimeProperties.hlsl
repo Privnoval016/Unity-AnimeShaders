@@ -82,6 +82,11 @@ SAMPLER(sampler_CircleDetail);
 TEXTURE2D(_FieldStones);
 TEXTURE2D(_CircleStones);
 #endif
+#if defined(ANIME_GROUP_FACE)
+// The face map (AnimeFaceMapBaker: R and G the horizontal normal in the head's frame, B the face weight, A coverage),
+// read through URP's global sampler_LinearClamp.
+TEXTURE2D(_FaceMap);
+#endif
 
 CBUFFER_START(UnityPerMaterial)
     // The core every lit pack shader has.
@@ -169,6 +174,12 @@ CBUFFER_START(UnityPerMaterial)
     float _EdgeSoftness;
     float _DetailFadeStart;
     float _DetailFadeRange;
+#endif
+#if defined(ANIME_GROUP_FACE)
+    half _FaceMapStrength;
+    half _FaceShadowSoftness;
+    half _FaceShadowBias;
+    half _FaceLightHeight;
 #endif
 #if defined(ANIME_GROUP_LINE)
     half4 _OutlineColor;

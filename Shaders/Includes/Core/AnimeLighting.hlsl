@@ -177,6 +177,7 @@ half3 AnimeShade(AnimeSurface surface, InputData inputData)
     half3 lightDirection = half3(AnimeDirectorLightDirection(mainLight.direction));
     half x = AnimeHalfLambert(surface.normalWS, lightDirection);
     half formWeight = AnimeToneWeight(x, _ShadowThreshold, _ShadowSoftness);
+    formWeight = lerp(formWeight, surface.formOverride, surface.formOverrideWeight);
     half castStrength;
     half castLit = AnimeMainLightCast(inputData, half3(mainLight.direction), castStrength);
     half litWeight = lerp(formWeight, min(formWeight, castLit), castStrength);
@@ -195,6 +196,7 @@ half3 AnimeShade(AnimeSurface surface, InputData inputData)
     if (ANIME_BAND2_ON)
     {
         half deepWeight = AnimeToneWeight(x, _ShadowThreshold - _Band2Offset, _Band2Softness);
+        deepWeight = lerp(deepWeight, 1.0h, surface.formOverrideWeight);
         shadowTone = lerp(shadowTone * _Band2Tint.rgb, shadowTone, deepWeight);
     }
 #endif

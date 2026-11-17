@@ -126,6 +126,8 @@ void AnimeForwardFragment(
     surface.alpha = alpha;
     surface.normalWS = AnimeSurfaceNormal(input, faceSign, input.uv);
     surface.emission = half3(0, 0, 0);
+    surface.formOverride = 0.0h;
+    surface.formOverrideWeight = 0.0h;
 #if defined(ANIME_GROUP_EMISSION)
     if (ANIME_EMISSION_ON)
         surface.emission = AnimeSampleEmission(input.uv);

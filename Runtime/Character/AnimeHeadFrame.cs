@@ -88,10 +88,7 @@ namespace AnimeShaders
 
         private void LateUpdate()
         {
-            if (_stale)
-                OnEnable();
-            else if (_ready)
-                Write();
+            Refresh();
         }
 
         private void OnDisable()
@@ -151,6 +148,15 @@ namespace AnimeShaders
         public static Matrix4x4 MeshFromModel(Transform mesh, Transform model)
         {
             return mesh.worldToLocalMatrix * model.localToWorldMatrix;
+        }
+
+        /** <summary>Writes the head's frame now (as each frame does after animation): for a body posed outside the player loop, as an offscreen capture's.</summary> */
+        public void Refresh()
+        {
+            if (_stale)
+                OnEnable();
+            else if (_ready)
+                Write();
         }
 
         #endregion

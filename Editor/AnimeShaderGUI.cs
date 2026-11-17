@@ -76,6 +76,7 @@ namespace AnimeShaders.EditorTools
                 materialEditor.ShaderProperty(property, property.displayName);
                 WarnIfNotPacked(property);
                 WarnAboutStones(property);
+                WarnAboutFaceMap(property);
             }
             EditorGUILayout.Space();
             materialEditor.RenderQueueField();
@@ -165,6 +166,21 @@ namespace AnimeShaders.EditorTools
             string path = AssetDatabase.GetAssetPath(property.textureValue);
             if (!string.IsNullOrEmpty(path) && !DataTextures.HasLabel(path, AnimeDetailImport.StonesLabel))
                 EditorGUILayout.HelpBox("Not a stone map: pack one from a Detail Set with Stones ticked.", MessageType.Warning);
+        }
+
+        /** <summary>Under a face map slot: what an empty slot or a texture that isn't a baked face map means.</summary> */
+        private static void WarnAboutFaceMap(MaterialProperty property)
+        {
+            if (property.name != Ids.FaceMapName)
+                return;
+            if (property.textureValue == null)
+            {
+                EditorGUILayout.HelpBox("No face map: the face shades by its normals. Bake one (Create > Anime Shaders > Face Map); the character also needs a head frame.", MessageType.Warning);
+                return;
+            }
+            string path = AssetDatabase.GetAssetPath(property.textureValue);
+            if (!string.IsNullOrEmpty(path) && !DataTextures.HasLabel(path, AnimeFaceMapImport.Label))
+                EditorGUILayout.HelpBox("Not a baked face map: bake one from a Face Map asset.", MessageType.Warning);
         }
 
         private static void DrawRamp(Material material)

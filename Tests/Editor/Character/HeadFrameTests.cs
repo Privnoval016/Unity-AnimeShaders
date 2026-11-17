@@ -1,4 +1,3 @@
-using System.Reflection;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -40,7 +39,7 @@ namespace AnimeShaders.Tests
 
         private void Tick()
         {
-            typeof(AnimeHeadFrame).GetMethod("LateUpdate", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(_frame, null);
+            _frame.Refresh();
         }
 
         private static void AssertDirection(Vector3 expected, Vector4 actual, string message)

@@ -16,6 +16,14 @@
   whose bone axes differ from the model's, turning, still and moving, letting go; break proofs.
 - The head frame reads the model's front from the character root (`BindAxes` takes it; `MeshFromModel`): Blender's
   meshes import turned 270° about X from their root, so the mesh's own +Z was up. The test rig's mesh is turned the same way.
+- `Anime/Face` (`Shaders/AnimeFace.shader`, `Includes/Character/`): the face's form lit from its face map round the head
+  frame, with Face Map Strength, Face Shadow Softness, Face Shadow Bias and Face Light Height (group `ANIME_GROUP_FACE`);
+  `AnimeSurface` gains `formOverride` and `formOverrideWeight` (zero: unchanged), which `AnimeShade` blends into the form
+  before the cast shadow, clouds and contact shading, and lifts the second band under. `AnimeShaderIds.FaceShader` and
+  the face's material ids; `AnimeHeadFrame.Refresh`; the inspector warns under an empty or wrong face map. Tests: the map
+  picks the side, Lambert round the horizon at eight angles, bias, height dimming and never moving the line, a light
+  straight above, no weight and no head frame as `Anime/Character`; in the name, batcher and every-platform tests; break
+  proofs.
 - Face maps (`Editor/Face/`): the face's horizontal normal and face weight baked from its mesh into a half-float EXR for
   `Anime/Face`, with an asset, an Inspector and an import rule. `DataTextures` gains `WriteHalf`, `AddLabel` and
   `FileHash`; **breaking:** `HoldTo` takes a `DataSampling` (`Exact` for the old `point: true`). Tests: a hemisphere's
