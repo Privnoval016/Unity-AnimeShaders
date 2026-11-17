@@ -80,3 +80,4 @@ MonoBehaviour:
     hazeGlowStrength: 0.35
     hazeGlowSize: 0.8
     skyDistance: 1500
+  light: {fileID: 11400000, guid: 5af783bfa35744960821fdc21a5460ec, type: 2}
