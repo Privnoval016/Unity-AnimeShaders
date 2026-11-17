@@ -10,6 +10,12 @@
   read in uniform flow, a trig-free hash.
 - The haze (`Core/AnimeFog.hlsl`): distance and height fog with a glow toward the sun, in the pack's forward and outline
   passes in place of URP's fog behind `_ANIME_ATMOSPHERE`; URP's fog takes the same colour and reach for other shaders.
+- Sky presets' **shade** (`SkyState.Shade`, published as `_AnimeWorldShade`, zero for white): the time of day's tint on
+  every pack material's shade tone, the director's on top; presets older than it load as white. Golden Hour, Dusk and
+  Night darker and cooler (at dusk the dim sun had pulled the lit tone level with the shade, so cast shadows read as
+  lilac stripes); Dusk's sun at 10° (4° stretched shadows 14 times a body's height and lifted them off the feet). The
+  presets' air: thinner haze capped higher, more mist at the hills' feet; Day's sky deeper. Tests: the tint scales only
+  the shade, the director's on top; the preset publishes and clears it; break proof.
 - **Stones** (variation per stone, for any tiled set with an occlusion map): a detail set's Stones section writes a
   stone map beside it (`StoneMath`: the stones found on the tile as a torus at the occlusion's resolution, an exact
   home-tile code per texel; `AnimeStones` label, point-sampled, uncompressed); `Anime/Ground` gains per layer **Stone

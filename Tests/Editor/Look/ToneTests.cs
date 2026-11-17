@@ -3,6 +3,7 @@ using UnityEngine;
 using Ids = AnimeShaders.AnimeShaderIds.MaterialProperties;
 using Keywords = AnimeShaders.AnimeShaderIds.Keywords;
 using Switches = AnimeShaders.AnimeShaderIds.Switches;
+using World = AnimeShaders.AnimeShaderIds.World;
 
 namespace AnimeShaders.Tests
 {
@@ -201,6 +202,17 @@ namespace AnimeShaders.Tests
             Color[] frame = _stage.Render();
             Assert.IsTrue(FrameReads.Near(At(frame, -0.6f), Shadow * 0.5f, Tolerance), $"shadow {At(frame, -0.6f)}");
             Assert.IsTrue(FrameReads.Near(At(frame, 0.6f), Base, Tolerance), $"lit {At(frame, 0.6f)}");
+        }
+
+        [Test]
+        public void WorldShade_ScalesOnlyTheShadowTone_AndTheDirectorsMultipliesOnTop()
+        {
+            Shader.SetGlobalVector(World.AnimeWorldShade, new Vector4(-0.5f, -0.5f, -0.5f, 0f));
+            Color[] frame = _stage.Render();
+            Assert.IsTrue(FrameReads.Near(At(frame, -0.6f), Shadow * 0.5f, Tolerance), $"shadow {At(frame, -0.6f)}");
+            Assert.IsTrue(FrameReads.Near(At(frame, 0.6f), Base, Tolerance), $"lit {At(frame, 0.6f)}");
+            Shader.SetGlobalVector(AnimeShaderIds.Director.ShadowColor, new Vector4(-0.5f, -0.5f, -0.5f, 0f));
+            Assert.IsTrue(FrameReads.Near(At(_stage.Render(), -0.6f), Shadow * 0.25f, Tolerance), "the shot's change on top of the time of day's");
         }
 
         [Test]

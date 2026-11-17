@@ -69,7 +69,7 @@ namespace AnimeShaders.Tests
             _fogStartBefore = RenderSettings.fogStartDistance;
             _fogEndBefore = RenderSettings.fogEndDistance;
             _world = new WorldGlobals();
-            _made = new MadeSky().Set("cloudCover", 0.5f).Set("cloudAltitude", 700f).Set("cloudShadowStrength", 0.3f)
+            _made = new MadeSky().Set("shade", new Color(0.5f, 0.6f, 0.7f)).Set("cloudCover", 0.5f).Set("cloudAltitude", 700f).Set("cloudShadowStrength", 0.3f)
                 .Set("haze", true).Set("hazeStart", 40f).Set("hazeDensity", 0.01f)
                 .Ridges(new SkyRidge(Color.red, 8f, 2f, 10f, 1f, 900f));
             _sky = new Material(Shader.Find("Anime/Sky"));
@@ -125,6 +125,7 @@ namespace AnimeShaders.Tests
             Assert.AreEqual(state.CloudAltitude, cloud.w, 1e-3f, "the altitude published");
             Assert.AreEqual(state.CloudShadowStrength, Shader.GetGlobalVector(World.AnimeCloudMotion).w, 1e-5f);
             Assert.AreEqual(state.HazeStart, Shader.GetGlobalVector(World.AnimeHazeShape).x, 1e-3f, "the haze published");
+            Assert.AreEqual(state.Shade.linear.g - 1f, Shader.GetGlobalVector(World.AnimeWorldShade).y, 1e-4f, "the shade tint published, less one");
             Assert.AreSame(_sky.GetTexture(Ids.NoiseTex), Shader.GetGlobalTexture(World.AnimeCloudNoise), "the clouds' noise is the sky's");
             Assert.IsTrue(On(World.AtmosphereKeyword), "the haze on");
             Assert.IsTrue(On(World.CloudShadowsKeyword), "the cloud shadows on");
@@ -155,6 +156,7 @@ namespace AnimeShaders.Tests
             SkyApply.Unpublish();
             Assert.AreEqual(Vector4.zero, Shader.GetGlobalVector(World.AnimeCloudShape));
             Assert.AreEqual(Vector4.zero, Shader.GetGlobalVector(World.AnimeHazeShape));
+            Assert.AreEqual(Vector4.zero, Shader.GetGlobalVector(World.AnimeWorldShade), "the materials' own shade");
             Assert.IsFalse(On(World.AtmosphereKeyword));
             Assert.IsFalse(On(World.CloudShadowsKeyword));
         }

@@ -69,6 +69,7 @@ MonoBehaviour:
     ambientSky: {r: 0.55, g: 0.62, b: 0.75, a: 1}
     ambientEquator: {r: 0.45, g: 0.5, b: 0.55, a: 1}
     ambientGround: {r: 0.3, g: 0.3, b: 0.28, a: 1}
+    shade: {r: 1, g: 1, b: 1, a: 1}
     haze: 1
     hazeStart: 30
     hazeDensity: 0.0025

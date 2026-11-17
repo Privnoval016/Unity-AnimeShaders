@@ -942,6 +942,12 @@ namespace AnimeShaders
             /** <summary>The property id of _AnimeHazeSky.</summary> */
             public static readonly int AnimeHazeSky = Shader.PropertyToID(AnimeHazeSkyName);
 
+            /** <summary>The name _AnimeWorldShade.</summary> */
+            public const string AnimeWorldShadeName = "_AnimeWorldShade";
+
+            /** <summary>The property id of _AnimeWorldShade.</summary> */
+            public static readonly int AnimeWorldShade = Shader.PropertyToID(AnimeWorldShadeName);
+
             /** <summary>The name _AnimeCloudNoise.</summary> */
             public const string AnimeCloudNoiseName = "_AnimeCloudNoise";
 

@@ -100,6 +100,8 @@ namespace AnimeShaders
         [SerializeField] private Color ambientEquator;
         [Tooltip("The light from below.")]
         [SerializeField] private Color ambientGround;
+        [Tooltip("Multiplies every pack material's shade tone: white keeps each material's own; darker and cooler for a low or absent sun, so shade stays below the dimmer light and cast shadows still read as shadow. A shot's director changes multiply on top.")]
+        [ColorUsage(false)] [SerializeField] private Color shade;
 
         [Header("Haze")]
         [Tooltip("Haze over distance and low ground in the horizon colour, glowing toward the sun. Off: the scene's plain fog.")]
@@ -141,7 +143,7 @@ namespace AnimeShaders
             ridges = Array.Empty<SkyRidge>(), ridgeLitEdge = Color.white, ridgeMistHeight = 3f, ridgeMist = 0.8f,
             stars = false, starDensity = 0.2f, starSize = 0.15f, starScale = 24f,
             ambientSky = new Color(0.55f, 0.62f, 0.75f), ambientEquator = new Color(0.45f, 0.5f, 0.55f),
-            ambientGround = new Color(0.3f, 0.3f, 0.28f),
+            ambientGround = new Color(0.3f, 0.3f, 0.28f), shade = Color.white,
             haze = true, hazeStart = 60f, hazeDensity = 0.006f, hazeBase = 0f, hazeFalloff = 0.02f, hazeMaxOpacity = 0.85f,
             hazeGlow = new Color(1f, 0.92f, 0.8f), hazeGlowStrength = 0.4f, hazeGlowSize = 0.6f, skyDistance = 1500f,
         };
@@ -256,6 +258,9 @@ namespace AnimeShaders
 
         /** <summary>The ambient light from below.</summary> */
         public Color AmbientGround => ambientGround;
+
+        /** <summary>The time of day's tint on every pack material's shade tone; white leaves it.</summary> */
+        public Color Shade => shade;
 
         /** <summary>Whether the haze is on.</summary> */
         public bool Haze => haze;

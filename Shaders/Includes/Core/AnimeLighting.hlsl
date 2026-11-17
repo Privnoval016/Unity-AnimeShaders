@@ -189,7 +189,7 @@ half3 AnimeShade(AnimeSurface surface, InputData inputData)
     half3 litTone = surface.albedo * lerp(half3(1, 1, 1), lightColor, _LightInfluence);
 
     half3 ambient = AnimeDirectorAmbient(AnimeProbeAmbient()) * contact.y;
-    half3 shadowTone = surface.albedo * (_ShadowTint.rgb * AnimeDirectorShadowColorMultiplier() + ambient * _AmbientStrength);
+    half3 shadowTone = surface.albedo * (_ShadowTint.rgb * AnimeWorldShadeMultiplier() * AnimeDirectorShadowColorMultiplier() + ambient * _AmbientStrength);
 
 #if defined(ANIME_GROUP_BAND)
     if (ANIME_BAND2_ON)

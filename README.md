@@ -209,11 +209,13 @@ takes no rim; a camera whose renderer lacks the feature draws none. XR single-pa
   reads it at the sky's distance and each ridge at its own, so far ground, ridges and sky meet.
 - **Sky presets** (`SkyPreset` assets: Day, Golden Hour, Dusk, Night in `Runtime/Sky/Presets/`): one `SkyState` each:
   the sky's colours, the sun, the cloud field (cover, size, simplicity, softness, altitude, drift, shade, shadow
-  strength), the ridges, the stars, the ambient (Trilight) and the haze (start, density, base height and falloff, most
-  opacity, the glow toward the sun, the sky's distance). `SkyApply.Apply` is the one writer: the sky material, the sun
+  strength), the ridges, the stars, the ambient (Trilight), the **shade** (a tint multiplying every pack material's
+  shade tone, white by day, darker and cooler for a low or absent sun so shade stays below the dimmer light and cast
+  shadows still read as shadow; the director's shade change multiplies on top) and the haze (start, density, base height
+  and falloff, most opacity, the glow toward the sun, the sky's distance). `SkyApply.Apply` is the one writer: the sky material, the sun
   light, the scene's render settings (reflections off; URP's fog set to the haze's colour and reach for shaders outside
   the pack) and the **world's globals** (`AnimeShaderIds.World`: the cloud field, the haze, the clouds' noise and two
-  keywords). **`SkyPresetApplier`** applies one on enable in Edit and Play Mode; no preset (Authored) leaves the scene
+  keywords, the shade tint). **`SkyPresetApplier`** applies one on enable in Edit and Play Mode; no preset (Authored) leaves the scene
   alone; in Edit Mode it writes the sky material itself, in Play Mode a copy (the material stays as authored) and
   switched off it puts back everything it changed, the sun and reflection included; switched off in either mode it
   clears the world's globals. Never applied mid-fight. The light director (when built) becomes its caller.

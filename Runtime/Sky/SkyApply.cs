@@ -102,7 +102,7 @@ namespace AnimeShaders
             sky.SetKeyword(new LocalKeyword(sky.shader, Ids.StarsKeyword), state.Stars);
         }
 
-        /** <summary>Publishes the state's cloud field and haze as the world's globals, with <paramref name="cloudNoise" /> as the clouds' noise (none: no clouds).</summary> */
+        /** <summary>Publishes the state's cloud field, haze and shade tint as the world's globals, with <paramref name="cloudNoise" /> as the clouds' noise (none: no clouds).</summary> */
         public static void Publish(in SkyState state, Texture cloudNoise)
         {
             float cover = cloudNoise != null ? state.CloudCover : 0f;
@@ -117,14 +117,16 @@ namespace AnimeShaders
             Shader.SetGlobalVector(World.AnimeHazeGlow, new Vector4(glow.r, glow.g, glow.b, state.HazeGlowStrength));
             Shader.SetGlobalVector(World.AnimeHazeShape, new Vector4(state.HazeStart, state.HazeDensity, state.HazeBase, state.HazeFalloff));
             Shader.SetGlobalVector(World.AnimeHazeSky, new Vector4(state.SkyDistance, state.HazeGlowSize, 0f, 0f));
+            Color shade = state.Shade.linear;
+            Shader.SetGlobalVector(World.AnimeWorldShade, new Vector4(shade.r - 1f, shade.g - 1f, shade.b - 1f, 0f));
             Shader.SetKeyword(GlobalKeyword.Create(World.AtmosphereKeyword), state.Haze);
             Shader.SetKeyword(GlobalKeyword.Create(World.CloudShadowsKeyword), cover > 0f && state.CloudShadowStrength > 0f);
         }
 
-        /** <summary>Clears the world's globals: no clouds, no haze, the scene's plain fog.</summary> */
+        /** <summary>Clears the world's globals: no clouds, no haze, the scene's plain fog, the materials' own shade.</summary> */
         public static void Unpublish()
         {
-            foreach (int global in new[] { World.AnimeCloudShape, World.AnimeCloudMotion, World.AnimeCloudShadowClear, World.AnimeHazeColor, World.AnimeHazeGlow, World.AnimeHazeShape, World.AnimeHazeSky })
+            foreach (int global in new[] { World.AnimeCloudShape, World.AnimeCloudMotion, World.AnimeCloudShadowClear, World.AnimeHazeColor, World.AnimeHazeGlow, World.AnimeHazeShape, World.AnimeHazeSky, World.AnimeWorldShade })
                 Shader.SetGlobalVector(global, Vector4.zero);
             Shader.SetGlobalTexture(World.AnimeCloudNoise, Texture2D.grayTexture);
             Shader.SetKeyword(GlobalKeyword.Create(World.AtmosphereKeyword), false);
