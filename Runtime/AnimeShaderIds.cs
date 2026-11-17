@@ -21,6 +21,34 @@ namespace AnimeShaders
 
         #endregion
 
+        /** <summary>The head frame's per-renderer values (set through <see cref="AnimeBlocks" /> by <see cref="AnimeHeadFrame" />): world space.</summary> */
+        public static class Head
+        {
+            /** <summary>The name _AnimeHeadCentre.</summary> */
+            public const string CentreName = "_AnimeHeadCentre";
+
+            /** <summary>The property id of _AnimeHeadCentre.</summary> */
+            public static readonly int Centre = Shader.PropertyToID(CentreName);
+
+            /** <summary>The name _AnimeHeadForward.</summary> */
+            public const string ForwardName = "_AnimeHeadForward";
+
+            /** <summary>The property id of _AnimeHeadForward.</summary> */
+            public static readonly int Forward = Shader.PropertyToID(ForwardName);
+
+            /** <summary>The name _AnimeHeadRight.</summary> */
+            public const string RightName = "_AnimeHeadRight";
+
+            /** <summary>The property id of _AnimeHeadRight.</summary> */
+            public static readonly int Right = Shader.PropertyToID(RightName);
+
+            /** <summary>The name _AnimeHeadUp.</summary> */
+            public const string UpName = "_AnimeHeadUp";
+
+            /** <summary>The property id of _AnimeHeadUp.</summary> */
+            public static readonly int Up = Shader.PropertyToID(UpName);
+        }
+
         /** <summary>The light director's global properties: all zero when never set, which means no change.</summary> */
         public static class Director
         {

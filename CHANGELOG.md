@@ -10,6 +10,10 @@
   read in uniform flow, a trig-free hash.
 - The haze (`Core/AnimeFog.hlsl`): distance and height fog with a glow toward the sun, in the pack's forward and outline
   passes in place of URP's fog behind `_ANIME_ATMOSPHERE`; URP's fog takes the same colour and reach for other shaders.
+- Step 3 (faces and hair) begins: `AnimeBlocks` (several writers on one renderer slot's property block, merged),
+  `AnimeHeadFrame` (the head's frame from the bind pose, written after animation and cloth, only on change, with
+  gizmos), `AnimeShaderIds.Head`. Tests: owners merge in either order, letting go, slots apart; the head frame on a rig
+  whose bone axes differ from the model's, turning, still and moving, letting go; break proofs.
 - After four reviewers over all of 2c: stars as a field of their own (they sat on the noise's lattice, a grid); the
   shafts' mask safe from an infinite pixel, their composite leaving alpha, no shafts on overlay, MSAA or XR cameras; full
   cloud cover cloud everywhere; no cloud reads at zero cover; hidden ridges skipped; the applier enabled last owns the
