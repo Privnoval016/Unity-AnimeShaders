@@ -1,13 +1,17 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace AnimeShaders
 {
     /**
      * <summary>Tells a character's face, hair, eye and brow materials where the head is and which way it faces: each
-     * frame, after animation and cloth, it writes the head's centre and its forward, right and up (the model's own front
-     * and up at rest, carried by the head bone, whatever the bone's or the mesh's axes) into those renderers' property
-     * blocks (<see cref="AnimeBlocks" />), only when they change. Those renderers leave the SRP Batcher.</summary>
+     * frame, after animation and cloth, it measures the head's centre and its forward, right and up (the model's own
+     * front and up at rest, carried by the head bone, whatever the bone's or the mesh's axes), and writes them into those
+     * renderers' property blocks (<see cref="AnimeBlocks" />) once they change, just before a camera that can see one of
+     * the renderers draws: a hidden figure (a menu's, a cut-in's) pays only the measuring. Those renderers leave the SRP
+     * Batcher.</summary>
      * <remarks>The model's front and up are this object's forward and up: put it on the character's root.</remarks>
      */
     [ExecuteAlways]
@@ -37,12 +41,16 @@ namespace AnimeShaders
         private const float GizmoLength = 0.15f;
         private const float GizmoCentre = 0.01f;
 
+        private static readonly List<AnimeHeadFrame> Enabled = new();
+        private static readonly Plane[] Frustum = new Plane[6];
+
         private readonly AnimeBlockValues _values = new();
         private Transform _head;
         private Vector3 _localForward;
         private Vector3 _localUp;
         private bool _ready;
         private bool _stale;
+        private bool _pending;
         private int[] _slots = Array.Empty<int>();
         private Vector3 _lastCentre;
         private Vector3 _lastForward;
@@ -61,16 +69,16 @@ namespace AnimeShaders
         /** <summary>The model's up at rest, in its root's space.</summary> */
         public static readonly Vector3 ModelUp = Vector3.up;
 
-        /** <summary>The head's centre as last written, in world space.</summary> */
+        /** <summary>The head's centre as last measured, in world space.</summary> */
         public Vector3 Centre { get; private set; }
 
-        /** <summary>The head's forward as last written.</summary> */
+        /** <summary>The head's forward as last measured.</summary> */
         public Vector3 Forward { get; private set; }
 
-        /** <summary>The head's right as last written.</summary> */
+        /** <summary>The head's right as last measured.</summary> */
         public Vector3 Right { get; private set; }
 
-        /** <summary>The head's up as last written.</summary> */
+        /** <summary>The head's up as last measured.</summary> */
         public Vector3 Up { get; private set; }
 
         #endregion
@@ -82,17 +90,30 @@ namespace AnimeShaders
             _stale = false;
             _ready = Resolve();
             _lastForward = Vector3.zero;
-            if (_ready)
-                Write();
+            if (!Enabled.Contains(this))
+                Enabled.Add(this);
+            RenderPipelineManager.beginCameraRendering -= WriteForCamera;
+            RenderPipelineManager.beginCameraRendering += WriteForCamera;
+            if (!_ready)
+                return;
+            Measure();
+            Write();
         }
 
         private void LateUpdate()
         {
-            Refresh();
+            if (_stale)
+                OnEnable();
+            else if (_ready)
+                Measure();
         }
 
         private void OnDisable()
         {
+            Enabled.Remove(this);
+            if (Enabled.Count == 0)
+                RenderPipelineManager.beginCameraRendering -= WriteForCamera;
+            _pending = false;
             AnimeBlocks.Release(this);
             _values.Clear();
         }
@@ -150,13 +171,18 @@ namespace AnimeShaders
             return mesh.worldToLocalMatrix * model.localToWorldMatrix;
         }
 
-        /** <summary>Writes the head's frame now (as each frame does after animation): for a body posed outside the player loop, as an offscreen capture's.</summary> */
+        /** <summary>Measures and writes the head's frame now, seen or not: for a body posed outside the player loop, as an offscreen capture's.</summary> */
         public void Refresh()
         {
             if (_stale)
+            {
                 OnEnable();
-            else if (_ready)
-                Write();
+                return;
+            }
+            if (!_ready)
+                return;
+            Measure();
+            Write();
         }
 
         #endregion
@@ -189,7 +215,41 @@ namespace AnimeShaders
             return _head != null && BindAxes(mesh, _head, transform, out _localForward, out _localUp);
         }
 
-        private void Write()
+        private static void WriteForCamera(ScriptableRenderContext context, Camera camera)
+        {
+            bool framed = false;
+            foreach (AnimeHeadFrame frame in Enabled)
+            {
+                if (!frame._pending)
+                    continue;
+                if (!framed)
+                {
+                    GeometryUtility.CalculateFrustumPlanes(camera, Frustum);
+                    framed = true;
+                }
+                if (frame.SeenBy(camera))
+                    frame.Write();
+            }
+        }
+
+        /** <summary>Whether <paramref name="camera" /> can draw one of the renderers: shown, on a layer it draws, in its scene and view.</summary> */
+        private bool SeenBy(Camera camera)
+        {
+            foreach (Renderer listed in renderers)
+            {
+                if (listed == null || !listed.enabled || listed.forceRenderingOff || !listed.gameObject.activeInHierarchy)
+                    continue;
+                if ((camera.cullingMask & (1 << listed.gameObject.layer)) == 0)
+                    continue;
+                if (camera.scene.IsValid() && listed.gameObject.scene != camera.scene)
+                    continue;
+                if (GeometryUtility.TestPlanesAABB(Frustum, listed.bounds))
+                    return true;
+            }
+            return false;
+        }
+
+        private void Measure()
         {
             Vector3 forward = _head.TransformDirection(_localForward);
             Vector3 up = _head.TransformDirection(_localUp);
@@ -210,6 +270,14 @@ namespace AnimeShaders
             _values.SetVector(AnimeShaderIds.Head.Forward, forward);
             _values.SetVector(AnimeShaderIds.Head.Right, right);
             _values.SetVector(AnimeShaderIds.Head.Up, up);
+            _pending = true;
+        }
+
+        private void Write()
+        {
+            if (!_pending)
+                return;
+            _pending = false;
             for (int i = 0; i < renderers.Length; i++)
             {
                 for (int slot = 0; slot < _slots[i]; slot++)

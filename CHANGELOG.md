@@ -16,6 +16,11 @@
   whose bone axes differ from the model's, turning, still and moving, letting go; break proofs.
 - The head frame reads the model's front from the character root (`BindAxes` takes it; `MeshFromModel`): Blender's
   meshes import turned 270° about X from their root, so the mesh's own +Z was up. The test rig's mesh is turned the same way.
+- Performance (step 3, B8): `AnimeHeadFrame` measures the head each frame and writes its renderers' blocks only just
+  before a camera that can see one of them draws (its layers, its scene, its view), so hidden figures (a menu's, a
+  cut-in's) skip the writes; `Refresh` still measures and writes at once. The hair depth's own depth buffer is 16-bit
+  with no stencil. Tests: a camera looking away, skipping the layer or drawing another scene writes nothing, one that
+  sees it writes; break proofs.
 - Eyes and brows through their fringe (step 3, B6): `Anime/Eyes` (EyeMark marks the stencil where their own fringe is
   just in front; `AnimeHairDepthFeature` draws EyesOverHair after the opaques), `AnimeEyesOverHairPass`, the rules in
   `Includes/Character/AnimeEyes.hlsl` (Hair Over Eyes, Eye Yaw Limit, Eye Pitch Limit, Eye Hair Distance, Eye Hair Fade,

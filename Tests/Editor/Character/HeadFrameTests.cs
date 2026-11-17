@@ -1,6 +1,8 @@
+using System.Reflection;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 
 namespace AnimeShaders.Tests
@@ -10,13 +12,16 @@ namespace AnimeShaders.Tests
      * bone turned so its own forward points down, the mesh turned as Blender's imports are, its own +Z pointing up): it
      * writes the model's front, right and up as the head carries them, turning with the head; the
      * centre offset along the head's own up; nothing rewritten while the head is still, rewritten once it moves; let go
-     * on disable; the bind axes false for a mesh not skinned to the bone.</summary>
+     * on disable; the bind axes false for a mesh not skinned to the bone. Measured each frame, the frame is written only
+     * as a camera that can see the renderer draws: not one looking away, not one skipping its layer, not another
+     * scene's.</summary>
      */
     public class HeadFrameTests
     {
         #region Private Fields
 
         private const float Close = 1e-3f;
+        private const int HiddenLayer = 31;
         private static readonly Quaternion BoneAtRest = Quaternion.Euler(90f, 0f, 0f);
         private static readonly Quaternion MeshTurned = Quaternion.Euler(270f, 0f, 0f);
 
@@ -25,6 +30,8 @@ namespace AnimeShaders.Tests
         private SkinnedMeshRenderer _skinned;
         private Mesh _mesh;
         private AnimeHeadFrame _frame;
+        private LitStage _stage;
+        private LitStage _otherStage;
 
         #endregion
 
@@ -40,6 +47,22 @@ namespace AnimeShaders.Tests
         private void Tick()
         {
             _frame.Refresh();
+        }
+
+        /** <summary>A frame's own pass: the head measured, nothing written yet.</summary> */
+        private void Animate()
+        {
+            typeof(AnimeHeadFrame).GetMethod("LateUpdate", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(_frame, null);
+        }
+
+        /** <summary>The rig on a stage whose camera sees it, the head then turned and measured but not yet written.</summary> */
+        private void TurnedOnStage()
+        {
+            _stage = new LitStage();
+            SceneManager.MoveGameObjectToScene(_root, _stage.Camera.scene);
+            _head.rotation = Quaternion.Euler(0f, 30f, 0f) * _head.rotation;
+            Animate();
+            AssertDirection(Vector3.forward, Shown(AnimeShaderIds.Head.Forward), "measured, not yet drawn: as before");
         }
 
         private static void AssertDirection(Vector3 expected, Vector4 actual, string message)
@@ -86,6 +109,8 @@ namespace AnimeShaders.Tests
         [TearDown]
         public void TearDown()
         {
+            _stage?.Dispose();
+            _otherStage?.Dispose();
             Object.DestroyImmediate(_root);
             Object.DestroyImmediate(_mesh);
         }
@@ -143,6 +168,42 @@ namespace AnimeShaders.Tests
             {
                 Object.DestroyImmediate(other.gameObject);
             }
+        }
+
+        [Test]
+        public void Measured_IsWrittenAsACameraThatSeesItDraws_NotOneLookingAway()
+        {
+            TurnedOnStage();
+            _stage.Camera.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
+            _stage.Render();
+            AssertDirection(Vector3.forward, Shown(AnimeShaderIds.Head.Forward), "a camera looking away: not written");
+            _stage.Camera.transform.rotation = Quaternion.identity;
+            _stage.Render();
+            AssertDirection(Quaternion.Euler(0f, 30f, 0f) * Vector3.forward, Shown(AnimeShaderIds.Head.Forward), "a camera that sees it: written");
+        }
+
+        [Test]
+        public void ACameraSkippingItsLayer_DoesNotWriteIt()
+        {
+            TurnedOnStage();
+            _skinned.gameObject.layer = HiddenLayer;
+            _stage.Camera.cullingMask = ~(1 << HiddenLayer);
+            _stage.Render();
+            AssertDirection(Vector3.forward, Shown(AnimeShaderIds.Head.Forward), "its layer not drawn: not written");
+            _stage.Camera.cullingMask = ~0;
+            _stage.Render();
+            AssertDirection(Quaternion.Euler(0f, 30f, 0f) * Vector3.forward, Shown(AnimeShaderIds.Head.Forward), "its layer drawn: written");
+        }
+
+        [Test]
+        public void AnotherScenesCamera_DoesNotWriteIt()
+        {
+            TurnedOnStage();
+            _otherStage = new LitStage();
+            _otherStage.Render();
+            AssertDirection(Vector3.forward, Shown(AnimeShaderIds.Head.Forward), "a camera drawing another scene: not written");
+            _stage.Render();
+            AssertDirection(Quaternion.Euler(0f, 30f, 0f) * Vector3.forward, Shown(AnimeShaderIds.Head.Forward), "its own scene's camera: written");
         }
     }
 }

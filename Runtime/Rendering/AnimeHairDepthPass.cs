@@ -9,7 +9,8 @@ namespace AnimeShaders
     /**
      * <summary>The hair depth's render-graph pass: the opaque renderers' hair depth pass drawn into a cleared target of
      * one channel (one over the eye depth; 0 is no hair) with its own depth buffer, then set as the global texture with
-     * its switch on.</summary>
+     * its switch on. The depth buffer is 16-bit with no stencil: it only picks the nearest hair, whose depth the colour
+     * target holds in full.</summary>
      */
     internal sealed class AnimeHairDepthPass : ScriptableRenderPass
     {
@@ -62,7 +63,7 @@ namespace AnimeShaders
                 : GraphicsFormat.R32_SFloat;
             RenderTextureDescriptor depth = target;
             depth.graphicsFormat = GraphicsFormat.None;
-            depth.depthStencilFormat = SystemInfo.GetGraphicsFormat(DefaultFormat.DepthStencil);
+            depth.depthStencilFormat = GraphicsFormat.D16_UNorm;
             TextureHandle colour = UniversalRenderer.CreateRenderGraphTexture(renderGraph, target, AnimeShaderIds.HairDepth.TextureName, true, FilterMode.Bilinear);
             TextureHandle depthBuffer = UniversalRenderer.CreateRenderGraphTexture(renderGraph, depth, "Anime Hair Depth Buffer", true, FilterMode.Point);
 
