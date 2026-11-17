@@ -89,7 +89,8 @@ namespace AnimeShaders.Tests
         {
             var table = PackSources.NameTable(typeof(AnimeShaderIds.Sky));
             table.Remove(AnimeShaderIds.Sky.StarsKeyword);
-            CollectionAssert.AreEquivalent(table, ShaderProperties(Shader.Find("Anime/Sky")));
+            table.Remove(AnimeShaderIds.Sky.ShaderName);
+            CollectionAssert.AreEquivalent(table, ShaderProperties(Shader.Find(AnimeShaderIds.Sky.ShaderName)));
         }
 
         [Test]

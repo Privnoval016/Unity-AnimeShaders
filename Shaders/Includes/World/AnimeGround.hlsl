@@ -35,9 +35,13 @@ SAMPLER(sampler_AnimeNoiseTex);
 #define ANIME_GROUND_BREAK_UP_OFFSET 0.5
 // The narrowest a step's soft edge gets, so a flat shade never meets a zero-width edge.
 #define ANIME_GROUND_STEP_MIN_WIDTH 1e-3h
-// The stone variation fades out in the joints: none where the shade is below FROM, full above TO.
-#define ANIME_GROUND_GROUT_FROM 0.15h
-#define ANIME_GROUND_GROUT_TO 0.35h
+// A stone map's home-tile code per axis (StoneMath.Code in the pack's Editor code writes it: 0 none, else 1 + the
+// shift's x index times this + its y index, each index the shift plus one).
+#define ANIME_GROUND_STONE_CODES_PER_AXIS 3u
+// A byte channel's largest value, to read a stone map's values and codes back as whole numbers.
+#define ANIME_GROUND_BYTE_MAX 255.0h
+// How wide, in shade, the stone variation's fade is round a layer's Stone Joint.
+#define ANIME_GROUND_JOINT_FADE 0.2h
 // The tangent turns from world X to world Z as the surface normal leans this far toward X, so no slope sees a seam.
 #define ANIME_GROUND_FRAME_TURN_FROM 0.7
 #define ANIME_GROUND_FRAME_TURN_TO 0.95
@@ -52,6 +56,7 @@ struct AnimeGroundLayer
     half steps;
     half stoneShade;
     half stoneMix;
+    half stoneJoint;
 };
 
 struct AnimeGroundCoordinates
@@ -99,6 +104,7 @@ AnimeGroundLayer AnimeFieldLayer()
     layer.steps = round(_FieldSteps);
     layer.stoneShade = _FieldStoneShade;
     layer.stoneMix = _FieldStoneMix;
+    layer.stoneJoint = _FieldStoneJoint;
     return layer;
 }
 
@@ -112,6 +118,7 @@ AnimeGroundLayer AnimeCircleLayer()
     layer.steps = round(_CircleSteps);
     layer.stoneShade = _CircleStoneShade;
     layer.stoneMix = _CircleStoneMix;
+    layer.stoneJoint = _CircleStoneJoint;
     return layer;
 }
 
@@ -174,10 +181,10 @@ half3 AnimeGroundStoneAt(TEXTURE2D_PARAM(stones, stonesSampler), float2 uv)
 {
     float2 tile = floor(uv);
     half2 texel = SAMPLE_TEXTURE2D_LOD(stones, stonesSampler, uv - tile, 0).rg;
-    uint code = uint(round(texel.g * 255.0h));
-    uint value = uint(round(texel.r * 255.0h));
+    uint code = uint(round(texel.g * ANIME_GROUND_BYTE_MAX));
+    uint value = uint(round(texel.r * ANIME_GROUND_BYTE_MAX));
     uint index = max(code, 1u) - 1u;
-    int2 home = int2(tile) + int2(int(index / 3u) - 1, int(index % 3u) - 1);
+    int2 home = int2(tile) + int2(int(index / ANIME_GROUND_STONE_CODES_PER_AXIS) - 1, int(index % ANIME_GROUND_STONE_CODES_PER_AXIS) - 1);
     uint3 hash = AnimeGroundHash(uint3(asuint(home), value));
     float2 draws = float2(hash.xy) * (1.0 / 4294967296.0);
     return code == 0u ? half3(0.0h, 1.0h, 0.0h) : half3(half(draws.x * 2.0 - 1.0), half(draws.y), 1.0h);
@@ -233,7 +240,8 @@ half3 AnimeGroundGradient(half3 dark, half3 light, half shade)
 // The stone's variation applies near (it fades with the detail) and off the joints, so it never steps where grout is.
 half3 AnimeGroundPaint(AnimeGroundSample sample, AnimeGroundLayer layer, half shift, half near)
 {
-    half stone = sample.stoneStrength * near * smoothstep(ANIME_GROUND_GROUT_FROM, ANIME_GROUND_GROUT_TO, sample.shade);
+    half joint = smoothstep(layer.stoneJoint - ANIME_GROUND_JOINT_FADE * 0.5h, layer.stoneJoint + ANIME_GROUND_JOINT_FADE * 0.5h, sample.shade);
+    half stone = sample.stoneStrength * near * joint;
     half shade = saturate(sample.shade + shift + sample.stoneShade * layer.stoneShade * stone);
     shade = lerp(shade, AnimeGroundSteps(shade, layer.steps), near);
     half mixed = sample.stoneKey < layer.stoneMix ? stone : 0.0h;

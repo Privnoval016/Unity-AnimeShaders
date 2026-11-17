@@ -1,7 +1,10 @@
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
 using Ids = AnimeShaders.AnimeShaderIds.Sky;
+using Object = UnityEngine.Object;
 
 namespace AnimeShaders.Tests
 {
@@ -47,11 +50,6 @@ namespace AnimeShaders.Tests
             return frame;
         }
 
-        private static Color Centre(Color[] frame)
-        {
-            return FrameReads.At(frame, Size / 2, Size / 2);
-        }
-
         /** <summary>The pixel in the middle column at <paramref name="degrees" /> above the view's centre.</summary> */
         private static Color Above(Color[] frame, float degrees)
         {
@@ -59,14 +57,37 @@ namespace AnimeShaders.Tests
             return FrameReads.At(frame, Size / 2, row);
         }
 
-        private static float Distance(Color a, Color b)
+        /** <summary>The centre of each connected patch of pixels that pass <paramref name="lit" />.</summary> */
+        private static List<Vector2> Blobs(Color[] frame, Func<Color, bool> lit)
         {
-            return Mathf.Abs(a.r - b.r) + Mathf.Abs(a.g - b.g) + Mathf.Abs(a.b - b.b);
-        }
-
-        private static float Brightest(Color pixel)
-        {
-            return Mathf.Max(pixel.r, Mathf.Max(pixel.g, pixel.b));
+            var seen = new bool[frame.Length];
+            var centres = new List<Vector2>();
+            var queue = new Queue<int>();
+            for (int start = 0; start < frame.Length; start++)
+            {
+                if (seen[start] || !lit(frame[start]))
+                    continue;
+                seen[start] = true;
+                queue.Enqueue(start);
+                Vector2 sum = Vector2.zero;
+                int count = 0;
+                while (queue.Count > 0)
+                {
+                    int pixel = queue.Dequeue();
+                    int x = pixel % Size, y = pixel / Size;
+                    sum += new Vector2(x, y);
+                    count++;
+                    foreach (int next in new[] { x > 0 ? pixel - 1 : -1, x < Size - 1 ? pixel + 1 : -1, y > 0 ? pixel - Size : -1, y < Size - 1 ? pixel + Size : -1 })
+                    {
+                        if (next < 0 || seen[next] || !lit(frame[next]))
+                            continue;
+                        seen[next] = true;
+                        queue.Enqueue(next);
+                    }
+                }
+                centres.Add(sum / count);
+            }
+            return centres;
         }
 
         private static SkyRidge Flat(Color colour, float height, float distance)
@@ -81,7 +102,7 @@ namespace AnimeShaders.Tests
         {
             _stage = new LitStage(Size);
             _stage.Perspective(FieldOfView, 0f);
-            _sky = new Material(Shader.Find("Anime/Sky"));
+            _sky = TestMaterials.Sky();
             _made = new MadeSky().Set("zenith", Zenith).Set("horizon", Horizon).Set("below", Below).Set("horizonHeight", 0.3f)
                 .Set("cloudCover", 0f).Set("cloudSpeed", 0f).Set("discStrength", 0f).Set("haloStrength", 0f).Set("haze", false)
                 .Set("ridgeMist", 0f);
@@ -100,12 +121,12 @@ namespace AnimeShaders.Tests
         [Test]
         public void TheGradient_RunsFromBelow_ToTheHorizon_ToTheZenith()
         {
-            Color up = Centre(Looking(Vector3.up));
-            Color level = Centre(Looking(Vector3.forward));
-            Color down = Centre(Looking(new Vector3(0f, -0.6f, 1f)));
-            Assert.Less(Distance(up, Zenith), Distance(up, Horizon), $"up {up}");
-            Assert.Less(Distance(level, Horizon), Distance(level, Zenith), $"level {level}");
-            Assert.Less(Distance(down, Below), Distance(down, Horizon), $"down {down}");
+            Color up = FrameReads.Centre(Looking(Vector3.up));
+            Color level = FrameReads.Centre(Looking(Vector3.forward));
+            Color down = FrameReads.Centre(Looking(new Vector3(0f, -0.6f, 1f)));
+            Assert.Less(FrameReads.Distance(up, Zenith), FrameReads.Distance(up, Horizon), $"up {up}");
+            Assert.Less(FrameReads.Distance(level, Horizon), FrameReads.Distance(level, Zenith), $"level {level}");
+            Assert.Less(FrameReads.Distance(down, Below), FrameReads.Distance(down, Horizon), $"down {down}");
         }
 
         [Test]
@@ -114,9 +135,9 @@ namespace AnimeShaders.Tests
             _made.Set("discStrength", 3f);
             Vector3 toward = new Vector3(0.3f, 0.5f, 1f).normalized;
             _stage.LightFrom(toward);
-            Assert.Greater(Brightest(Centre(Looking(toward))), Ceiling, "the disc, looking at the sun");
+            Assert.Greater(FrameReads.Brightest(FrameReads.Centre(Looking(toward))), Ceiling, "the disc, looking at the sun");
             Color[] away = Looking(-toward);
-            Assert.AreEqual(0, FrameReads.Count(away, pixel => Brightest(pixel) > Ceiling + 0.01f), "no disc looking away");
+            Assert.AreEqual(0, FrameReads.Count(away, pixel => FrameReads.Brightest(pixel) > Ceiling + 0.01f), "no disc looking away");
         }
 
         [Test]
@@ -125,7 +146,27 @@ namespace AnimeShaders.Tests
             _made.Set("cloudCover", 0.6f).Set("haloStrength", 1f).Set("zenith", Color.white);
             Vector3 toward = new Vector3(0f, 0.5f, 1f).normalized;
             _stage.LightFrom(toward);
-            Assert.AreEqual(0, FrameReads.Count(Looking(toward), pixel => Brightest(pixel) > Ceiling + 0.01f));
+            Assert.AreEqual(0, FrameReads.Count(Looking(toward), pixel => FrameReads.Brightest(pixel) > Ceiling + 0.01f));
+        }
+
+        [Test]
+        public void FullCover_IsCloudEverywhereOverhead()
+        {
+            var grey = new Color(0.6f, 0.6f, 0.6f);
+            _made.Set("zenith", Color.black).Set("cloudLit", grey).Set("cloudShade", grey).Set("cloudCover", 1f).Set("cloudSize", 50f);
+            var thinnest = new Texture2D(4, 4, TextureFormat.RGBA32, false, true);
+            try
+            {
+                thinnest.SetPixels32(Enumerable.Repeat(new Color32(0, 0, 0, 255), 16).ToArray());
+                thinnest.Apply(false);
+                _sky.SetTexture(Ids.NoiseTex, thinnest);
+                Color[] frame = Looking(Vector3.up);
+                Assert.AreEqual(frame.Length, FrameReads.Count(frame, pixel => FrameReads.Near(pixel, grey.linear, 0.02f)), "every pixel the cloud's colour, even where the noise is at its thinnest");
+            }
+            finally
+            {
+                Object.DestroyImmediate(thinnest);
+            }
         }
 
         [Test]
@@ -156,9 +197,23 @@ namespace AnimeShaders.Tests
             _made.Set("stars", true);
             Color[] starry = Looking(Vector3.up);
             Color[] underfoot = Looking(Vector3.down);
-            Assert.AreEqual(0, FrameReads.Count(dark, pixel => Brightest(pixel) > 0.05f), "no stars while off");
-            Assert.Greater(FrameReads.Count(starry, pixel => Brightest(pixel) > 0.05f), 0, "stars overhead");
-            Assert.AreEqual(0, FrameReads.Count(underfoot, pixel => Brightest(pixel) > 0.05f), "none below the horizon");
+            Assert.AreEqual(0, FrameReads.Count(dark, pixel => FrameReads.Brightest(pixel) > 0.05f), "no stars while off");
+            Assert.Greater(FrameReads.Count(starry, pixel => FrameReads.Brightest(pixel) > 0.05f), 0, "stars overhead");
+            Assert.AreEqual(0, FrameReads.Count(underfoot, pixel => FrameReads.Brightest(pixel) > 0.05f), "none below the horizon");
+        }
+
+        [Test]
+        public void Stars_LieAtRandom_NotOnAGrid()
+        {
+            _made.Set("zenith", Color.black).Set("horizon", Color.black).Set("below", Color.black).Set("cloudCover", 0f)
+                .Set("stars", true).Set("starDensity", 1f).Set("starSize", 0.08f).Set("starScale", 12f);
+            Color[] frame = Looking(Vector3.up);
+            List<Vector2> stars = Blobs(frame, pixel => FrameReads.Brightest(pixel) > 0.05f);
+            Assert.Greater(stars.Count, 12, "a field of stars overhead");
+            float[] gaps = stars.Select(star => stars.Where(other => other != star).Min(other => Vector2.Distance(star, other))).ToArray();
+            float mean = gaps.Average();
+            float spread = Mathf.Sqrt(gaps.Sum(gap => (gap - mean) * (gap - mean)) / gaps.Length) / mean;
+            Assert.Greater(spread, 0.15f, $"the gaps between neighbouring stars vary ({spread:0.000} of the mean); on a grid they are all alike");
         }
 
         [Test]
@@ -180,7 +235,7 @@ namespace AnimeShaders.Tests
             _made.Set("ridgeMist", 1f);
             Color[] misty = Looking(Vector3.forward);
             Color horizon = Horizon.linear;
-            Assert.Less(Distance(Above(misty, 1f), horizon), Distance(Above(misty, 1f), RedAsDrawn), $"the foot nearer the horizon colour {Above(misty, 1f)}");
+            Assert.Less(FrameReads.Distance(Above(misty, 1f), horizon), FrameReads.Distance(Above(misty, 1f), RedAsDrawn), $"the foot nearer the horizon colour {Above(misty, 1f)}");
             Assert.IsTrue(FrameReads.Near(Above(misty, 9f), RedAsDrawn, 0.05f), $"above the mist the ridge as it was {Above(misty, 9f)}");
         }
 
@@ -202,8 +257,8 @@ namespace AnimeShaders.Tests
                 .Set("hazeMaxOpacity", 1f).Set("hazeGlowStrength", 0f)
                 .Ridges(Flat(Red, 15f, 3000f), Flat(Red, 5f, 100f));
             Color[] frame = Looking(Vector3.forward);
-            Color haze = Horizon;
-            Assert.Less(Distance(Above(frame, 10f), haze), Distance(Above(frame, 2f), haze),
+            Color haze = Horizon.linear;
+            Assert.Less(FrameReads.Distance(Above(frame, 10f), haze), FrameReads.Distance(Above(frame, 2f), haze),
                 $"the far ridge {Above(frame, 10f)} nearer the haze than the near one {Above(frame, 2f)}");
         }
 
@@ -213,9 +268,9 @@ namespace AnimeShaders.Tests
             _made.Set("discStrength", 3f).Ridges(Flat(Red, 15f, 0f));
             Vector3 view = Quaternion.Euler(-15f, 0f, 0f) * Vector3.forward;
             _stage.LightFrom(Quaternion.Euler(-5f, 0f, 0f) * Vector3.forward);
-            Assert.AreEqual(0, FrameReads.Count(Looking(view), pixel => Brightest(pixel) > Ceiling), "the sun at five degrees, behind the ridge");
+            Assert.AreEqual(0, FrameReads.Count(Looking(view), pixel => FrameReads.Brightest(pixel) > Ceiling), "the sun at five degrees, behind the ridge");
             _stage.LightFrom(Quaternion.Euler(-30f, 0f, 0f) * Vector3.forward);
-            Assert.Greater(FrameReads.Count(Looking(view), pixel => Brightest(pixel) > Ceiling), 0, "the sun at thirty degrees, above it");
+            Assert.Greater(FrameReads.Count(Looking(view), pixel => FrameReads.Brightest(pixel) > Ceiling), 0, "the sun at thirty degrees, above it");
         }
 
         [Test]

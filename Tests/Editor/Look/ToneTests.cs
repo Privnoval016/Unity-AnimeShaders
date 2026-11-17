@@ -213,6 +213,9 @@ namespace AnimeShaders.Tests
             Assert.IsTrue(FrameReads.Near(At(frame, 0.6f), Base, Tolerance), $"lit {At(frame, 0.6f)}");
             Shader.SetGlobalVector(AnimeShaderIds.Director.ShadowColor, new Vector4(-0.5f, -0.5f, -0.5f, 0f));
             Assert.IsTrue(FrameReads.Near(At(_stage.Render(), -0.6f), Shadow * 0.25f, Tolerance), "the shot's change on top of the time of day's");
+            Shader.SetGlobalVector(AnimeShaderIds.Director.ShadowColor, Vector4.zero);
+            Shader.SetGlobalVector(World.AnimeWorldShade, new Vector4(0.2f, 0.2f, 0.2f, 0f));
+            Assert.IsTrue(FrameReads.Near(At(_stage.Render(), -0.6f), Shadow * 1.2f, Tolerance), "a brighter tint lifts it");
         }
 
         [Test]

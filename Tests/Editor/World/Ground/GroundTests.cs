@@ -90,11 +90,6 @@ namespace AnimeShaders.Tests
             return FrameReads.At(frame, _stage.Column(x), _stage.Column(z));
         }
 
-        private static float Distance(Color a, Color b)
-        {
-            return Mathf.Abs(a.r - b.r) + Mathf.Abs(a.g - b.g) + Mathf.Abs(a.b - b.b);
-        }
-
         private static bool Finite(Color pixel)
         {
             return !float.IsNaN(pixel.r + pixel.g + pixel.b) && !float.IsInfinity(pixel.r + pixel.g + pixel.b);
@@ -193,11 +188,6 @@ namespace AnimeShaders.Tests
         {
             MidRamp(towardLight);
             return At(_stage.Render(), 0.5f, 0.5f).r;
-        }
-
-        private static float Luminance(Color pixel)
-        {
-            return pixel.r * 0.2126729f + pixel.g * 0.7151522f + pixel.b * 0.0721750f;
         }
 
         private static float Spread(IEnumerable<float> values)
@@ -310,8 +300,8 @@ namespace AnimeShaders.Tests
         {
             Color[] frame = _stage.Render();
             Assert.Greater(FrameReads.Count(frame, FrameReads.Covered), 0, "the floor drew");
-            Assert.Less(Distance(At(frame, 0.5f, 0f), Grey), Distance(At(frame, 0.5f, 0f), Green), "inside");
-            Assert.Less(Distance(At(frame, 2.5f, 0f), Green), Distance(At(frame, 2.5f, 0f), Grey), "outside");
+            Assert.Less(FrameReads.Distance(At(frame, 0.5f, 0f), Grey), FrameReads.Distance(At(frame, 0.5f, 0f), Green), "inside");
+            Assert.Less(FrameReads.Distance(At(frame, 2.5f, 0f), Green), FrameReads.Distance(At(frame, 2.5f, 0f), Grey), "outside");
         }
 
         [Test]
@@ -498,12 +488,12 @@ namespace AnimeShaders.Tests
 
             TestMaterials.SetLinear(_material, Ids.PatchTint, new Color(0.5f, 0.1f, 0.1f, 1f));
             Color[] tinted = _stage.Render();
-            Assert.Greater(Luminance(plain[0]) - 0.185f, 0.05f, "the tint is darker than the ground, so keeping the brightness shows");
+            Assert.Greater(FrameReads.Luminance(plain[0]) - FrameReads.Luminance(new Color(0.5f, 0.1f, 0.1f)), 0.05f, "the tint is darker than the ground, so keeping the brightness shows");
             int[] patches = Enumerable.Range(0, tinted.Length).Where(i => FrameReads.Covered(tinted[i]) && tinted[i].r > tinted[i].g + 0.1f).ToArray();
             Assert.Greater(patches.Length, tinted.Length / 20, "patches take the tint's hue");
             Assert.Less(patches.Length, tinted.Length * 19 / 20, "and only patches");
             foreach (int i in patches)
-                Assert.AreEqual(Luminance(plain[i]), Luminance(tinted[i]), 0.03f, $"a tinted pixel keeps its brightness ({plain[i]} to {tinted[i]})");
+                Assert.AreEqual(FrameReads.Luminance(plain[i]), FrameReads.Luminance(tinted[i]), 0.03f, $"a tinted pixel keeps its brightness ({plain[i]} to {tinted[i]})");
 
             _material.SetFloat(Ids.PatchTintCover, 0f);
             Assert.IsTrue(plain.SequenceEqual(_stage.Render()), "no cover, no patches");
@@ -575,9 +565,9 @@ namespace AnimeShaders.Tests
         public void StoneMix_PaintsAShareOfStones_RisingWithTheMix()
         {
             Layer layer = Layer.Circle;
-            float[] shares = new[] { 0f, 0.25f, 0.75f, 1f }.Select(mix =>
+            float[] shares = new[] { 0f, 0.25f, 0.75f, 1f, 0.5f }.Select(mix =>
             {
-                StoneLayer(layer, StonePerTexel(8), 0f, mix);
+                StoneLayer(layer, StonePerTexel(16), 0f, mix);
                 Colours(Of(layer).Colours, White, White, Black, Black);
                 Color[] frame = _stage.Render();
                 return FrameReads.Count(frame, pixel => FrameReads.Covered(pixel) && pixel.r < 0.5f) / (float)FrameReads.Count(frame, FrameReads.Covered);
@@ -587,6 +577,7 @@ namespace AnimeShaders.Tests
             Assert.Greater(shares[2], shares[1], $"more stones with more mix ({shares[1]} then {shares[2]})");
             Assert.Greater(shares[1], 0f);
             Assert.Less(shares[2], 1f);
+            Assert.AreEqual(0.5f, shares[4], 0.2f, "about the share asked for, over many stones");
         }
 
         [Test]
@@ -605,9 +596,12 @@ namespace AnimeShaders.Tests
 
             _material.SetFloat(Ids.DetailFadeStart, 100f);
             StoneLayer(layer, StonePerTexel(2), 0f, 0f, 20);
+            _material.SetFloat(Ids.CircleStoneJoint, 0.25f);
             Color[] joint = _stage.Render();
             _material.SetFloat(Of(layer).StoneShade, 0.3f);
             Assert.IsTrue(joint.Zip(_stage.Render(), (a, b) => FrameReads.Near(a, b, 0.003f)).All(same => same), "a dark joint takes no variation");
+            _material.SetFloat(Ids.CircleStoneJoint, 0f);
+            Assert.IsFalse(joint.SequenceEqual(_stage.Render()), "with the layer's Stone Joint at 0, even dark texels vary");
         }
 
         [Test]

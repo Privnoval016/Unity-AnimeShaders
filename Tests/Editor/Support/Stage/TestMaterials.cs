@@ -38,6 +38,12 @@ namespace AnimeShaders.Tests
             return material;
         }
 
+        /** <summary>A material on the pack's sky shader, with its defaults.</summary> */
+        public static Material Sky()
+        {
+            return new Material(Shader.Find(AnimeShaderIds.Sky.ShaderName)) { name = "TestSky" };
+        }
+
         /**
          * <summary>A material on <paramref name="shader" /> (Anime/World or Anime/Ground) whose lit tone is its
          * surface colour exactly: light colour, ambient and cast shadows play no part, the ramp's softness a hair.</summary>

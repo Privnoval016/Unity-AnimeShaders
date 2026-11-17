@@ -7,9 +7,7 @@ namespace AnimeShaders
     /**
      * <summary>Draws the sun shafts set by the <see cref="AnimeSunShafts" /> volume override, before the post (so bloom and
      * tonemapping see them). Add it to each renderer that should show them; a camera on a renderer without it draws none.</summary>
-     * <remarks>Three half-resolution passes and a composite while the volume's intensity is above 0 and the sun is in
-     * front; nothing otherwise. Game and Scene view cameras with post-processing on only. Forward and Forward+ renderers; MSAA unsupported; not XR
-     * single-pass.</remarks>
+     * <remarks>Base Game and Scene view cameras with post-processing on, without MSAA or XR (others draw none).</remarks>
      */
     public sealed class AnimeSunShaftsFeature : ScriptableRendererFeature
     {

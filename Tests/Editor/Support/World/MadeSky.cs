@@ -25,6 +25,9 @@ namespace AnimeShaders.Tests
         /** <summary>The state as it stands.</summary> */
         public SkyState State => _preset.Resolve();
 
+        /** <summary>The made preset itself, for an applier to take.</summary> */
+        public SkyPreset Preset => _preset;
+
         #endregion
 
         #region Public API

@@ -156,6 +156,8 @@ CBUFFER_START(UnityPerMaterial)
     half _CircleStoneShade;
     half _FieldStoneMix;
     half _CircleStoneMix;
+    half _FieldStoneJoint;
+    half _CircleStoneJoint;
     float _BreakUpScale;
     float _BreakUpAngle;
     float _PatchScale;

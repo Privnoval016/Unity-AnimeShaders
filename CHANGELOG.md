@@ -10,6 +10,13 @@
   read in uniform flow, a trig-free hash.
 - The haze (`Core/AnimeFog.hlsl`): distance and height fog with a glow toward the sun, in the pack's forward and outline
   passes in place of URP's fog behind `_ANIME_ATMOSPHERE`; URP's fog takes the same colour and reach for other shaders.
+- After four reviewers over all of 2c: stars as a field of their own (they sat on the noise's lattice, a grid); the
+  shafts' mask safe from an infinite pixel, their composite leaving alpha, no shafts on overlay, MSAA or XR cameras; full
+  cloud cover cloud everywhere; no cloud reads at zero cover; hidden ridges skipped; the applier enabled last owns the
+  globals (a scene change keeps the new sky); per-layer **Stone Joint**; the material inspector's stone map warnings;
+  `SkyApply.Globals`/`Keywords` listed once; clamp minimums named (`SkyState.MinCloudSize`, `MinClearFade`,
+  `MinStarScale`, `SkyRidge.MinHills`); `AnimeShaderIds.Sky.ShaderName`; test helpers shared in `FrameReads` and
+  `TestMaterials.Sky()`; no game-specific words in the pack. Tests added for each, with break proofs.
 - Sky presets' **shade** (`SkyState.Shade`, published as `_AnimeWorldShade`, zero for white): the time of day's tint on
   every pack material's shade tone, the director's on top; presets older than it load as white. Golden Hour, Dusk and
   Night darker and cooler (at dusk the dim sun had pulled the lit tone level with the shade, so cast shadows read as

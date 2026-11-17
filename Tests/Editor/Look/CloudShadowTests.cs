@@ -44,11 +44,6 @@ namespace AnimeShaders.Tests
             return frame;
         }
 
-        private static Color Centre(Color[] frame)
-        {
-            return FrameReads.At(frame, Size / 2, Size / 2);
-        }
-
         private void FloorAt(Vector3 position, float size)
         {
             _stage.Add(_quad, _floor, position, Quaternion.Euler(90f, 0f, 0f), Vector3.one * size);
@@ -64,7 +59,7 @@ namespace AnimeShaders.Tests
             _stage.Camera.orthographicSize = 3f;
             _stage.Camera.farClipPlane = 2000f;
             _floor = TestMaterials.WorldLit("Anime/World");
-            _skyForNoise = new Material(Shader.Find("Anime/Sky"));
+            _skyForNoise = TestMaterials.Sky();
             _quad = TestMeshes.Quad();
             _made = new MadeSky().Set("cloudSpeed", 0f).Set("cloudSoftness", 0.02f).Set("cloudSimplicity", 0f)
                 .Set("cloudShadowStrength", Strength).Set("cloudShadowClearRadius", 0f).Set("haze", false).Set("discStrength", 0f).Set("haloStrength", 0f);
@@ -86,10 +81,10 @@ namespace AnimeShaders.Tests
             LookDownOn(new Vector3(0f, 10f, 0f));
             FloorAt(Vector3.zero, 20f);
             _made.Set("cloudCover", 1f).Set("cloudShadowStrength", 0f);
-            Color off = Centre(Render());
+            Color off = FrameReads.Centre(Render());
             _made.Set("cloudShadowStrength", 0.6f);
             _floor.SetFloat(Ids.CloudShadow, 0f);
-            Color unresponsive = Centre(Render());
+            Color unresponsive = FrameReads.Centre(Render());
             Assert.IsTrue(FrameReads.Near(off, Color.white, 0.001f), $"no strength: fully lit {off}");
             Assert.IsTrue(FrameReads.Near(unresponsive, Color.white, 0.001f), $"no response: fully lit {unresponsive}");
         }
@@ -100,9 +95,9 @@ namespace AnimeShaders.Tests
             LookDownOn(new Vector3(0f, 10f, 0f));
             FloorAt(Vector3.zero, 20f);
             _made.Set("cloudCover", 0f);
-            Color clear = Centre(Render());
+            Color clear = FrameReads.Centre(Render());
             _made.Set("cloudCover", 1f);
-            Color clouded = Centre(Render());
+            Color clouded = FrameReads.Centre(Render());
             Assert.IsTrue(FrameReads.Near(clear, Color.white, 0.001f), $"clear: fully lit {clear}");
             Assert.Less(clouded.r, clear.r - 0.2f, $"under a cloud, toward the shadow tone {clouded}");
             Assert.Greater(clouded.r, 0.5f - 0.001f, "never past the shadow tone");
@@ -166,7 +161,7 @@ namespace AnimeShaders.Tests
             LookDownOn(far + new Vector3(0f, 10f, 0f));
             FloorAt(far, 20f);
             _made.Set("cloudCover", 1f);
-            Assert.Less(Centre(Render()).r, 0.8f, "shaded a kilometre and a half away");
+            Assert.Less(FrameReads.Centre(Render()).r, 0.8f, "shaded a kilometre and a half away");
         }
 
         [Test]
@@ -212,7 +207,7 @@ namespace AnimeShaders.Tests
         [Test]
         public void ACloudOverhead_LiesOverItsShadow()
         {
-            var sky = new Material(Shader.Find("Anime/Sky"));
+            var sky = TestMaterials.Sky();
             try
             {
                 _made.Set("cloudCover", 0.5f).Set("cloudSize", 4f).Set("cloudAltitude", 20f).Set("zenith", Color.blue)
@@ -227,10 +222,10 @@ namespace AnimeShaders.Tests
                 {
                     var spot = new Vector3(i * 37f, 0f, i * 11f);
                     _stage.Camera.transform.SetPositionAndRotation(spot, Quaternion.LookRotation(Vector3.up, Vector3.forward));
-                    float overhead = Centre(Render()).r;
+                    float overhead = FrameReads.Centre(Render()).r;
                     _stage.Camera.transform.SetPositionAndRotation(spot + new Vector3(0f, 10f, 0f), Quaternion.Euler(90f, 0f, 0f));
                     FloorAt(spot, 4f);
-                    float below = (1f - (Centre(Render()).r - 0.5f) / 0.5f) / Strength;
+                    float below = (1f - (FrameReads.Centre(Render()).r - 0.5f) / 0.5f) / Strength;
                     Assert.AreEqual(overhead, below, 0.25f, $"at {spot}: the cloud's density overhead and in its shadow");
                     if (overhead > 0.75f)
                         clouded++;

@@ -61,11 +61,6 @@ namespace AnimeShaders.Tests
             return frame;
         }
 
-        private static float Distance(Color a, Color b)
-        {
-            return Mathf.Abs(a.r - b.r) + Mathf.Abs(a.g - b.g) + Mathf.Abs(a.b - b.b);
-        }
-
         #endregion
 
         [SetUp]
@@ -142,7 +137,7 @@ namespace AnimeShaders.Tests
             int column = _stage.Size / 2;
             Color low = FrameReads.At(frame, column, _stage.Column(-0.8f));
             Color high = FrameReads.At(frame, column, _stage.Column(0.8f));
-            Assert.Less(Distance(low, Base), Distance(high, Base), $"low {low}, high {high}");
+            Assert.Less(FrameReads.Distance(low, Base), FrameReads.Distance(high, Base), $"low {low}, high {high}");
         }
 
         [Test]
@@ -152,12 +147,12 @@ namespace AnimeShaders.Tests
             Color[] forward = FadedBack(0f, 0f, 1f);
             Color uLow = FrameReads.At(forward, _stage.Column(0.8f), row);
             Color uHigh = FrameReads.At(forward, _stage.Column(-0.8f), row);
-            Assert.Less(Distance(uLow, Base), Distance(uHigh, Base), $"u low {uLow}, u high {uHigh}");
+            Assert.Less(FrameReads.Distance(uLow, Base), FrameReads.Distance(uHigh, Base), $"u low {uLow}, u high {uHigh}");
 
             Color[] reversed = FadedBack(0f, 1f, 0f);
             Color reversedLow = FrameReads.At(reversed, _stage.Column(0.8f), row);
             Color reversedHigh = FrameReads.At(reversed, _stage.Column(-0.8f), row);
-            Assert.Greater(Distance(reversedLow, Base), Distance(reversedHigh, Base), "start and end swapped");
+            Assert.Greater(FrameReads.Distance(reversedLow, Base), FrameReads.Distance(reversedHigh, Base), "start and end swapped");
         }
     }
 }

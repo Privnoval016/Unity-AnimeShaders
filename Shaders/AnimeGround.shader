@@ -49,6 +49,7 @@ Shader "Anime/Ground"
         [NoScaleOffset] _FieldStones("Field Stone Map (from a detail set with Stones)", 2D) = "black" {}
         _FieldStoneShade("Field Stone Shade (each stone varies by up to this)", Range(0, 0.5)) = 0
         _FieldStoneMix("Field Stone Mix (share of stones in the second pair)", Range(0, 1)) = 0
+        _FieldStoneJoint("Field Stone Joint (shade below which joints take no variation)", Range(0, 1)) = 0.25
 
         [Header(Circle)]
         [NoScaleOffset] _CircleDetail("Circle Detail (packed)", 2D) = "linearGrey" {}
@@ -63,6 +64,7 @@ Shader "Anime/Ground"
         [NoScaleOffset] _CircleStones("Circle Stone Map (from a detail set with Stones)", 2D) = "black" {}
         _CircleStoneShade("Circle Stone Shade (each stone varies by up to this)", Range(0, 0.5)) = 0
         _CircleStoneMix("Circle Stone Mix (share of stones in the second pair)", Range(0, 1)) = 0
+        _CircleStoneJoint("Circle Stone Joint (shade below which joints take no variation)", Range(0, 1)) = 0.25
 
         [Header(Patches and Tiling)]
         _PatchScale("Patch Scale (per metre)", Float) = 0.04

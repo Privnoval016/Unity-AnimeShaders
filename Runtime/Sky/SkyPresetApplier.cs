@@ -8,7 +8,8 @@ namespace AnimeShaders
      * when it is enabled, in Edit and Play Mode. No preset (Authored) leaves the scene as it was made. In Edit Mode it
      * writes the sky material itself (what the preset makes of it); in Play Mode it draws through a copy, so the material
      * stays as authored, and switched off it puts back everything it changed. Switched off in either mode, the world's
-     * globals are cleared.</summary>
+     * globals are cleared. Only the applier enabled last does either, so one switched off after another took over (a
+     * scene change) leaves the new one's sky alone.</summary>
      */
     [ExecuteAlways]
     [DisallowMultipleComponent]
@@ -28,6 +29,8 @@ namespace AnimeShaders
         #endregion
 
         #region Private Fields
+
+        private static SkyPresetApplier _current;
 
         private Authored _authored;
         private bool _recorded;
@@ -59,18 +62,21 @@ namespace AnimeShaders
                     sky = _playCopy;
                 }
             }
+            _current = this;
             SkyApply.Apply(_preset.Resolve(), sky, _sun);
         }
 
         private void OnDisable()
         {
-            if (_preset != null)
-                SkyApply.Unpublish();
-            if (_recorded)
+            bool owns = _current == this;
+            if (owns)
             {
-                _authored.Restore(_sun);
-                _recorded = false;
+                SkyApply.Unpublish();
+                _current = null;
             }
+            if (_recorded && owns)
+                _authored.Restore(_sun);
+            _recorded = false;
             if (_playCopy != null)
             {
                 Destroy(_playCopy);

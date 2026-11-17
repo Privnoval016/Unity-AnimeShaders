@@ -142,11 +142,12 @@ takes no rim; a camera whose renderer lacks the feature draws none. XR single-pa
   circle, 3 outside, up to 5 on the edge band, and one point read of a layer's stone map while it varies stones
   (**Stones**, below); the reads sit
   in branches with their gradients taken before them, each map with its own sampler; the steps, painting and tilt run
-  after. Measured on the playground fight at 4K (2026-11-16): 10.1 ms median with the branches, 10.6 without. Far off
+  after (branching the reads measured about 5% faster than reading every layer everywhere). Far off
   (**Detail Fade**) the normal flattens and the steps smooth; the shade is left to the mips, which settle on each map's
   mean of 0.5. Shade Steps are whole numbers; an Edge Softness or Tile Size of 0 is held to a small minimum. The
   depth-normals pass keeps the geometric normal (screen-space effects don't see the detail); the alpha clip runs after
-  the surface hook. The material inspector warns under a detail slot holding a texture that is not a packed map.
+  the surface hook. The material inspector warns under a detail slot holding a texture that is not a packed map,
+  and under a stone map slot that is empty while Stone Shade or Mix is up, or holds a texture that is not a stone map.
   Breaking change from 0.1.0's procedural ground: its grass, stone and grout properties (and their ids) are gone.
 - **Detail sets** (Create > Anime Shaders > Detail Set): a photo-scanned surface's colour and normal maps, and
   optionally its occlusion and a mask (read from their files' bytes, so their import settings never matter; OpenGL or
@@ -156,7 +157,7 @@ takes no rim; a camera whose renderer lacks the feature draws none. XR single-pa
   wraps, so a tiling set packs to a tiling map. The Inspector says when the packed map is out of date (a hash of the
   source files' bytes and the settings), what it costs in video memory, and warns above 2048 square (a 2K map packs in
   seconds; the import rule's version, if raised, reimports every texture in the project). The packed map is held linear, compressed at high quality, mipmapped and repeating by its
-  label. Its four channels compress worse than one: measured on the playground's sets (BC7 and ASTC 4x4 alike), a
+  label. Its four channels compress worse than one: measured on two scanned sets (BC7 and ASTC 4x4 alike), a
   smooth stone keeps about 3° of normal and 4 of 255 shade levels, a noisy grass about 9° and 11; a set that needs better
   can be packed without its mask, or its normal split out (not built).
 - **Stones** (a detail set's Stones section, for any tiled set whose joints are darker in its occlusion: paving, tiles,
@@ -171,7 +172,8 @@ takes no rim; a camera whose renderer lacks the feature draws none. XR single-pa
   stones, or over 400 (pitting splitting them). Turning Stones off removes the map. On the ground: the layer's **Stone
   Map**, **Stone Shade** (each stone's shade moves by up to this) and **Stone Mix** (that share of stones painted with
   the layer's Second pair, which a mask also uses). The shader hashes the stone's home tile with its value, so every
-  stone on the floor differs and the tile stops repeating; the variation fades in the joints (by the shade), with
+  stone on the floor differs and the tile stops repeating; the variation fades in the joints (below the layer's **Stone Joint**
+  shade, over a fixed width), with
   distance (Detail Fade) and where Break Up Tiling blends a second read. Cost: one point read and an integer hash a
   pixel, only on a layer with Stone Shade or Mix above 0; nothing otherwise. To use it on another texture: give its
   detail set the occlusion map, tick Stones, Pack, read the count against the stones you see (raise the blur if it is
@@ -179,7 +181,8 @@ takes no rim; a camera whose renderer lacks the feature draws none. XR single-pa
 - **`Anime/Sky`** (the skybox): the gradient; the **cloud field** where the view ray meets its plane (a world plane at
   the clouds' altitude, so they parallax with the camera; two reads of the noise that never line up, so the field never
   repeats; drawn shapes with an anti-aliased edge and one shade band
-  away from the sun; the same field the ground's cloud shadows read); stars at night; the sun's halo and disc where the
+  away from the sun; the same field the ground's cloud shadows read); stars at night (a field of its own: at most one star a cell of **Star Scale**, anywhere in it, its own brightness,
+  kept by **Star Density**, its radius **Star Size** as a share of a cell, so none lines up); the sun's halo and disc where the
   main light points (or the director's override); the haze at the sky's distance; and up to three **ridges** of hills on
   the horizon, drawn analytically (no texture), farthest first, each hazed at its own distance, lit softly along its
   line where it faces the sun, hiding the sun behind it, its foot dissolving into the haze over the sky (the **mist**:
@@ -188,7 +191,7 @@ takes no rim; a camera whose renderer lacks the feature draws none. XR single-pa
 - **Cloud shadows** (`Core/AnimeClouds.hlsl`, in the lighting): the cloud field read where the ray toward the sun meets
   its plane, so a shadow lies under its cloud; it dims the lit tone toward the shadow tone softly (by the cloud's own
   edge, not the ramp; not faded by the shadow distance); a body reads it once at its body-shadow point; a material's
-  **Cloud Shadow** sets how much it takes; none within the preset's clear radius round the camera, so a fight never
+  **Cloud Shadow** sets how much it takes; none within the preset's clear radius round the camera, so the action there never
   changes light; the sky's ridges take it where they stand. Behind the global dynamic branch `_ANIME_CLOUD_SHADOWS`
   (on while a preset has cover and strength): off costs nothing, on one noise read a pixel.
 - **Contact shading** (the lighting): URP's screen-space ambient occlusion, when a renderer has its feature, through the
@@ -202,7 +205,7 @@ takes no rim; a camera whose renderer lacks the feature draws none. XR single-pa
   rays), where all four depths under a texel are the far plane and weighted by **Reach** round the sun on screen, blurred
   toward the sun twice (**Length**, **Decay**, **Samples**), added before the post in the sun's colour times **Tint** and
   **Intensity**, faded by the sun's angle from the view. Nothing is recorded at intensity 0, with the sun behind, or on a
-  camera with post-processing off (menu figures, portraits). Game and Scene view cameras; MSAA unsupported.
+  camera with post-processing off (menu figures, portraits). Base Game and Scene view cameras only; none with MSAA or in XR.
 - **The haze** (`Core/AnimeFog.hlsl`): distance and height fog in the horizon colour, glowing toward the sun, applied
   per pixel by the pack's forward and outline passes in place of URP's fog while a preset turns it on (the global
   dynamic branch `_ANIME_ATMOSPHERE`); exact on orthographic cameras and transparents; off, URP's fog as before. The sky
@@ -218,7 +221,9 @@ takes no rim; a camera whose renderer lacks the feature draws none. XR single-pa
   keywords, the shade tint). **`SkyPresetApplier`** applies one on enable in Edit and Play Mode; no preset (Authored) leaves the scene
   alone; in Edit Mode it writes the sky material itself, in Play Mode a copy (the material stays as authored) and
   switched off it puts back everything it changed, the sun and reflection included; switched off in either mode it
-  clears the world's globals. Never applied mid-fight. The light director (when built) becomes its caller.
+  clears the world's globals; only the applier enabled last clears or restores, so a scene change leaves the new
+  scene's sky alone. Applied between moments of play, never during one. The light director (when built) becomes its
+  caller.
 
 ### The light director's globals
 

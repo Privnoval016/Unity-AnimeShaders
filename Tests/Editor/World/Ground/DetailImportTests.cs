@@ -245,6 +245,24 @@ namespace AnimeShaders.Tests
             Assert.AreEqual(TextureWrapMode.Repeat, importer.wrapMode);
             Assert.AreEqual(TextureImporterCompression.Uncompressed, importer.textureCompression);
             Assert.GreaterOrEqual(importer.maxTextureSize, StoneMath.MapSize);
+            importer.filterMode = FilterMode.Bilinear;
+            importer.SaveAndReimport();
+            Assert.AreEqual(FilterMode.Point, Importer(path).filterMode, "put back on reimport");
+
+            var written = new Texture2D(2, 2, TextureFormat.RGBA32, false, true);
+            var source = new Texture2D(2, 2, TextureFormat.RGBA32, false, true);
+            try
+            {
+                Assert.IsTrue(written.LoadImage(File.ReadAllBytes(path), false));
+                Assert.IsTrue(source.LoadImage(File.ReadAllBytes(AssetDatabase.GetAssetPath(set.Occlusion)), false));
+                StoneMap expected = StoneMath.Find(new DetailImage(source.width, source.height, source.GetPixels32()), set.StoneSettings);
+                CollectionAssert.AreEqual(expected.Image.Pixels, written.GetPixels32(), "the file holds the stones found, value and code as written");
+            }
+            finally
+            {
+                Object.DestroyImmediate(written);
+                Object.DestroyImmediate(source);
+            }
 
             var serialized = new SerializedObject(set);
             serialized.FindProperty(StonesField).boolValue = false;

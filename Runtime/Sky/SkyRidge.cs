@@ -19,7 +19,7 @@ namespace AnimeShaders
         [Range(0f, 20f)] [SerializeField] private float roughness;
 
         [Tooltip("How many hills run around the whole horizon (more is busier).")]
-        [Range(1f, 64f)] [SerializeField] private float hills;
+        [Range(MinHills, 64f)] [SerializeField] private float hills;
 
         [Tooltip("Which ridge line, of endless ones: change it for a different skyline.")]
         [SerializeField] private float seed;
@@ -30,6 +30,9 @@ namespace AnimeShaders
         #endregion
 
         #region Properties
+
+        /** <summary>The fewest hills round the horizon; fewer is held to it.</summary> */
+        public const float MinHills = 1f;
 
         /** <summary>The layer's colour before the haze.</summary> */
         public Color Colour => colour;

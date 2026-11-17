@@ -21,6 +21,37 @@ namespace AnimeShaders.Tests
                 && Mathf.Abs(a.b - b.b) <= tolerance;
         }
 
+        /** <summary>The sum of two colours' red, green and blue differences.</summary> */
+        public static float Distance(Color a, Color b)
+        {
+            return Mathf.Abs(a.r - b.r) + Mathf.Abs(a.g - b.g) + Mathf.Abs(a.b - b.b);
+        }
+
+        /** <summary>The pixel in the middle of the frame.</summary> */
+        public static Color Centre(Color[] frame)
+        {
+            int side = Side(frame);
+            return At(frame, side / 2, side / 2);
+        }
+
+        /** <summary>A pixel's brightest channel.</summary> */
+        public static float Brightest(Color pixel)
+        {
+            return Mathf.Max(pixel.r, Mathf.Max(pixel.g, pixel.b));
+        }
+
+        /** <summary>A pixel's red, green and blue added up.</summary> */
+        public static float Sum(Color pixel)
+        {
+            return pixel.r + pixel.g + pixel.b;
+        }
+
+        /** <summary>A linear pixel's brightness (Rec. 709 weights).</summary> */
+        public static float Luminance(Color pixel)
+        {
+            return pixel.r * 0.2126729f + pixel.g * 0.7151522f + pixel.b * 0.0721750f;
+        }
+
         /** <summary>Whether something drew on the pixel (the stage clears to alpha 0; every pack pass writes alpha 1).</summary> */
         public static bool Covered(Color pixel)
         {

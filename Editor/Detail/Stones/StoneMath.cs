@@ -5,20 +5,9 @@ using UnityEngine;
 namespace AnimeShaders.EditorTools
 {
     /**
-     * <summary>Finding the stones of a tiled set from its occlusion, as pure image maths at the occlusion's own
-     * resolution (thin joints vanish when averaged down): the occlusion is blurred (so pitting doesn't split a stone) and
-     * thresholded (grout is darker); each bright area, found on the tile as a torus so a stone cut by the tile's edge is
-     * one stone, is a stone. Each texel then holds its stone's value and the stone's home tile relative to the texel's
-     * own copy of the tile, so the shader can tell every stone on a floor apart; the result is picked down to
-     * <see cref="MapSize" />.</summary>
-     * <remarks>
-     * The map: R the stone's value (1 to 255, from its wrapped centre; 0 none); G the home-tile code (0 none, else
-     * <see cref="Code" /> of the shift, each axis -1, 0 or 1: the tile holding the stone's centre). The code is exact, so
-     * both pieces of a stone crossing the tile's edge agree. A stone that wraps onto itself or spans the whole tile is
-     * dropped (its texels are then no farther than a tile from its centre, so the shift stays within one); one under the minimum size is left to the fill. Every other texel (joints, pits, small pieces)
-     * takes the nearest stone, so joints split down their middle (the shader weights the variation by the shade, so a
-     * dark joint barely shows the split). Deterministic: a fixed scan order, ties to the first reached.
-     * </remarks>
+     * <summary>Finds the stones of a tiled set in its occlusion and writes a stone map: each texel holds its stone's value
+     * and the tile holding the stone's centre, relative to the texel's own copy of the tile (see <see cref="Code" />),
+     * so a shader can tell every stone on a floor apart. The method is in the pack README, "Stones".</summary>
      */
     public static class StoneMath
     {
@@ -26,6 +15,12 @@ namespace AnimeShaders.EditorTools
 
         private const int CodesPerAxis = 3;
         private const int Unlabelled = -1;
+        private const float Percent = 100f;
+        private const float TexelCentre = 0.5f;
+        private const uint StoneValues = byte.MaxValue;
+        private const uint HashX = 0x8da6b343u;
+        private const uint HashY = 0xd8163841u;
+        private const uint HashMix = 0x5bd1e995u;
 
         private static readonly Vector2Int[] Neighbours = { Vector2Int.right, Vector2Int.left, Vector2Int.up, Vector2Int.down };
 
@@ -61,8 +56,8 @@ namespace AnimeShaders.EditorTools
             int width = occlusion.Width, height = occlusion.Height, texels = width * height;
             var red = new float[texels];
             for (int i = 0; i < texels; i++)
-                red[i] = occlusion.Pixels[i].r / 255f;
-            float[] blurred = DetailMath.Blur(red, width, height, settings.Blur / 100f * width);
+                red[i] = occlusion.Pixels[i].r / (float)byte.MaxValue;
+            float[] blurred = DetailMath.Blur(red, width, height, settings.Blur / Percent * width);
 
             var label = new int[texels];
             var unwrappedX = new int[texels];
@@ -76,7 +71,7 @@ namespace AnimeShaders.EditorTools
                     stones.Add(Flood(start, stones.Count, width, height, blurred, settings.Threshold, label, unwrappedX, unwrappedY, queue));
             }
 
-            int minCount = Mathf.CeilToInt(settings.MinSize / 100f * texels);
+            int minCount = Mathf.CeilToInt(settings.MinSize / Percent * texels);
             var homeX = new int[stones.Count];
             var homeY = new int[stones.Count];
             var value = new byte[stones.Count];
@@ -92,13 +87,13 @@ namespace AnimeShaders.EditorTools
                 if (!kept[id])
                     continue;
                 count++;
-                float centreX = (float)stone.SumX / stone.Count + 0.5f;
-                float centreY = (float)stone.SumY / stone.Count + 0.5f;
+                float centreX = (float)stone.SumX / stone.Count + TexelCentre;
+                float centreY = (float)stone.SumY / stone.Count + TexelCentre;
                 homeX[id] = Mathf.FloorToInt(centreX / width);
                 homeY[id] = Mathf.FloorToInt(centreY / height);
                 int cellX = DataTextures.Wrap(Mathf.FloorToInt(centreX), width) * MapSize / width;
                 int cellY = DataTextures.Wrap(Mathf.FloorToInt(centreY), height) * MapSize / height;
-                value[id] = (byte)(1 + Hash(cellX, cellY) % 255u);
+                value[id] = (byte)(1 + Hash(cellX, cellY) % StoneValues);
             }
 
             var values = new byte[texels];
@@ -230,9 +225,9 @@ namespace AnimeShaders.EditorTools
 
         private static uint Hash(int x, int y)
         {
-            uint hash = (uint)x * 0x8da6b343u ^ (uint)y * 0xd8163841u;
+            uint hash = (uint)x * HashX ^ (uint)y * HashY;
             hash ^= hash >> 13;
-            hash *= 0x5bd1e995u;
+            hash *= HashMix;
             hash ^= hash >> 15;
             return hash;
         }

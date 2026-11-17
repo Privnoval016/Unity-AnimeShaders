@@ -44,7 +44,7 @@ Shader "Hidden/AnimeShaders/SunShafts"
             float2 toSun = (uv - _SunShaftsSun.xy) * float2(_SunShaftsSun.w, 1.0);
             float near = exp(-dot(toSun, toSun) / max(_SunShaftsSun.z * _SunShaftsSun.z, 1e-4));
             half3 colour = max(SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv).rgb - half(_SunShaftsColor.a), 0.0h);
-            return half4(colour * half(near) * (sky ? 1.0h : 0.0h), 1.0h);
+            return half4(sky ? colour * half(near) : half3(0.0h, 0.0h, 0.0h), 1.0h);
         }
 
         half4 AnimeShaftsBlur(float2 uv, float length)
@@ -75,7 +75,7 @@ Shader "Hidden/AnimeShaders/SunShafts"
         half4 AnimeShaftsComposite(Varyings input) : SV_Target
         {
             half3 shafts = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, input.texcoord).rgb;
-            return half4(shafts * half3(_SunShaftsColor.rgb), 1.0h);
+            return half4(shafts * half3(_SunShaftsColor.rgb), 0.0h);
         }
         ENDHLSL
 

@@ -7,7 +7,7 @@ namespace AnimeShaders
     /**
      * <summary>Sun shafts as a volume override: light streaming from the sun past whatever stands in front of the sky,
      * drawn by <see cref="AnimeSunShaftsFeature" /> on the renderers that have it. Blended like any volume (a scene's global
-     * one, local ones by area, a fight's on top). Intensity 0, the default, draws nothing.</summary>
+     * one, local ones by area, a higher priority one on top). Intensity 0, the default, draws nothing.</summary>
      */
     [Serializable]
     [VolumeComponentMenu("Anime Shaders/Sun Shafts")]
@@ -15,7 +15,7 @@ namespace AnimeShaders
     {
         #region Inspector Fields
 
-        [Tooltip("How bright the shafts are (0: none, and nothing is drawn).")]
+        [Tooltip("How bright the shafts are (0: none, and nothing is drawn). Drawn only on renderers with the Anime Sun Shafts feature.")]
         public ClampedFloatParameter intensity = new(0f, 0f, 4f);
 
         [Tooltip("The shafts' colour, over the sun light's own.")]

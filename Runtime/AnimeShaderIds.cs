@@ -435,6 +435,18 @@ namespace AnimeShaders
             /** <summary>The property id of _CircleStoneMix.</summary> */
             public static readonly int CircleStoneMix = Shader.PropertyToID(CircleStoneMixName);
 
+            /** <summary>The name _FieldStoneJoint.</summary> */
+            public const string FieldStoneJointName = "_FieldStoneJoint";
+
+            /** <summary>The property id of _FieldStoneJoint.</summary> */
+            public static readonly int FieldStoneJoint = Shader.PropertyToID(FieldStoneJointName);
+
+            /** <summary>The name _CircleStoneJoint.</summary> */
+            public const string CircleStoneJointName = "_CircleStoneJoint";
+
+            /** <summary>The property id of _CircleStoneJoint.</summary> */
+            public static readonly int CircleStoneJoint = Shader.PropertyToID(CircleStoneJointName);
+
             /** <summary>The name _BreakUpScale.</summary> */
             public const string BreakUpScaleName = "_BreakUpScale";
 
@@ -710,6 +722,9 @@ namespace AnimeShaders
         /** <summary>The sky material's properties (Anime/Sky), written by <c>SkyApply</c>.</summary> */
         public static class Sky
         {
+            /** <summary>The sky shader's name.</summary> */
+            public const string ShaderName = "Anime/Sky";
+
             #region Properties
 
             /** <summary>The name _ZenithColor.</summary> */

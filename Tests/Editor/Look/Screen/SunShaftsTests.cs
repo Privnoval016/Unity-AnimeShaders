@@ -59,7 +59,7 @@ namespace AnimeShaders.Tests
             _stage.Perspective(60f, 0f);
             _stage.Camera.farClipPlane = 1000f;
             _stage.Camera.GetUniversalAdditionalCameraData().renderPostProcessing = true;
-            _sky = new Material(Shader.Find("Anime/Sky"));
+            _sky = TestMaterials.Sky();
             TestMaterials.SetLinear(_sky, SkyIds.ZenithColor, new Color(0.2f, 0.3f, 0.7f));
             TestMaterials.SetLinear(_sky, SkyIds.HorizonColor, new Color(0.4f, 0.5f, 0.8f));
             _sky.SetFloat(SkyIds.SunStrength, 3f);
@@ -81,11 +81,17 @@ namespace AnimeShaders.Tests
         {
             try
             {
-                _stage?.Dispose();
-                _volume?.Dispose();
-                Object.DestroyImmediate(_sky);
-                Object.DestroyImmediate(_wall);
-                Object.DestroyImmediate(_quad);
+                try
+                {
+                    _stage?.Dispose();
+                }
+                finally
+                {
+                    _volume?.Dispose();
+                    Object.DestroyImmediate(_sky);
+                    Object.DestroyImmediate(_wall);
+                    Object.DestroyImmediate(_quad);
+                }
             }
             finally
             {

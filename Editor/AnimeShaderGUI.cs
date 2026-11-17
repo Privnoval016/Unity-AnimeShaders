@@ -21,6 +21,12 @@ namespace AnimeShaders.EditorTools
 
         private static readonly string[] DetailSlots = { Ids.FieldDetailName, Ids.CircleDetailName };
 
+        private static readonly Dictionary<string, string[]> StoneSlots = new()
+        {
+            [Ids.FieldStonesName] = new[] { Ids.FieldStoneShadeName, Ids.FieldStoneMixName },
+            [Ids.CircleStonesName] = new[] { Ids.CircleStoneShadeName, Ids.CircleStoneMixName },
+        };
+
         private static readonly Dictionary<string, string[]> Dependents = new()
         {
             [Switches.Band2Name] = new[] { Ids.Band2TintName, Ids.Band2OffsetName, Ids.Band2SoftnessName },
@@ -69,6 +75,7 @@ namespace AnimeShaders.EditorTools
                     continue;
                 materialEditor.ShaderProperty(property, property.displayName);
                 WarnIfNotPacked(property);
+                WarnAboutStones(property);
             }
             EditorGUILayout.Space();
             materialEditor.RenderQueueField();
@@ -142,6 +149,22 @@ namespace AnimeShaders.EditorTools
             string path = AssetDatabase.GetAssetPath(property.textureValue);
             if (!string.IsNullOrEmpty(path) && !DataTextures.HasLabel(path, AnimeDetailImport.Label))
                 EditorGUILayout.HelpBox("Not a packed detail map: pack one from a Detail Set (Create > Anime Shaders > Detail Set).", MessageType.Warning);
+        }
+
+        private static void WarnAboutStones(MaterialProperty property)
+        {
+            if (!StoneSlots.TryGetValue(property.name, out string[] variation) || property.targets.Length == 0)
+                return;
+            var material = (Material)property.targets[0];
+            if (property.textureValue == null)
+            {
+                if (Array.Exists(variation, name => material.HasFloat(name) && material.GetFloat(name) > 0f))
+                    EditorGUILayout.HelpBox("Stone Shade and Stone Mix need a stone map: tick Stones on the layer's Detail Set and Pack.", MessageType.Warning);
+                return;
+            }
+            string path = AssetDatabase.GetAssetPath(property.textureValue);
+            if (!string.IsNullOrEmpty(path) && !DataTextures.HasLabel(path, AnimeDetailImport.StonesLabel))
+                EditorGUILayout.HelpBox("Not a stone map: pack one from a Detail Set with Stones ticked.", MessageType.Warning);
         }
 
         private static void DrawRamp(Material material)

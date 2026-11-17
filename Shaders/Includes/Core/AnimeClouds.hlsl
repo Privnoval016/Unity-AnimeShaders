@@ -23,15 +23,18 @@
 // scales and angles that never line up, blended so the contrast holds, so the field never repeats.
 half AnimeCloudDensity(float2 planeXZ)
 {
+    UNITY_BRANCH
+    if (_AnimeCloudShape.y <= 0.0)
+        return 0.0h;
     float2 uv = (planeXZ - _AnimeCloudMotion.xy * _Time.y) * _AnimeCloudShape.x;
     float2 turned = float2(uv.x * ANIME_CLOUD_SECOND_COS - uv.y * ANIME_CLOUD_SECOND_SIN, uv.x * ANIME_CLOUD_SECOND_SIN + uv.y * ANIME_CLOUD_SECOND_COS);
     half first = SAMPLE_TEXTURE2D_BIAS(_AnimeCloudNoise, sampler_AnimeCloudNoise, uv, _AnimeCloudMotion.z).g;
     half second = SAMPLE_TEXTURE2D_BIAS(_AnimeCloudNoise, sampler_AnimeCloudNoise, turned * ANIME_CLOUD_SECOND_SCALE + ANIME_CLOUD_SECOND_OFFSET, _AnimeCloudMotion.z).g;
     half shape = saturate((first + second - 1.0h) * 1.41421h + 0.5h);
-    half threshold = 1.0h - half(_AnimeCloudShape.y);
     half width = max(max(half(fwidth(shape)), half(_AnimeCloudShape.z)), 1e-3h);
+    half threshold = (1.0h - half(_AnimeCloudShape.y)) * (1.0h + 2.0h * width) - width;
     half density = smoothstep(threshold - width, threshold + width, shape);
-    return _AnimeCloudShape.y > 0.0 ? density : 0.0h;
+    return density;
 }
 
 // Where a view ray from <cameraPosition> in <direction> meets the cloud plane (rays at or below the horizon held just above it).
@@ -49,7 +52,7 @@ float2 AnimeCloudPlaneTowardSun(float3 positionWS, float3 towardSun)
 }
 
 // How much a cloud shades <positionWS> from the sun, 0 to the published shadow strength: none above the plane or with
-// the sun down, and none within the clear radius round the camera (so a fight never changes light), coming in past it.
+// the sun down, and none within the clear radius round the camera (so the action round the camera never changes light), coming in past it.
 half AnimeCloudShadow(float3 positionWS, float3 towardSun)
 {
     half density = AnimeCloudDensity(AnimeCloudPlaneTowardSun(positionWS, towardSun));

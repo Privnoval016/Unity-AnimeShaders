@@ -28,8 +28,6 @@
 // How far below a ridge's line its sunlit edge reaches (in the same units as its height).
 #define ANIME_SKY_RIDGE_EDGE 0.01
 
-TEXTURE2D(_AnimeNoiseTex);
-SAMPLER(sampler_AnimeNoiseTex);
 
 CBUFFER_START(UnityPerMaterial)
     half4 _ZenithColor;
@@ -99,6 +97,36 @@ float AnimeSkyHash(float cell, float seed)
     p *= p + 33.33;
     p *= p + p;
     return frac(p);
+}
+
+// The dimmest a star shows, as a share of the brightest.
+#define ANIME_SKY_STAR_DIMMEST 0.3
+// Spreads a cell's coordinates into one hash input, so neighbouring cells never share a value.
+#define ANIME_SKY_STAR_ROW 157.0
+
+// A field of stars over <p>: each cell may hold one star (kept by density), anywhere in it, with its own brightness and
+// a radius of <size> cells; the cells round it are checked too, so stars near an edge are whole and nothing lines up.
+// Edges are softened over a pixel.
+half AnimeSkyStars(float2 p, half density, half size)
+{
+    float2 cell = floor(p);
+    float pixel = max(length(fwidth(p)), 1e-4);
+    half brightest = 0.0h;
+    for (int y = -1; y <= 1; y++)
+    {
+        for (int x = -1; x <= 1; x++)
+        {
+            float2 neighbour = cell + float2(x, y);
+            float key = neighbour.x + neighbour.y * ANIME_SKY_STAR_ROW;
+            float2 centre = neighbour + float2(AnimeSkyHash(key, 2.0), AnimeSkyHash(key, 3.0));
+            float distance = length(p - centre);
+            half shown = AnimeSkyHash(key, 1.0) < density ? 1.0h : 0.0h;
+            half glow = half(smoothstep(size + pixel, max(size - pixel, 0.0), distance));
+            half light = half(lerp(ANIME_SKY_STAR_DIMMEST, 1.0, AnimeSkyHash(key, 4.0)));
+            brightest = max(brightest, glow * light * shown);
+        }
+    }
+    return brightest;
 }
 
 // Smooth value noise along a ring of <period> cells (it wraps), 0 to 1.
@@ -176,10 +204,9 @@ half4 AnimeSkyFragment(AnimeSkyVaryings input) : SV_Target
     cloud *= half(smoothstep(0.0, _CloudHorizonFade, height)) * belowClouds;
     sky = lerp(sky, lerp(_CloudLitColor.rgb, _CloudShadeColor.rgb, shaded), cloud);
 
-    half4 field = SAMPLE_TEXTURE2D(_AnimeNoiseTex, sampler_AnimeNoiseTex, direction.xz / (abs(height) + 1.0) * _StarScale);
     if (ANIME_SKY_STARS_ON)
     {
-        half star = smoothstep(1.0h - _StarSize, 1.0h - _StarSize * 0.33h, field.r) * step(1.0h - _StarDensity, field.a);
+        half star = AnimeSkyStars(direction.xz / (abs(height) + 1.0) * _StarScale, _StarDensity, _StarSize);
         sky += _StarColor.rgb * (star * (1.0h - cloud) * step(0.0, height));
     }
 
@@ -194,9 +221,15 @@ half4 AnimeSkyFragment(AnimeSkyVaryings input) : SV_Target
     sky += _SunColor.rgb * (_SunStrength * disc);
 
     float around = atan2(direction.x, direction.z) / TWO_PI + 0.5;
-    sky = AnimeSkyRidge(sky, _RidgeColor0, _RidgeShape0, _RidgeDistance.x, direction, around, sun);
-    sky = AnimeSkyRidge(sky, _RidgeColor1, _RidgeShape1, _RidgeDistance.y, direction, around, sun);
-    sky = AnimeSkyRidge(sky, _RidgeColor2, _RidgeShape2, _RidgeDistance.z, direction, around, sun);
+    UNITY_BRANCH
+    if (_RidgeColor0.a > 0.0h)
+        sky = AnimeSkyRidge(sky, _RidgeColor0, _RidgeShape0, _RidgeDistance.x, direction, around, sun);
+    UNITY_BRANCH
+    if (_RidgeColor1.a > 0.0h)
+        sky = AnimeSkyRidge(sky, _RidgeColor1, _RidgeShape1, _RidgeDistance.y, direction, around, sun);
+    UNITY_BRANCH
+    if (_RidgeColor2.a > 0.0h)
+        sky = AnimeSkyRidge(sky, _RidgeColor2, _RidgeShape2, _RidgeDistance.z, direction, around, sun);
 
     return half4(sky, 1.0h);
 }

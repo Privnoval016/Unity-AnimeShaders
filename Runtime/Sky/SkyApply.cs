@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Ids = AnimeShaders.AnimeShaderIds.Sky;
@@ -7,10 +8,8 @@ namespace AnimeShaders
 {
     /**
      * <summary>The one writer of a sky's state: the sky material, the sun light, the scene's render settings and the
-     * world's globals (the cloud field and the haze, read by the sky, the pack's fog and its cloud shadows). The ambient
-     * comes from the state's colours (Trilight) and reflections are off, so applying costs no sky-to-cubemap render. The
-     * scene's own fog takes the haze's colour and reach, for shaders outside the pack. Never call it during a fight: a
-     * light that turns mid-fight changes every shadow and rim.</summary>
+     * world's globals (<see cref="Globals" />, <see cref="Keywords" />). Call it between moments of play, not during
+     * one.</summary>
      */
     public static class SkyApply
     {
@@ -23,12 +22,26 @@ namespace AnimeShaders
         private static readonly int[] RidgeColors = { Ids.RidgeColor0, Ids.RidgeColor1, Ids.RidgeColor2 };
         private static readonly int[] RidgeShapes = { Ids.RidgeShape0, Ids.RidgeShape1, Ids.RidgeShape2 };
 
+        private static readonly int[] WorldVectors =
+        {
+            World.AnimeCloudShape, World.AnimeCloudMotion, World.AnimeCloudShadowClear, World.AnimeHazeColor, World.AnimeHazeGlow,
+            World.AnimeHazeShape, World.AnimeHazeSky, World.AnimeWorldShade,
+        };
+
+        private static readonly string[] WorldKeywords = { World.AtmosphereKeyword, World.CloudShadowsKeyword };
+
         #endregion
 
         #region Properties
 
         /** <summary>The most ridge layers the sky draws.</summary> */
         public static int RidgeLimit => MaxRidges;
+
+        /** <summary>Every vector global this writes (and clears).</summary> */
+        public static IReadOnlyList<int> Globals => WorldVectors;
+
+        /** <summary>Every global keyword this sets (and clears).</summary> */
+        public static IReadOnlyList<string> Keywords => WorldKeywords;
 
         #endregion
 
@@ -89,7 +102,7 @@ namespace AnimeShaders
                 colour.a = shown ? 1f : 0f;
                 sky.SetColor(RidgeColors[i], colour);
                 sky.SetVector(RidgeShapes[i], new Vector4(Mathf.Sin(ridge.Height * Mathf.Deg2Rad),
-                    Mathf.Sin(ridge.Roughness * Mathf.Deg2Rad), Mathf.Max(1f, Mathf.Round(ridge.Hills)), ridge.Seed));
+                    Mathf.Sin(ridge.Roughness * Mathf.Deg2Rad), Mathf.Max(SkyRidge.MinHills, Mathf.Round(ridge.Hills)), ridge.Seed));
                 distances[i] = ridge.Distance;
             }
             sky.SetVector(Ids.RidgeDistance, distances);
@@ -97,7 +110,7 @@ namespace AnimeShaders
             sky.SetVector(Ids.RidgeMist, new Vector4(Mathf.Sin(state.RidgeMistHeight * Mathf.Deg2Rad), state.RidgeMist, 0f, 0f));
             sky.SetFloat(Ids.StarDensity, state.StarDensity);
             sky.SetFloat(Ids.StarSize, state.StarSize);
-            sky.SetFloat(Ids.StarScale, Mathf.Max(state.StarScale, 1f));
+            sky.SetFloat(Ids.StarScale, Mathf.Max(state.StarScale, SkyState.MinStarScale));
             sky.SetFloat(Ids.Stars, state.Stars ? 1f : 0f);
             sky.SetKeyword(new LocalKeyword(sky.shader, Ids.StarsKeyword), state.Stars);
         }
@@ -107,9 +120,9 @@ namespace AnimeShaders
         {
             float cover = cloudNoise != null ? state.CloudCover : 0f;
             Vector2 drift = state.Wind.sqrMagnitude > 0f ? state.Wind.normalized * state.CloudSpeed : Vector2.zero;
-            Shader.SetGlobalVector(World.AnimeCloudShape, new Vector4(1f / Mathf.Max(state.CloudSize, 1f), cover, state.CloudSoftness, state.CloudAltitude));
+            Shader.SetGlobalVector(World.AnimeCloudShape, new Vector4(1f / Mathf.Max(state.CloudSize, SkyState.MinCloudSize), cover, state.CloudSoftness, state.CloudAltitude));
             Shader.SetGlobalVector(World.AnimeCloudMotion, new Vector4(drift.x, drift.y, state.CloudSimplicity, state.CloudShadowStrength));
-            Shader.SetGlobalVector(World.AnimeCloudShadowClear, new Vector4(state.CloudShadowClearRadius, Mathf.Max(state.CloudShadowClearFade, 0.01f), 0f, 0f));
+            Shader.SetGlobalVector(World.AnimeCloudShadowClear, new Vector4(state.CloudShadowClearRadius, Mathf.Max(state.CloudShadowClearFade, SkyState.MinClearFade), 0f, 0f));
             Shader.SetGlobalTexture(World.AnimeCloudNoise, cloudNoise != null ? cloudNoise : Texture2D.grayTexture);
             Color haze = state.Horizon.linear;
             Color glow = state.HazeGlow.linear;
@@ -126,11 +139,11 @@ namespace AnimeShaders
         /** <summary>Clears the world's globals: no clouds, no haze, the scene's plain fog, the materials' own shade.</summary> */
         public static void Unpublish()
         {
-            foreach (int global in new[] { World.AnimeCloudShape, World.AnimeCloudMotion, World.AnimeCloudShadowClear, World.AnimeHazeColor, World.AnimeHazeGlow, World.AnimeHazeShape, World.AnimeHazeSky, World.AnimeWorldShade })
+            foreach (int global in WorldVectors)
                 Shader.SetGlobalVector(global, Vector4.zero);
             Shader.SetGlobalTexture(World.AnimeCloudNoise, Texture2D.grayTexture);
-            Shader.SetKeyword(GlobalKeyword.Create(World.AtmosphereKeyword), false);
-            Shader.SetKeyword(GlobalKeyword.Create(World.CloudShadowsKeyword), false);
+            foreach (string keyword in WorldKeywords)
+                Shader.SetKeyword(GlobalKeyword.Create(keyword), false);
         }
 
         #endregion

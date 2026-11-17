@@ -41,7 +41,7 @@ Shader "Anime/Sky"
         [Toggle(_ANIME_SKY_STARS)] _Stars("Use Stars", Float) = 0
         _StarColor("Star Colour", Color) = (0.9, 0.92, 1, 1)
         _StarDensity("Star Density", Range(0, 1)) = 0.2
-        _StarSize("Star Size", Range(0, 1)) = 0.15
+        _StarSize("Star Size (share of a cell)", Range(0, 0.5)) = 0.05
         _StarScale("Star Scale", Float) = 4
 
         [Header(Bloom)]

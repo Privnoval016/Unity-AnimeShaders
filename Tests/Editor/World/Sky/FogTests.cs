@@ -61,16 +61,6 @@ namespace AnimeShaders.Tests
             return FrameReads.At(frame, Mathf.Clamp(Mathf.RoundToInt(across * Size), 0, Size - 1), Mathf.Clamp(Mathf.RoundToInt(up * Size), 0, Size - 1));
         }
 
-        private static float Brightness(Color pixel)
-        {
-            return pixel.r + pixel.g + pixel.b;
-        }
-
-        private static float Distance(Color a, Color b)
-        {
-            return Mathf.Abs(a.r - b.r) + Mathf.Abs(a.g - b.g) + Mathf.Abs(a.b - b.b);
-        }
-
         private void LookFromOrigin()
         {
             _stage.Perspective(FieldOfView, 0f);
@@ -132,8 +122,28 @@ namespace AnimeShaders.Tests
             Wall(new Vector3(90f, 0f, 300f), 120f);
             Color[] frame = Render();
             Color near = At(frame, 0.24f, 0.5f), far = At(frame, 0.76f, 0.5f);
-            Assert.Greater(Brightness(far), Brightness(near) + 0.1f, $"near {near}, far {far}");
-            Assert.Greater(Brightness(near), 0f, "some haze past its start even near");
+            Assert.Greater(FrameReads.Sum(far), FrameReads.Sum(near) + 0.1f, $"near {near}, far {far}");
+            Assert.Greater(FrameReads.Sum(near), 0f, "some haze past its start even near");
+        }
+
+        [Test]
+        public void BeforeItsStart_ThereIsNoHaze()
+        {
+            _made.Set("hazeStart", 100f);
+            LookFromOrigin();
+            Wall(new Vector3(0f, 0f, 30f), 60f);
+            Color[] neutral = RenderWithoutHaze();
+            Assert.IsTrue(neutral.Zip(Render(), (a, b) => FrameReads.Near(a, b, 0.002f)).All(same => same), "a wall nearer than the start takes none");
+        }
+
+        [Test]
+        public void TheHaze_NeverPassesItsMostOpacity()
+        {
+            _made.Set("hazeDensity", 1f).Set("hazeMaxOpacity", 0.5f);
+            LookFromOrigin();
+            Wall(new Vector3(0f, 0f, 2000f), 4000f);
+            Color capped = FrameReads.Centre(Render());
+            Assert.IsTrue(FrameReads.Near(capped, Haze.linear * 0.5f, 0.02f), $"half the haze at most: {capped}");
         }
 
         [Test]
@@ -145,7 +155,7 @@ namespace AnimeShaders.Tests
             Wall(new Vector3(0f, 60f, 200f), 30f);
             Color[] frame = Render();
             Color low = At(frame, 0.5f, 0.5f), high = At(frame, 0.5f, 0.76f);
-            Assert.Less(Brightness(high), Brightness(low) - 0.05f, $"low {low}, high {high}");
+            Assert.Less(FrameReads.Sum(high), FrameReads.Sum(low) - 0.05f, $"low {low}, high {high}");
         }
 
         [Test]
@@ -158,7 +168,7 @@ namespace AnimeShaders.Tests
             Wall(new Vector3(2.5f, 0f, 300f), 4f);
             Color[] frame = Render();
             Color near = At(frame, 0.25f, 0.5f), far = At(frame, 0.75f, 0.5f);
-            Assert.Greater(Brightness(far), Brightness(near) + 0.1f, $"near {near}, far {far}");
+            Assert.Greater(FrameReads.Sum(far), FrameReads.Sum(near) + 0.1f, $"near {near}, far {far}");
         }
 
         [Test]
@@ -171,7 +181,7 @@ namespace AnimeShaders.Tests
             Wall(new Vector3(40f, 0f, 100f), 20f);
             Color[] frame = Render();
             Color centre = At(frame, 0.5f, 0.5f), side = At(frame, 0.9f, 0.5f);
-            Assert.Greater(Brightness(centre), 0.1f, "hazed");
+            Assert.Greater(FrameReads.Sum(centre), 0.1f, "hazed");
             Assert.IsTrue(FrameReads.Near(centre, side, 0.005f), $"the same distance from the camera's plane: centre {centre}, side {side}");
         }
 
@@ -208,7 +218,7 @@ namespace AnimeShaders.Tests
         [Test]
         public void AWallAtTheSkysDistance_MeetsTheSkyBesideIt()
         {
-            var sky = new Material(Shader.Find("Anime/Sky"));
+            var sky = TestMaterials.Sky();
             try
             {
                 _made.Set("hazeStart", 0f).Set("hazeDensity", 0.003f).Set("skyDistance", 1500f).Set("discStrength", 0f).Set("haloStrength", 0f);
@@ -218,10 +228,10 @@ namespace AnimeShaders.Tests
                 LookFromOrigin();
                 Wall(new Vector3(-900f, 0f, 1500f), 1700f);
                 Color[] hazy = Render();
-                Assert.Less(Distance(At(hazy, 0.2f, 0.5f), At(hazy, 0.8f, 0.5f)), 0.1f, $"wall {At(hazy, 0.2f, 0.5f)}, sky {At(hazy, 0.8f, 0.5f)}");
+                Assert.Less(FrameReads.Distance(At(hazy, 0.2f, 0.5f), At(hazy, 0.8f, 0.5f)), 0.1f, $"wall {At(hazy, 0.2f, 0.5f)}, sky {At(hazy, 0.8f, 0.5f)}");
                 _made.Set("haze", false);
                 Color[] clear = Render();
-                Assert.Greater(Distance(At(clear, 0.2f, 0.5f), At(clear, 0.8f, 0.5f)), 0.3f, "with no haze the black wall stands out");
+                Assert.Greater(FrameReads.Distance(At(clear, 0.2f, 0.5f), At(clear, 0.8f, 0.5f)), 0.3f, "with no haze the black wall stands out");
             }
             finally
             {

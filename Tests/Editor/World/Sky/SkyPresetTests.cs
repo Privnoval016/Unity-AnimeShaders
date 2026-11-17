@@ -40,6 +40,17 @@ namespace AnimeShaders.Tests
 
         #region Helpers
 
+        /** <summary>Adds a switched-off applier of <paramref name="preset" /> on <paramref name="holder" />, drawing to the test's sky and sun.</summary> */
+        private void Applier(GameObject holder, SkyPreset preset)
+        {
+            holder.SetActive(false);
+            var serialized = new SerializedObject(holder.AddComponent<SkyPresetApplier>());
+            serialized.FindProperty("_preset").objectReferenceValue = preset;
+            serialized.FindProperty("_sun").objectReferenceValue = _sun;
+            serialized.FindProperty("_sky").objectReferenceValue = _sky;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
         private static bool Close(Color a, Color b)
         {
             return Mathf.Abs(a.r - b.r) < 1e-3f && Mathf.Abs(a.g - b.g) < 1e-3f && Mathf.Abs(a.b - b.b) < 1e-3f;
@@ -72,7 +83,7 @@ namespace AnimeShaders.Tests
             _made = new MadeSky().Set("shade", new Color(0.5f, 0.6f, 0.7f)).Set("cloudCover", 0.5f).Set("cloudAltitude", 700f).Set("cloudShadowStrength", 0.3f)
                 .Set("haze", true).Set("hazeStart", 40f).Set("hazeDensity", 0.01f)
                 .Ridges(new SkyRidge(Color.red, 8f, 2f, 10f, 1f, 900f));
-            _sky = new Material(Shader.Find("Anime/Sky"));
+            _sky = TestMaterials.Sky();
             _sunObject = new GameObject("Sun");
             _sun = _sunObject.AddComponent<Light>();
             _sun.type = LightType.Directional;
@@ -125,7 +136,11 @@ namespace AnimeShaders.Tests
             Assert.AreEqual(state.CloudAltitude, cloud.w, 1e-3f, "the altitude published");
             Assert.AreEqual(state.CloudShadowStrength, Shader.GetGlobalVector(World.AnimeCloudMotion).w, 1e-5f);
             Assert.AreEqual(state.HazeStart, Shader.GetGlobalVector(World.AnimeHazeShape).x, 1e-3f, "the haze published");
-            Assert.AreEqual(state.Shade.linear.g - 1f, Shader.GetGlobalVector(World.AnimeWorldShade).y, 1e-4f, "the shade tint published, less one");
+            Vector4 shade = Shader.GetGlobalVector(World.AnimeWorldShade);
+            Color shadeLinear = state.Shade.linear;
+            Assert.AreEqual(new Vector4(shadeLinear.r - 1f, shadeLinear.g - 1f, shadeLinear.b - 1f, 0f), shade, "the shade tint published, less one, channel by channel");
+            Assert.IsTrue(Close(state.Below, _sky.GetColor(Ids.BelowColor)));
+            Assert.AreEqual(state.SunIntensity, _sun.intensity, 1e-4f, "the sun's strength");
             Assert.AreSame(_sky.GetTexture(Ids.NoiseTex), Shader.GetGlobalTexture(World.AnimeCloudNoise), "the clouds' noise is the sky's");
             Assert.IsTrue(On(World.AtmosphereKeyword), "the haze on");
             Assert.IsTrue(On(World.CloudShadowsKeyword), "the cloud shadows on");
@@ -159,6 +174,34 @@ namespace AnimeShaders.Tests
             Assert.AreEqual(Vector4.zero, Shader.GetGlobalVector(World.AnimeWorldShade), "the materials' own shade");
             Assert.IsFalse(On(World.AtmosphereKeyword));
             Assert.IsFalse(On(World.CloudShadowsKeyword));
+        }
+
+        [Test]
+        public void AnApplierSwitchedOffAfterAnotherTookOver_LeavesTheNewOnesSky()
+        {
+            var first = new GameObject("First Sky");
+            var second = new GameObject("Second Sky");
+            var cloudy = new MadeSky().Set("cloudCover", 0.5f).Set("cloudShadowStrength", 0.5f).Set("shade", new Color(0.4f, 0.5f, 0.6f));
+            var clear = new MadeSky().Set("cloudCover", 0f).Set("shade", new Color(0.9f, 0.8f, 0.7f));
+            try
+            {
+                Applier(first, cloudy.Preset);
+                Applier(second, clear.Preset);
+                first.SetActive(true);
+                second.SetActive(true);
+                Vector4 seconds = Shader.GetGlobalVector(World.AnimeWorldShade);
+                first.SetActive(false);
+                Assert.AreEqual(seconds, Shader.GetGlobalVector(World.AnimeWorldShade), "the second's shade stays");
+                second.SetActive(false);
+                Assert.AreEqual(Vector4.zero, Shader.GetGlobalVector(World.AnimeWorldShade), "the owner switched off clears");
+            }
+            finally
+            {
+                Object.DestroyImmediate(first);
+                Object.DestroyImmediate(second);
+                cloudy.Dispose();
+                clear.Dispose();
+            }
         }
 
         [Test]

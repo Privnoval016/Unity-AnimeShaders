@@ -53,12 +53,12 @@ namespace AnimeShaders
         [Tooltip("How soft a cloud's edge is (0: as crisp as the screen allows).")]
         [Range(0f, 0.5f)] [SerializeField] private float cloudSoftness;
         [Tooltip("The size of a typical cloud, in metres.")]
-        [Min(1f)] [SerializeField] private float cloudSize;
+        [Min(MinCloudSize)] [SerializeField] private float cloudSize;
         [Tooltip("How simple the clouds' shapes are: higher drops their small wisps for large, drawn forms.")]
         [Range(0f, 4f)] [SerializeField] private float cloudSimplicity;
         [Tooltip("How high the clouds float, in metres: it sets how far their shadows fall from under them.")]
         [Min(1f)] [SerializeField] private float cloudAltitude;
-        [Tooltip("How fast the clouds drift, in metres a second (with game time, so they hold through a hitstop).")]
+        [Tooltip("How fast the clouds drift, in metres a second (with game time, so they pause when game time does).")]
         [Min(0f)] [SerializeField] private float cloudSpeed;
         [Tooltip("The direction the clouds drift, across x and z.")]
         [SerializeField] private Vector2 wind;
@@ -68,10 +68,10 @@ namespace AnimeShaders
         [Range(0.01f, 0.5f)] [SerializeField] private float cloudHorizonFade;
         [Tooltip("How dark the clouds' shadows on the ground are (0: none).")]
         [Range(0f, 1f)] [SerializeField] private float cloudShadowStrength;
-        [Tooltip("No cloud shadows within this many metres of the camera, so a fight and the people in it never change light; they drift over the field and hills beyond.")]
+        [Tooltip("No cloud shadows within this many metres of the camera, so the action round the camera and the people in it never change light; they drift over the land and hills beyond.")]
         [Min(0f)] [SerializeField] private float cloudShadowClearRadius;
         [Tooltip("Over how many metres past the clear radius the cloud shadows come in.")]
-        [Min(0.01f)] [SerializeField] private float cloudShadowClearFade;
+        [Min(MinClearFade)] [SerializeField] private float cloudShadowClearFade;
 
         [Header("Ridges")]
         [Tooltip("Hills and mountains drawn on the horizon, farthest first; at most three.")]
@@ -86,12 +86,12 @@ namespace AnimeShaders
         [Header("Night")]
         [Tooltip("Whether stars show.")]
         [SerializeField] private bool stars;
-        [Tooltip("How many stars show.")]
+        [Tooltip("The share of the star field's cells that hold a star.")]
         [Range(0f, 1f)] [SerializeField] private float starDensity;
-        [Tooltip("How large a star is.")]
-        [Range(0f, 1f)] [SerializeField] private float starSize;
-        [Tooltip("How fine the star field is: higher packs more, smaller stars across the sky.")]
-        [Range(4f, 64f)] [SerializeField] private float starScale;
+        [Tooltip("A star's radius as a share of a cell; never under a pixel on screen.")]
+        [Range(0f, 0.5f)] [SerializeField] private float starSize;
+        [Tooltip("How fine the star field is: higher packs more, smaller cells (each holds at most one star, placed at random) across the sky.")]
+        [Range(MinStarScale, 64f)] [SerializeField] private float starScale;
 
         [Header("Ambient")]
         [Tooltip("The light from above that fills the shadow tones.")]
@@ -104,9 +104,9 @@ namespace AnimeShaders
         [ColorUsage(false)] [SerializeField] private Color shade;
 
         [Header("Haze")]
-        [Tooltip("Haze over distance and low ground in the horizon colour, glowing toward the sun. Off: the scene's plain fog.")]
+        [Tooltip("Haze over distance and low ground in the horizon colour, glowing toward the sun. Off: no fog.")]
         [SerializeField] private bool haze;
-        [Tooltip("Where the haze begins, in metres from the camera: past the fighting area, so fights stay clear.")]
+        [Tooltip("Where the haze begins, in metres from the camera: past the area of play, so it stays clear.")]
         [Min(0f)] [SerializeField] private float hazeStart;
         [Tooltip("How thick the haze is per metre past its start.")]
         [Range(0f, 0.05f)] [SerializeField] private float hazeDensity;
@@ -129,6 +129,15 @@ namespace AnimeShaders
 
         #region Properties
 
+        /** <summary>The smallest typical cloud size, in metres; smaller is held to it.</summary> */
+        public const float MinCloudSize = 1f;
+
+        /** <summary>The shortest fade into the cloud shadows round the camera, in metres; shorter is held to it.</summary> */
+        public const float MinClearFade = 0.01f;
+
+        /** <summary>The coarsest star field; coarser is held to it.</summary> */
+        public const float MinStarScale = 4f;
+
         /** <summary>The values a new preset starts from: a clear day.</summary> */
         public static SkyState Default => new()
         {
@@ -141,7 +150,7 @@ namespace AnimeShaders
             cloudShadeOffset = 40f, cloudHorizonFade = 0.12f, cloudShadowStrength = 0.4f, cloudShadowClearRadius = 40f,
             cloudShadowClearFade = 80f,
             ridges = Array.Empty<SkyRidge>(), ridgeLitEdge = Color.white, ridgeMistHeight = 3f, ridgeMist = 0.8f,
-            stars = false, starDensity = 0.2f, starSize = 0.15f, starScale = 24f,
+            stars = false, starDensity = 0.2f, starSize = 0.05f, starScale = 24f,
             ambientSky = new Color(0.55f, 0.62f, 0.75f), ambientEquator = new Color(0.45f, 0.5f, 0.55f),
             ambientGround = new Color(0.3f, 0.3f, 0.28f), shade = Color.white,
             haze = true, hazeStart = 60f, hazeDensity = 0.006f, hazeBase = 0f, hazeFalloff = 0.02f, hazeMaxOpacity = 0.85f,

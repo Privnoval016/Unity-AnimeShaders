@@ -10,8 +10,8 @@ namespace AnimeShaders
     /**
      * <summary>The sun shafts' render-graph passes, at half resolution: the mask (the sky near the sun), a long and a short
      * radial blur toward the sun, and the composite added over the camera colour. Records nothing when the volume's
-     * intensity is 0, the camera has post-processing off (menu figure and portrait cameras), there is no main light, or
-     * the sun is behind the camera; fades in by the sun's angle from the view.</summary>
+     * intensity is 0, the camera has post-processing off, is an overlay, renders with MSAA or in XR, there is no main
+     * light, or the sun is behind the camera; fades in by the sun's angle from the view.</summary>
      */
     internal sealed class AnimeSunShaftsPass : ScriptableRenderPass
     {
@@ -51,7 +51,8 @@ namespace AnimeShaders
             UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
             UniversalLightData lightData = frameData.Get<UniversalLightData>();
             if (_material == null || shafts == null || !shafts.IsActive() || !cameraData.postProcessEnabled || lightData.mainLightIndex < 0
-                || resources.isActiveTargetBackBuffer || !resources.cameraDepthTexture.IsValid())
+                || resources.isActiveTargetBackBuffer || !resources.cameraDepthTexture.IsValid() || cameraData.renderType != CameraRenderType.Base
+                || cameraData.cameraTargetDescriptor.msaaSamples > 1 || cameraData.xr.enabled)
                 return;
 
             VisibleLight sun = lightData.visibleLights[lightData.mainLightIndex];
