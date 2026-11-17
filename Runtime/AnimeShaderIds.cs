@@ -536,6 +536,108 @@ namespace AnimeShaders
             /** <summary>The property id of _HairShadowSoftness.</summary> */
             public static readonly int HairShadowSoftness = Shader.PropertyToID(HairShadowSoftnessName);
 
+            /** <summary>The name _RingMask.</summary> */
+            public const string RingMaskName = "_RingMask";
+
+            /** <summary>The property id of _RingMask.</summary> */
+            public static readonly int RingMask = Shader.PropertyToID(RingMaskName);
+
+            /** <summary>The name _RingColor.</summary> */
+            public const string RingColorName = "_RingColor";
+
+            /** <summary>The property id of _RingColor.</summary> */
+            public static readonly int RingColor = Shader.PropertyToID(RingColorName);
+
+            /** <summary>The name _RingStrength.</summary> */
+            public const string RingStrengthName = "_RingStrength";
+
+            /** <summary>The property id of _RingStrength.</summary> */
+            public static readonly int RingStrength = Shader.PropertyToID(RingStrengthName);
+
+            /** <summary>The name _RingHairTint.</summary> */
+            public const string RingHairTintName = "_RingHairTint";
+
+            /** <summary>The property id of _RingHairTint.</summary> */
+            public static readonly int RingHairTint = Shader.PropertyToID(RingHairTintName);
+
+            /** <summary>The name _RingLightColor.</summary> */
+            public const string RingLightColorName = "_RingLightColor";
+
+            /** <summary>The property id of _RingLightColor.</summary> */
+            public static readonly int RingLightColor = Shader.PropertyToID(RingLightColorName);
+
+            /** <summary>The name _RingHeight.</summary> */
+            public const string RingHeightName = "_RingHeight";
+
+            /** <summary>The property id of _RingHeight.</summary> */
+            public static readonly int RingHeight = Shader.PropertyToID(RingHeightName);
+
+            /** <summary>The name _RingWidth.</summary> */
+            public const string RingWidthName = "_RingWidth";
+
+            /** <summary>The property id of _RingWidth.</summary> */
+            public static readonly int RingWidth = Shader.PropertyToID(RingWidthName);
+
+            /** <summary>The name _RingSoftness.</summary> */
+            public const string RingSoftnessName = "_RingSoftness";
+
+            /** <summary>The property id of _RingSoftness.</summary> */
+            public static readonly int RingSoftness = Shader.PropertyToID(RingSoftnessName);
+
+            /** <summary>The name _RingTilt.</summary> */
+            public const string RingTiltName = "_RingTilt";
+
+            /** <summary>The property id of _RingTilt.</summary> */
+            public static readonly int RingTilt = Shader.PropertyToID(RingTiltName);
+
+            /** <summary>The name _RingSphereBlend.</summary> */
+            public const string RingSphereBlendName = "_RingSphereBlend";
+
+            /** <summary>The property id of _RingSphereBlend.</summary> */
+            public static readonly int RingSphereBlend = Shader.PropertyToID(RingSphereBlendName);
+
+            /** <summary>The name _RingFacing.</summary> */
+            public const string RingFacingName = "_RingFacing";
+
+            /** <summary>The property id of _RingFacing.</summary> */
+            public static readonly int RingFacing = Shader.PropertyToID(RingFacingName);
+
+            /** <summary>The name _RingFollowsView.</summary> */
+            public const string RingFollowsViewName = "_RingFollowsView";
+
+            /** <summary>The property id of _RingFollowsView.</summary> */
+            public static readonly int RingFollowsView = Shader.PropertyToID(RingFollowsViewName);
+
+            /** <summary>The name _RingGlow.</summary> */
+            public const string RingGlowName = "_RingGlow";
+
+            /** <summary>The property id of _RingGlow.</summary> */
+            public static readonly int RingGlow = Shader.PropertyToID(RingGlowName);
+
+            /** <summary>The name _RingBreakup.</summary> */
+            public const string RingBreakupName = "_RingBreakup";
+
+            /** <summary>The property id of _RingBreakup.</summary> */
+            public static readonly int RingBreakup = Shader.PropertyToID(RingBreakupName);
+
+            /** <summary>The name _RingBreakupCount.</summary> */
+            public const string RingBreakupCountName = "_RingBreakupCount";
+
+            /** <summary>The property id of _RingBreakupCount.</summary> */
+            public static readonly int RingBreakupCount = Shader.PropertyToID(RingBreakupCountName);
+
+            /** <summary>The name _RingBreakupShape.</summary> */
+            public const string RingBreakupShapeName = "_RingBreakupShape";
+
+            /** <summary>The property id of _RingBreakupShape.</summary> */
+            public static readonly int RingBreakupShape = Shader.PropertyToID(RingBreakupShapeName);
+
+            /** <summary>The name _RingBrightest.</summary> */
+            public const string RingBrightestName = "_RingBrightest";
+
+            /** <summary>The property id of _RingBrightest.</summary> */
+            public static readonly int RingBrightest = Shader.PropertyToID(RingBrightestName);
+
             /** <summary>The name _CircleStoneShade.</summary> */
             public const string CircleStoneShadeName = "_CircleStoneShade";
 

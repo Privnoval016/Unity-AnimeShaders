@@ -202,6 +202,7 @@ half3 AnimeShade(AnimeSurface surface, InputData inputData)
 #endif
 
     half3 color = lerp(shadowTone, litTone, litWeight);
+    color += surface.litHighlight * litWeight;
     color += AnimeExtraLights(surface, inputData, shadowMask);
 
 #if defined(ANIME_GROUP_RIM)

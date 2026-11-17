@@ -82,6 +82,10 @@ SAMPLER(sampler_CircleDetail);
 TEXTURE2D(_FieldStones);
 TEXTURE2D(_CircleStones);
 #endif
+#if defined(ANIME_GROUP_HAIR)
+// The angel ring's optional mask (R), read through the base map's sampler.
+TEXTURE2D(_RingMask);
+#endif
 #if defined(ANIME_GROUP_FACE)
 // The face map (AnimeFaceMapBaker: R and G the horizontal normal in the head's frame, B the face weight, A coverage),
 // read through URP's global sampler_LinearClamp.
@@ -184,6 +188,24 @@ CBUFFER_START(UnityPerMaterial)
     float _HairShadowReach;
     float _HairShadowBias;
     float _HairShadowSoftness;
+#endif
+#if defined(ANIME_GROUP_HAIR)
+    half4 _RingColor;
+    half _RingStrength;
+    half _RingHairTint;
+    half _RingLightColor;
+    half _RingHeight;
+    half _RingWidth;
+    half _RingSoftness;
+    half _RingTilt;
+    half _RingSphereBlend;
+    half _RingFacing;
+    half _RingFollowsView;
+    half _RingGlow;
+    half _RingBreakup;
+    half _RingBreakupCount;
+    half _RingBreakupShape;
+    half _RingBrightest;
 #endif
 #if defined(ANIME_GROUP_LINE)
     half4 _OutlineColor;

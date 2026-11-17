@@ -5,6 +5,7 @@
 // (a face or hair shader adds its own terms) and hand it to AnimeShade in AnimeLighting.hlsl. formOverride is a lit
 // weight (0 shade, 1 lit) an entry shader can put in place of the main light's form, by formOverrideWeight (0: the form
 // as the normal gives it, so every other shader is unchanged); the cast shadow, clouds and contact still apply after it.
+// litHighlight is a colour added where the surface is lit (scaled by the lit weight, so none in shade): a hair's ring.
 
 #include "AnimeProperties.hlsl"
 
@@ -16,6 +17,7 @@ struct AnimeSurface
     half alpha;
     half formOverride;
     half formOverrideWeight;
+    half3 litHighlight;
 };
 
 half4 AnimeSampleBase(float2 uv)

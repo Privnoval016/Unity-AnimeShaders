@@ -128,6 +128,7 @@ void AnimeForwardFragment(
     surface.emission = half3(0, 0, 0);
     surface.formOverride = 0.0h;
     surface.formOverrideWeight = 0.0h;
+    surface.litHighlight = half3(0, 0, 0);
 #if defined(ANIME_GROUP_EMISSION)
     if (ANIME_EMISSION_ON)
         surface.emission = AnimeSampleEmission(input.uv);
