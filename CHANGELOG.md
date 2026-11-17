@@ -14,6 +14,13 @@
   `AnimeHeadFrame` (the head's frame from the bind pose, written after animation and cloth, only on change, with
   gizmos), `AnimeShaderIds.Head`. Tests: owners merge in either order, letting go, slots apart; the head frame on a rig
   whose bone axes differ from the model's, turning, still and moving, letting go; break proofs.
+- The head frame reads the model's front from the character root (`BindAxes` takes it; `MeshFromModel`): Blender's
+  meshes import turned 270° about X from their root, so the mesh's own +Z was up. The test rig's mesh is turned the same way.
+- Face maps (`Editor/Face/`): the face's horizontal normal and face weight baked from its mesh into a half-float EXR for
+  `Anime/Face`, with an asset, an Inspector and an import rule. `DataTextures` gains `WriteHalf`, `AddLabel` and
+  `FileHash`; **breaking:** `HoldTo` takes a `DataSampling` (`Exact` for the old `point: true`). Tests: a hemisphere's
+  stored normal and its Lambert agreement round the horizon, islands smoothed apart, the gutter, overlap, weights,
+  vertical normals, determinism, the import rule, the hash, a mesh's problems; break proofs.
 - After four reviewers over all of 2c: stars as a field of their own (they sat on the noise's lattice, a grid); the
   shafts' mask safe from an infinite pixel, their composite leaving alpha, no shafts on overlay, MSAA or XR cameras; full
   cloud cover cloud everywhere; no cloud reads at zero cover; hidden ridges skipped; the applier enabled last owns the

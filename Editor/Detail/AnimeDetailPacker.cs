@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
@@ -19,7 +18,6 @@ namespace AnimeShaders.EditorTools
         #region Private Fields
 
         private static readonly string[] DetailTextures = { Ids.FieldDetailName, Ids.CircleDetailName };
-        private static readonly Dictionary<string, (long Stamp, string Hash)> FileHashes = new();
 
         #endregion
 
@@ -60,7 +58,7 @@ namespace AnimeShaders.EditorTools
         {
             var hash = new Hash128();
             foreach (Texture2D source in new[] { set.Colour, set.Occlusion, set.Normal, set.Mask })
-                hash.Append(source == null ? string.Empty : FileHash(AssetDatabase.GetAssetPath(source)));
+                hash.Append(source == null ? string.Empty : DataTextures.FileHash(AssetDatabase.GetAssetPath(source)));
             DetailSettings settings = set.Settings;
             hash.Append(settings.Soften);
             hash.Append(settings.OcclusionWeight);
@@ -105,17 +103,6 @@ namespace AnimeShaders.EditorTools
             DataTextures.Write(map.Image.Pixels, map.Image.Width, map.Image.Height, path, AnimeDetailImport.StonesLabel);
             set.RecordStones(AssetDatabase.LoadAssetAtPath<Texture2D>(path), map.Count);
             Debug.Log(map.Dropped > 0 ? $"{set.name}: {map.Count} stones, {map.Dropped} dropped." : $"{set.name}: {map.Count} stones.", set);
-        }
-
-        /** <summary>A source file's content hash, kept until the file changes on disk.</summary> */
-        private static string FileHash(string path)
-        {
-            long stamp = File.GetLastWriteTimeUtc(path).Ticks ^ new FileInfo(path).Length;
-            if (FileHashes.TryGetValue(path, out (long Stamp, string Hash) known) && known.Stamp == stamp)
-                return known.Hash;
-            string hash = Hash128.Compute(File.ReadAllBytes(path)).ToString();
-            FileHashes[path] = (stamp, hash);
-            return hash;
         }
 
         private static DetailImage Read(Texture2D source, string role, AnimeDetailSet set, bool required)

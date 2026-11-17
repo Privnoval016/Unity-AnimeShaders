@@ -42,7 +42,7 @@ namespace AnimeShaders.EditorTools
             if (DataTextures.HasLabel(assetPath, Label))
                 DataTextures.HoldTo((TextureImporter)assetImporter, TextureImporterCompression.CompressedHQ, MaxSize);
             else if (DataTextures.HasLabel(assetPath, StonesLabel))
-                DataTextures.HoldTo((TextureImporter)assetImporter, TextureImporterCompression.Uncompressed, StoneMath.MapSize, true);
+                DataTextures.HoldTo((TextureImporter)assetImporter, TextureImporterCompression.Uncompressed, StoneMath.MapSize, DataSampling.Exact);
         }
 
         #endregion
