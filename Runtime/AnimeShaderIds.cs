@@ -542,11 +542,23 @@ namespace AnimeShaders
             /** <summary>The property id of _HairShadowSoftness.</summary> */
             public static readonly int HairShadowSoftness = Shader.PropertyToID(HairShadowSoftnessName);
 
+            /** <summary>The name _HairShadowRange.</summary> */
+            public const string HairShadowRangeName = "_HairShadowRange";
+
+            /** <summary>The property id of _HairShadowRange.</summary> */
+            public static readonly int HairShadowRange = Shader.PropertyToID(HairShadowRangeName);
+
             /** <summary>The name _RingMask.</summary> */
             public const string RingMaskName = "_RingMask";
 
             /** <summary>The property id of _RingMask.</summary> */
             public static readonly int RingMask = Shader.PropertyToID(RingMaskName);
+
+            /** <summary>The name _RingBrightest.</summary> */
+            public const string RingBrightestName = "_RingBrightest";
+
+            /** <summary>The property id of _RingBrightest.</summary> */
+            public static readonly int RingBrightest = Shader.PropertyToID(RingBrightestName);
 
             /** <summary>The name _RingColor.</summary> */
             public const string RingColorName = "_RingColor";
@@ -703,12 +715,6 @@ namespace AnimeShaders
 
             /** <summary>The property id of _EyeThroughTint.</summary> */
             public static readonly int EyeThroughTint = Shader.PropertyToID(EyeThroughTintName);
-
-            /** <summary>The name _RingBrightest.</summary> */
-            public const string RingBrightestName = "_RingBrightest";
-
-            /** <summary>The property id of _RingBrightest.</summary> */
-            public static readonly int RingBrightest = Shader.PropertyToID(RingBrightestName);
 
             /** <summary>The name _CircleStoneShade.</summary> */
             public const string CircleStoneShadeName = "_CircleStoneShade";

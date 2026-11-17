@@ -7,7 +7,7 @@ namespace AnimeShaders.EditorTools
      * (a compressed or sRGB map bends the face's shadow line), no mips, bilinear and clamped. Applies to textures
      * carrying the <see cref="Label" /> asset label, on every import.</summary>
      */
-    public class AnimeFaceMapImport : AssetPostprocessor
+    public sealed class AnimeFaceMapImport : AssetPostprocessor
     {
         #region Properties
 

@@ -11,7 +11,7 @@ namespace AnimeShaders.EditorTools
      * face not facing the model's front), the import rule's label, and a Bake button.</summary>
      */
     [CustomEditor(typeof(AnimeFaceMap))]
-    public class AnimeFaceMapEditor : Editor
+    public sealed class AnimeFaceMapEditor : Editor
     {
         #region Private Fields
 
@@ -63,7 +63,7 @@ namespace AnimeShaders.EditorTools
             EditorGUILayout.LabelField("Video memory", $"About {size * (float)size * BytesPerTexel / Megabyte:0.#} MB (half float, no mips)");
 
             if (_problem != null)
-                EditorGUILayout.HelpBox(_problem, MessageType.Info);
+                EditorGUILayout.HelpBox(_problem, MessageType.Warning);
             else if (faceMap.Map == null)
                 EditorGUILayout.HelpBox("Not baked yet.", MessageType.Info);
             else if (faceMap.BakedHash != _hash)

@@ -3,8 +3,7 @@
 
 // How much an eye or brow shows over its fringe (Anime/Eyes' EyesOverHair pass), 0 to 1. The fringe stays over it by
 // Hair Over Eyes at least, and grows opaque as the head turns from the camera: to fully opaque at Eye Yaw Limit degrees
-// round (left or right) and at Eye Pitch Limit degrees up or down, each against the head frame's forward (Star Rail's
-// community recreation uses 0.6, 70 and 45). It fades out softly over Eye Hair Fade before the fringe is Eye Hair
+// round (left or right) and at Eye Pitch Limit degrees up or down, each against the head frame's forward. It fades out softly over Eye Hair Fade before the fringe is Eye Hair
 // Distance in front. Eye Thin Hair (texels, 0 off) shows it only where the fringe is thin: the hair's depth sampled on a
 // ring round the pixel, full once Eye Thin Hair Need of the ring has none of its fringe over it (part of the eye already
 // in view), none under a solid mass. The revealed eye is tinted by Eye Through Tint (white: none).

@@ -33,6 +33,7 @@ Shader "Anime/Face"
         _HairShadowReach("Hair Shadow Reach (m toward the light)", Range(0, 0.2)) = 0.03
         _HairShadowBias("Hair Shadow Bias (m: hair nearer than this casts none)", Range(0, 0.1)) = 0.01
         _HairShadowSoftness("Hair Shadow Softness (m)", Range(0.001, 0.1)) = 0.01
+        _HairShadowRange("Hair Shadow Range (m: hair farther in front casts none)", Range(0.02, 1)) = 0.3
 
         [Header(Shadows and Lights)]
         [ToggleOff(_RECEIVE_SHADOWS_OFF)] _ReceiveShadows("Receive Shadows", Float) = 1

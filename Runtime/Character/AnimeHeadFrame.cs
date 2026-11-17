@@ -10,8 +10,7 @@ namespace AnimeShaders
      * frame, after animation and cloth, it measures the head's centre and its forward, right and up (the model's own
      * front and up at rest, carried by the head bone, whatever the bone's or the mesh's axes), and writes them into those
      * renderers' property blocks (<see cref="AnimeBlocks" />) once they change, just before a camera that can see one of
-     * the renderers draws: a hidden figure (a menu's, a cut-in's) pays only the measuring. Those renderers leave the SRP
-     * Batcher.</summary>
+     * the renderers draws: a figure no camera sees pays only the measuring. Those renderers leave the SRP Batcher.</summary>
      * <remarks>The model's front and up are this object's forward and up: put it on the character's root.</remarks>
      */
     [ExecuteAlways]
@@ -50,6 +49,7 @@ namespace AnimeShaders
         private Vector3 _localUp;
         private bool _ready;
         private bool _stale;
+        private bool _retried;
         private bool _pending;
         private int[] _slots = Array.Empty<int>();
         private Vector3 _lastCentre;
@@ -69,6 +69,12 @@ namespace AnimeShaders
         /** <summary>The model's up at rest, in its root's space.</summary> */
         public static readonly Vector3 ModelUp = Vector3.up;
 
+        /** <summary>Whether it found the head and its rest frame (else the listed materials shade as plain).</summary> */
+        public bool Ready => _ready;
+
+        /** <summary>The renderers it writes.</summary> */
+        public IReadOnlyList<Renderer> Renderers => renderers;
+
         /** <summary>The head's centre as last measured, in world space.</summary> */
         public Vector3 Centre { get; private set; }
 
@@ -87,25 +93,47 @@ namespace AnimeShaders
 
         private void OnEnable()
         {
-            _stale = false;
-            _ready = Resolve();
-            _lastForward = Vector3.zero;
+            _retried = false;
             if (!Enabled.Contains(this))
                 Enabled.Add(this);
             RenderPipelineManager.beginCameraRendering -= WriteForCamera;
             RenderPipelineManager.beginCameraRendering += WriteForCamera;
-            if (!_ready)
-                return;
-            Measure();
-            Write();
+            Rebuild();
         }
 
         private void LateUpdate()
         {
             if (_stale)
-                OnEnable();
+            {
+                Rebuild();
+            }
+            else if (!_ready && !_retried)
+            {
+                _retried = true;
+                Rebuild();
+                if (!_ready)
+                    Debug.LogWarning($"{name}: no head to frame.", this);
+            }
             else if (_ready)
+            {
                 Measure();
+            }
+        }
+
+        private void Reset()
+        {
+            var listed = new List<Renderer>();
+            foreach (Renderer child in GetComponentsInChildren<Renderer>(true))
+            {
+                foreach (Material material in child.sharedMaterials)
+                {
+                    if (material == null || !ReadsHead(material.shader))
+                        continue;
+                    listed.Add(child);
+                    break;
+                }
+            }
+            renderers = listed.ToArray();
         }
 
         private void OnDisable()
@@ -171,12 +199,18 @@ namespace AnimeShaders
             return mesh.worldToLocalMatrix * model.localToWorldMatrix;
         }
 
+        /** <summary>Whether materials on <paramref name="shader" /> read a head frame (<c>Anime/Face</c>, <c>Anime/Hair</c>, <c>Anime/Eyes</c>).</summary> */
+        public static bool ReadsHead(Shader shader)
+        {
+            return shader != null && (shader.name == AnimeShaderIds.FaceShader || shader.name == AnimeShaderIds.HairShader || shader.name == AnimeShaderIds.EyesShader);
+        }
+
         /** <summary>Measures and writes the head's frame now, seen or not: for a body posed outside the player loop, as an offscreen capture's.</summary> */
         public void Refresh()
         {
             if (_stale)
             {
-                OnEnable();
+                Rebuild();
                 return;
             }
             if (!_ready)
@@ -187,7 +221,40 @@ namespace AnimeShaders
 
         #endregion
 
+        #region Event Handlers
+
+        private static void WriteForCamera(ScriptableRenderContext context, Camera camera)
+        {
+            bool framed = false;
+            foreach (AnimeHeadFrame frame in Enabled)
+            {
+                if (!frame._pending)
+                    continue;
+                if (!framed)
+                {
+                    GeometryUtility.CalculateFrustumPlanes(camera, Frustum);
+                    framed = true;
+                }
+                if (frame.SeenBy(camera))
+                    frame.Write();
+            }
+        }
+
+        #endregion
+
         #region Helpers
+
+        /** <summary>Finds the head and its rest frame again and writes the frame at once.</summary> */
+        private void Rebuild()
+        {
+            _stale = false;
+            _ready = Resolve();
+            _lastForward = Vector3.zero;
+            if (!_ready)
+                return;
+            Measure();
+            Write();
+        }
 
         private bool Resolve()
         {
@@ -213,23 +280,6 @@ namespace AnimeShaders
             for (int i = 0; i < renderers.Length; i++)
                 _slots[i] = renderers[i] != null ? renderers[i].sharedMaterials.Length : 0;
             return _head != null && BindAxes(mesh, _head, transform, out _localForward, out _localUp);
-        }
-
-        private static void WriteForCamera(ScriptableRenderContext context, Camera camera)
-        {
-            bool framed = false;
-            foreach (AnimeHeadFrame frame in Enabled)
-            {
-                if (!frame._pending)
-                    continue;
-                if (!framed)
-                {
-                    GeometryUtility.CalculateFrustumPlanes(camera, Frustum);
-                    framed = true;
-                }
-                if (frame.SeenBy(camera))
-                    frame.Write();
-            }
         }
 
         /** <summary>Whether <paramref name="camera" /> can draw one of the renderers: shown, on a layer it draws, in its scene and view.</summary> */
@@ -278,7 +328,8 @@ namespace AnimeShaders
             if (!_pending)
                 return;
             _pending = false;
-            for (int i = 0; i < renderers.Length; i++)
+            int listed = Mathf.Min(renderers.Length, _slots.Length);
+            for (int i = 0; i < listed; i++)
             {
                 for (int slot = 0; slot < _slots[i]; slot++)
                     AnimeBlocks.Write(this, renderers[i], slot, _values);

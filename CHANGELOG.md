@@ -16,6 +16,14 @@
   whose bone axes differ from the model's, turning, still and moving, letting go; break proofs.
 - The head frame reads the model's front from the character root (`BindAxes` takes it; `MeshFromModel`): Blender's
   meshes import turned 270° about X from their root, so the mesh's own +Z was up. The test rig's mesh is turned the same way.
+- Step 3's code review (four reviewers): the hair depth read checks the feature first and every camera resets its
+  size; the front hair's shadow takes **Hair Shadow Range** (other characters' hair casts none) and none from behind
+  the camera; eyes over the fringe draw far to near and keep the target's alpha; Eye Stencil Bit a dropdown; the
+  ring's strand angle safe straight above the centre; `Anime/Eyes` hides depth-rim controls it can't use; the
+  feature's per-camera reset held while any feature lives; the head frame retries once, warns once, guards its slots,
+  `Reset` fills its renderers, an Inspector with warnings; the block store drops destroyed renderers' slots; the face
+  map's out-of-date hash includes the model's import settings, a built-in mesh or one without skin weights refused
+  with a message. Tests made to set what they rely on, and new ones for every fix and gap found; break proofs.
 - Performance (step 3, B8): `AnimeHeadFrame` measures the head each frame and writes its renderers' blocks only just
   before a camera that can see one of them draws (its layers, its scene, its view), so hidden figures (a menu's, a
   cut-in's) skip the writes; `Refresh` still measures and writes at once. The hair depth's own depth buffer is 16-bit

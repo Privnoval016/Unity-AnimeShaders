@@ -30,12 +30,16 @@
 #define ANIME_RING_SHORTEST 0.3
 // At full breakup, how far a strand's top edge moves, as a share of the width.
 #define ANIME_RING_TOP_JITTER 0.15
+// Nearer the head's up axis than this (metres), a point is straight above or below the centre: any strand will do.
+#define ANIME_RING_TINY 1e-6
 
 // Where a point is among the strands round the head: x how far across its strand (0 to 1), y and z its strand's own
 // random values (0 to 1). The strands meet behind the head, where the seam can't be seen.
 half3 AnimeRingStrand(float3 fromCentre, float3 right, float3 forward)
 {
-    float around = (atan2(dot(fromCentre, right), dot(fromCentre, forward)) * (0.5 / PI) + 0.5) * _RingBreakupCount;
+    float x = dot(fromCentre, right), y = dot(fromCentre, forward);
+    y = abs(x) + abs(y) > ANIME_RING_TINY ? y : 1.0;
+    float around = (atan2(x, y) * (0.5 / PI) + 0.5) * _RingBreakupCount;
     float index = floor(around);
     return half3(half(around - index), half(AnimeHash(index, 1.0)), half(AnimeHash(index, 2.0)));
 }

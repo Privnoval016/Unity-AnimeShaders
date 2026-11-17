@@ -9,8 +9,9 @@ namespace AnimeShaders.Tests
     /**
      * <summary>The front hair's shadow on a face quad, a fringe quad on Anime/Hair in front of its top, the light above
      * and in front: with the hair depth feature, the face just below the fringe is shaded and the face well below it is
-     * not; none without the feature, at reach 0, at strength 0, with the hair level with the face, or once the fringe is
-     * gone (nothing left from the frame before); at full resolution as at half.</summary>
+     * not; none without the feature, at reach 0, at strength 0, with the hair level with the face, with the hair farther
+     * in front than the range, or once the fringe is gone (nothing left from the frame before); at full resolution as at
+     * half.</summary>
      */
     public class HairShadowTests
     {
@@ -21,6 +22,7 @@ namespace AnimeShaders.Tests
         private const float FringeDepth = -0.2f;
         private const float JustBelow = 0.22f;
         private const float WellBelow = -0.6f;
+        private const float WideRange = 0.5f;
 
         private static readonly Vector3 TowardLight = new Vector3(0f, 1f, -1f).normalized;
 
@@ -56,8 +58,14 @@ namespace AnimeShaders.Tests
             _face = Lit(AnimeShaderIds.FaceShader);
             _face.SetTexture(Ids.FaceMap, _map);
             _face.SetFloat(Ids.FaceLightHeight, 0f);
+            _face.SetFloat(Ids.FaceShadowSoftness, 1f);
+            _face.SetFloat(Ids.FaceShadowBias, 0f);
+            _face.SetFloat(Ids.FaceMapStrength, 1f);
+            _face.SetFloat(Ids.HairShadowStrength, 1f);
             _face.SetFloat(Ids.HairShadowReach, 0.2f);
+            _face.SetFloat(Ids.HairShadowBias, 0.01f);
             _face.SetFloat(Ids.HairShadowSoftness, 0.005f);
+            _face.SetFloat(Ids.HairShadowRange, WideRange);
             _hair = Lit(AnimeShaderIds.HairShader);
 
             _quad = TestMeshes.Quad();
@@ -79,6 +87,8 @@ namespace AnimeShaders.Tests
             material.SetFloat(Ids.AmbientStrength, 0f);
             material.SetFloat(Ids.CastShadowStrength, 0f);
             material.SetFloat(Ids.ContactShading, 0f);
+            material.SetFloat(Ids.ShadowThreshold, 0.5f);
+            material.SetFloat(Ids.ShadowSoftness, 0.004f);
             return material;
         }
 
@@ -94,12 +104,18 @@ namespace AnimeShaders.Tests
         [TearDown]
         public void TearDown()
         {
-            _stage?.Dispose();
-            _pipeline?.Dispose();
-            Object.DestroyImmediate(_face);
-            Object.DestroyImmediate(_hair);
-            Object.DestroyImmediate(_quad);
-            Object.DestroyImmediate(_map);
+            try
+            {
+                _stage?.Dispose();
+                _pipeline?.Dispose();
+            }
+            finally
+            {
+                Object.DestroyImmediate(_face);
+                Object.DestroyImmediate(_hair);
+                Object.DestroyImmediate(_quad);
+                Object.DestroyImmediate(_map);
+            }
         }
 
         [Test]
@@ -144,6 +160,16 @@ namespace AnimeShaders.Tests
             Build(true);
             _fringe.transform.position = new Vector3(0f, FringeBottom + 1f, -0.005f);
             Assert.Greater(LitAt(_stage.Render(), JustBelow), 0.9f, "within the bias: no shadow acne");
+        }
+
+        [Test]
+        public void HairFartherThanTheRange_CastsNone()
+        {
+            Build(true);
+            _face.SetFloat(Ids.HairShadowRange, -FringeDepth * 0.5f);
+            Assert.Greater(LitAt(_stage.Render(), JustBelow), 0.9f, "the fringe twice the range in front: another's hair, no shadow");
+            _face.SetFloat(Ids.HairShadowRange, -FringeDepth * 2f);
+            Assert.Less(LitAt(_stage.Render(), JustBelow), 0.1f, "within the range: its shadow");
         }
 
         [Test]

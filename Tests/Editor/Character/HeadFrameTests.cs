@@ -3,6 +3,7 @@ using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.TestTools;
 using Object = UnityEngine.Object;
 
 namespace AnimeShaders.Tests
@@ -14,7 +15,8 @@ namespace AnimeShaders.Tests
      * centre offset along the head's own up; nothing rewritten while the head is still, rewritten once it moves; let go
      * on disable; the bind axes false for a mesh not skinned to the bone. Measured each frame, the frame is written only
      * as a camera that can see the renderer draws: not one looking away, not one skipping its layer, not another
-     * scene's.</summary>
+     * scene's; an ordinary game camera does; every listed renderer's every slot; one frame switched off leaves another
+     * writing; switched back on it writes where the head is now.</summary>
      */
     public class HeadFrameTests
     {
@@ -32,6 +34,9 @@ namespace AnimeShaders.Tests
         private AnimeHeadFrame _frame;
         private LitStage _stage;
         private LitStage _otherStage;
+        private GameObject _extra;
+        private Camera _gameCamera;
+        private RenderTexture _gameTarget;
 
         #endregion
 
@@ -47,6 +52,37 @@ namespace AnimeShaders.Tests
         private void Tick()
         {
             _frame.Refresh();
+        }
+
+        /** <summary>An ordinary camera (no scene of its own) in front of the rig, rendering into a small target.</summary> */
+        private Camera GameCamera()
+        {
+            _gameTarget = new RenderTexture(16, 16, 16);
+            _gameCamera = new GameObject("HeadFrameGameCamera").AddComponent<Camera>();
+            _gameCamera.transform.SetPositionAndRotation(new Vector3(0f, 0f, -5f), Quaternion.identity);
+            _gameCamera.targetTexture = _gameTarget;
+            return _gameCamera;
+        }
+
+        private static void Render(Camera camera)
+        {
+            bool wasAsync = ShaderUtil.allowAsyncCompilation;
+            ShaderUtil.allowAsyncCompilation = false;
+            try
+            {
+                camera.Render();
+            }
+            finally
+            {
+                ShaderUtil.allowAsyncCompilation = wasAsync;
+            }
+        }
+
+        private void SetOffset(Vector3 offset)
+        {
+            var serialized = new SerializedObject(_frame);
+            serialized.FindProperty("centreOffset").vector3Value = offset;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
         /** <summary>A frame's own pass: the head measured, nothing written yet.</summary> */
@@ -111,6 +147,12 @@ namespace AnimeShaders.Tests
         {
             _stage?.Dispose();
             _otherStage?.Dispose();
+            if (_gameCamera != null)
+                _gameCamera.targetTexture = null;
+            Object.DestroyImmediate(_gameTarget);
+            if (_gameCamera != null)
+                Object.DestroyImmediate(_gameCamera.gameObject);
+            Object.DestroyImmediate(_extra);
             Object.DestroyImmediate(_root);
             Object.DestroyImmediate(_mesh);
         }
@@ -204,6 +246,114 @@ namespace AnimeShaders.Tests
             AssertDirection(Vector3.forward, Shown(AnimeShaderIds.Head.Forward), "a camera drawing another scene: not written");
             _stage.Render();
             AssertDirection(Quaternion.Euler(0f, 30f, 0f) * Vector3.forward, Shown(AnimeShaderIds.Head.Forward), "its own scene's camera: written");
+        }
+
+        [Test]
+        public void TheHeadTipped_CarriesEveryAxis_AndTheOffsetAlongItsOwnAxes()
+        {
+            var offset = new Vector3(0.02f, 0.1f, 0.03f);
+            SetOffset(offset);
+            Quaternion turn = Quaternion.Euler(30f, 20f, 0f);
+            _head.rotation = turn * _head.rotation;
+            Tick();
+            AssertDirection(turn * Vector3.forward, Shown(AnimeShaderIds.Head.Forward), "forward");
+            AssertDirection(turn * Vector3.up, Shown(AnimeShaderIds.Head.Up), "up");
+            AssertDirection(turn * Vector3.right, Shown(AnimeShaderIds.Head.Right), "right");
+            AssertDirection(_head.position + turn * offset, Shown(AnimeShaderIds.Head.Centre), "the centre, offset along the head's right, up and forward");
+        }
+
+        [Test]
+        public void EveryListedRenderer_EverySlot_IsWritten()
+        {
+            _extra = new GameObject("Hair");
+            _extra.transform.SetParent(_root.transform, false);
+            var hair = _extra.AddComponent<MeshRenderer>();
+            hair.sharedMaterials = new Material[2];
+            var serialized = new SerializedObject(_frame);
+            SerializedProperty listed = serialized.FindProperty("renderers");
+            listed.arraySize = 3;
+            listed.GetArrayElementAtIndex(1).objectReferenceValue = null;
+            listed.GetArrayElementAtIndex(2).objectReferenceValue = hair;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            Tick();
+            var block = new MaterialPropertyBlock();
+            for (int slot = 0; slot < 2; slot++)
+            {
+                hair.GetPropertyBlock(block, slot);
+                AssertDirection(Vector3.forward, block.GetVector(AnimeShaderIds.Head.Forward), $"the second renderer's slot {slot}");
+            }
+            AssertDirection(Vector3.forward, Shown(AnimeShaderIds.Head.Forward), "the first renderer, past a missing entry");
+        }
+
+        [Test]
+        public void AnOrdinaryGameCamera_WritesIt()
+        {
+            Camera camera = GameCamera();
+            _head.rotation = Quaternion.Euler(0f, 30f, 0f) * _head.rotation;
+            Animate();
+            Render(camera);
+            AssertDirection(Quaternion.Euler(0f, 30f, 0f) * Vector3.forward, Shown(AnimeShaderIds.Head.Forward), "a camera with no scene of its own draws every scene");
+        }
+
+        [Test]
+        public void OneFrameSwitchedOff_LeavesAnotherWriting()
+        {
+            Camera camera = GameCamera();
+            _extra = Object.Instantiate(_root);
+            var other = _extra.GetComponent<AnimeHeadFrame>();
+            var otherSkinned = _extra.GetComponentInChildren<SkinnedMeshRenderer>();
+            Transform otherHead = _extra.transform.Find("Head");
+            _frame.enabled = false;
+            otherHead.rotation = Quaternion.Euler(0f, 30f, 0f) * otherHead.rotation;
+            typeof(AnimeHeadFrame).GetMethod("LateUpdate", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(other, null);
+            Render(camera);
+            var block = new MaterialPropertyBlock();
+            otherSkinned.GetPropertyBlock(block, 0);
+            AssertDirection(Quaternion.Euler(0f, 30f, 0f) * Vector3.forward, block.GetVector(AnimeShaderIds.Head.Forward), "the one left on still writes");
+        }
+
+        [Test]
+        public void SwitchedBackOn_ItWritesWhereTheHeadIsNow()
+        {
+            _frame.enabled = false;
+            _head.rotation = Quaternion.Euler(0f, 45f, 0f) * _head.rotation;
+            _frame.enabled = true;
+            AssertDirection(Quaternion.Euler(0f, 45f, 0f) * Vector3.forward, Shown(AnimeShaderIds.Head.Forward), "written as it wakes");
+        }
+
+        [Test]
+        public void Reset_ListsTheChildrenWhoseMaterialsReadTheHead()
+        {
+            var face = new Material(Shader.Find(AnimeShaderIds.FaceShader));
+            var plain = new Material(Shader.Find("Anime/Character"));
+            try
+            {
+                _skinned.sharedMaterials = new[] { plain, face };
+                _extra = new GameObject("Body");
+                _extra.transform.SetParent(_root.transform, false);
+                _extra.AddComponent<MeshRenderer>().sharedMaterial = plain;
+                typeof(AnimeHeadFrame).GetMethod("Reset", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(_frame, null);
+                CollectionAssert.AreEqual(new Renderer[] { _skinned }, _frame.Renderers, "the face's renderer, not the body's");
+            }
+            finally
+            {
+                Object.DestroyImmediate(face);
+                Object.DestroyImmediate(plain);
+            }
+        }
+
+        [Test]
+        public void NoHead_TriesOnceMore_ThenWarnsOnce()
+        {
+            _extra = new GameObject("Headless");
+            var frame = _extra.AddComponent<AnimeHeadFrame>();
+            Assert.IsFalse(frame.Ready, "no head found as it wakes");
+            LogAssert.Expect(LogType.Warning, "Headless: no head to frame.");
+            MethodInfo late = typeof(AnimeHeadFrame).GetMethod("LateUpdate", BindingFlags.Instance | BindingFlags.NonPublic);
+            late.Invoke(frame, null);
+            late.Invoke(frame, null);
+            LogAssert.NoUnexpectedReceived();
+            Assert.IsFalse(frame.Ready);
         }
     }
 }

@@ -141,5 +141,16 @@ namespace AnimeShaders.Tests
                 Object.DestroyImmediate(made);
             }
         }
+
+        [Test]
+        public void ABuiltInMesh_HashesAndSaysItIsNoModel()
+        {
+            var sphere = Resources.GetBuiltinResource<Mesh>("New-Sphere.fbx");
+            var serialized = new SerializedObject(_faceMap);
+            serialized.FindProperty("mesh").objectReferenceValue = sphere;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            Assert.DoesNotThrow(() => AnimeFaceMapBaker.HashOf(_faceMap), "no model file to hash: no exception");
+            Assert.IsNotNull(AnimeFaceMapBaker.Problem(sphere), "what stops it baking is said");
+        }
     }
 }

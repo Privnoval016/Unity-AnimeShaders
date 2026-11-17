@@ -10,8 +10,9 @@ namespace AnimeShaders.Tests
      * <summary>Anime/Face on a quad facing the camera, its head facing the camera too (so the head's right is the
      * world's -X): its form comes from the face map, not its normal, picking the side the map points; across a map whose
      * direction turns a full circle it lights where plain Lambert round the horizon does, at eight light angles; the bias
-     * lights more of it; a light's height never moves the line, dims it by Light Height and never breaks it; with no face weight, or no head
-     * frame, it shades as Anime/Character.</summary>
+     * lights more of it, by its own measure; a light's height never moves the line, dims it by Light Height and never
+     * breaks it; the head turning turns which side is lit; with no face weight, or no head frame, it shades as
+     * Anime/Character.</summary>
      */
     public class FaceTests
     {
@@ -69,10 +70,16 @@ namespace AnimeShaders.Tests
 
         private void HeadFrame()
         {
+            HeadFrame(Quaternion.identity);
+        }
+
+        /** <summary>The head frame turned by <paramref name="turn" /> from facing the camera.</summary> */
+        private void HeadFrame(Quaternion turn)
+        {
             var block = new MaterialPropertyBlock();
-            block.SetVector(AnimeShaderIds.Head.Forward, HeadForward);
-            block.SetVector(AnimeShaderIds.Head.Right, HeadRight);
-            block.SetVector(AnimeShaderIds.Head.Up, HeadUp);
+            block.SetVector(AnimeShaderIds.Head.Forward, turn * HeadForward);
+            block.SetVector(AnimeShaderIds.Head.Right, turn * HeadRight);
+            block.SetVector(AnimeShaderIds.Head.Up, turn * HeadUp);
             _renderer.SetPropertyBlock(block);
         }
 
@@ -125,7 +132,10 @@ namespace AnimeShaders.Tests
             _stage = new LitStage();
             _material = Lit(AnimeShaderIds.FaceShader);
             _material.SetFloat(Ids.FaceShadowSoftness, 1f);
+            _material.SetFloat(Ids.FaceShadowBias, 0f);
             _material.SetFloat(Ids.FaceLightHeight, 0f);
+            _material.SetFloat(Ids.FaceMapStrength, 1f);
+            _material.SetFloat(Ids.HairShadowStrength, 0f);
             _quad = TestMeshes.Quad();
             _renderer = _stage.Add(_quad, _material, Vector3.zero, Quaternion.identity, Vector3.one * 2f);
             HeadFrame();
@@ -186,6 +196,29 @@ namespace AnimeShaders.Tests
         }
 
         [Test]
+        public void TheBias_ShiftsTheLineByItsOwnMeasure()
+        {
+            Map(_ => Vector2.up);
+            const float softness = 60f;
+            const float bias = 0.05f;
+            _material.SetFloat(Ids.FaceShadowSoftness, softness);
+            _material.SetFloat(Ids.FaceShadowBias, bias);
+            float half = softness * Mathf.Deg2Rad * 0.5f;
+            float t = (bias + half) / (2f * half);
+            Assert.AreEqual(t * t * (3f - 2f * t), CentreLit(RoundTheHead(0f)), 0.03f, "the bias added to the facing, softened");
+        }
+
+        [Test]
+        public void TheHeadTurning_TurnsWhichSideIsLit()
+        {
+            Map(_ => Vector2.right);
+            Vector3 light = RoundTheHead(0f);
+            Assert.Greater(CentreLit(light), 0.95f, "facing: the light on the head's right");
+            HeadFrame(Quaternion.AngleAxis(180f, HeadUp));
+            Assert.Less(CentreLit(light), 0.05f, "turned round: the same light now on its left");
+        }
+
+        [Test]
         public void ALightAbove_DimsTheFaceByLightHeight()
         {
             Map(_ => Vector2.up);
@@ -232,9 +265,11 @@ namespace AnimeShaders.Tests
         public void NoHeadFrame_ShadesAsTheCharacterShader()
         {
             Map(_ => Vector2.right);
+            Vector3 light = new Vector3(0.6f, 0.3f, -1f).normalized;
+            Assert.Less(LitOf(FrameReads.Centre(RenderFrom(light))), 0.05f, "with the frame: the map's shade");
             _renderer.SetPropertyBlock(null);
-            Vector3 light = new Vector3(-0.6f, 0.3f, -1f).normalized;
             Color face = FrameReads.Centre(RenderFrom(light));
+            Assert.Greater(LitOf(face), 0.95f, "without: lit by its normal");
             Assert.IsTrue(FrameReads.Near(face, PlainCentre(light), Close), $"face {face}");
         }
     }

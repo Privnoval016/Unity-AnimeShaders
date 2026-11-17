@@ -54,13 +54,16 @@ namespace AnimeShaders
             Apply(key, owners);
         }
 
-        /** <summary>Lets go of every slot <paramref name="owner" /> holds, rewriting each from the owners left.</summary> */
+        /**
+         * <summary>Lets go of every slot <paramref name="owner" /> holds, rewriting each from the owners left, and drops
+         * the slots of renderers since destroyed.</summary>
+         */
         public static void Release(IAnimeBlockOwner owner)
         {
             Released.Clear();
             foreach (KeyValuePair<(Renderer Renderer, int Slot), List<(IAnimeBlockOwner Owner, AnimeBlockValues Values)>> slot in Slots)
             {
-                if (slot.Value.RemoveAll(entry => ReferenceEquals(entry.Owner, owner)) > 0)
+                if (slot.Key.Renderer == null || RemoveOwner(slot.Value, owner))
                     Released.Add(slot.Key);
             }
             foreach ((Renderer Renderer, int Slot) key in Released)
@@ -70,6 +73,23 @@ namespace AnimeShaders
         #endregion
 
         #region Helpers
+
+        /** <summary>Empties the store as play starts, for a project that enters Play Mode without reloading its scripts.</summary> */
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetOnPlay()
+        {
+            Slots.Clear();
+            Released.Clear();
+        }
+
+        private static bool RemoveOwner(List<(IAnimeBlockOwner Owner, AnimeBlockValues Values)> owners, IAnimeBlockOwner owner)
+        {
+            int at = IndexOf(owners, owner);
+            if (at < 0)
+                return false;
+            owners.RemoveAt(at);
+            return true;
+        }
 
         private static int IndexOf(List<(IAnimeBlockOwner Owner, AnimeBlockValues Values)> owners, IAnimeBlockOwner owner)
         {

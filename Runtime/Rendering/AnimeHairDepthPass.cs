@@ -16,6 +16,8 @@ namespace AnimeShaders
     {
         #region Private Fields
 
+        private const int HalfResolution = 2;
+
         private ShaderTagId _tag;
         private ProfilingSampler _sampler;
         private int _texture;
@@ -53,7 +55,7 @@ namespace AnimeShaders
             UniversalLightData lightData = frameData.Get<UniversalLightData>();
 
             RenderTextureDescriptor target = cameraData.cameraTargetDescriptor;
-            int divisor = _full ? 1 : 2;
+            int divisor = _full ? 1 : HalfResolution;
             target.width = Mathf.Max(1, target.width / divisor);
             target.height = Mathf.Max(1, target.height / divisor);
             target.msaaSamples = 1;

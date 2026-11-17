@@ -28,7 +28,7 @@ Shader "Anime/Eyes"
         _EyeThinHair("Eye Thin Hair (texels round: only where the fringe is thin; 0 off)", Range(0, 16)) = 0
         _EyeThinHairNeed("Eye Thin Hair Need (share of that ring clear of the fringe for full)", Range(0.05, 1)) = 0.5
         _EyeThroughTint("Eye Through Tint (the eyes as they show through; white none)", Color) = (1, 1, 1, 1)
-        _EyeStencilBit("Eye Stencil Bit (a power of two the game doesn't use)", Float) = 16
+        [Enum(Bit0, 1, Bit1, 2, Bit2, 4, Bit3, 8, Bit4, 16, Bit5, 32, Bit6, 64)] _EyeStencilBit("Eye Stencil Bit (one no other shader in the project writes; URP's Deferred path uses Bit4)", Float) = 16
 
         [Header(Shadows and Lights)]
         [ToggleOff(_RECEIVE_SHADOWS_OFF)] _ReceiveShadows("Receive Shadows", Float) = 1
@@ -50,9 +50,9 @@ Shader "Anime/Eyes"
         _RimSoftness("Rim Softness", Range(0, 1)) = 0.15
         _RimStrength("Rim Strength", Range(0, 2)) = 0.5
         _RimLightMask("Rim Lit Side Only", Range(0, 1)) = 0.5
-        [ToggleUI] _RimDepth("Use Depth Edge Rim", Float) = 0
-        _RimDepthWidth("Depth Rim Width (px at 1080p)", Range(0, 12)) = 3
-        _RimDepthThreshold("Depth Rim Threshold (m)", Range(0.01, 2)) = 0.15
+        [HideInInspector] _RimDepth("Use Depth Edge Rim", Float) = 0
+        [HideInInspector] _RimDepthWidth("Depth Rim Width (px at 1080p)", Range(0, 12)) = 3
+        [HideInInspector] _RimDepthThreshold("Depth Rim Threshold (m)", Range(0.01, 2)) = 0.15
 
         [Header(Emission)]
         [Toggle(_ANIME_EMISSION)] _Emission("Use Emission", Float) = 0
@@ -166,7 +166,7 @@ Shader "Anime/Eyes"
                 ReadMask [_EyeStencilBit]
                 Comp Equal
             }
-            Blend SrcAlpha OneMinusSrcAlpha
+            Blend SrcAlpha OneMinusSrcAlpha, Zero One
 
             ZWrite Off
             ZTest Always

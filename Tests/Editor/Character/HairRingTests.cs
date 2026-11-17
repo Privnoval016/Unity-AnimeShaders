@@ -8,7 +8,7 @@ namespace AnimeShaders.Tests
 {
     /**
      * <summary>The angel ring on a sphere of hair (radius 1) facing the camera, its head frame at its centre: the band
-     * sits at its height on the head and nowhere well away from it; none in shade, at strength 0 (as Anime/Character) or
+     * sits at its height on the head and nowhere well away from it, and follows the head's centre and up when they move; none in shade, at strength 0 (as Anime/Character) or
      * without a head frame; following the view moves it to where the hair meets the view at that height; the breakup
      * gives each strand's stroke its own height and length; the strand gap draws thin lines through the band; what it adds
      * never passes the cap; the hair's tint gives it the hair's hue; with Lift it brightens the hair's own colour, so on
@@ -22,6 +22,8 @@ namespace AnimeShaders.Tests
         private const float Height = 0.5f;
         private const float Width = 0.05f;
         private const float Close = 0.01f;
+        private const float PeakClose = 0.03f;
+        private const float Strands = 140f;
 
         private static readonly Vector3 FromFront = new Vector3(0f, 0.3f, -1f).normalized;
 
@@ -42,17 +44,25 @@ namespace AnimeShaders.Tests
             material.SetFloat(Ids.AmbientStrength, 0f);
             material.SetFloat(Ids.CastShadowStrength, 0f);
             material.SetFloat(Ids.ContactShading, 0f);
+            material.SetFloat(Ids.ShadowThreshold, 0.5f);
+            material.SetFloat(Ids.ShadowSoftness, 0.004f);
             material.SetShaderPassEnabled(AnimeShaderIds.OutlineLightMode, false);
             return material;
         }
 
         private void HeadFrame()
         {
+            HeadFrame(Vector3.zero, Quaternion.identity);
+        }
+
+        /** <summary>The head frame at <paramref name="centre" />, turned by <paramref name="turn" /> from facing the camera.</summary> */
+        private void HeadFrame(Vector3 centre, Quaternion turn)
+        {
             var block = new MaterialPropertyBlock();
-            block.SetVector(AnimeShaderIds.Head.Centre, Vector3.zero);
-            block.SetVector(AnimeShaderIds.Head.Forward, Vector3.back);
-            block.SetVector(AnimeShaderIds.Head.Right, Vector3.left);
-            block.SetVector(AnimeShaderIds.Head.Up, Vector3.up);
+            block.SetVector(AnimeShaderIds.Head.Centre, centre);
+            block.SetVector(AnimeShaderIds.Head.Forward, turn * Vector3.back);
+            block.SetVector(AnimeShaderIds.Head.Right, turn * Vector3.left);
+            block.SetVector(AnimeShaderIds.Head.Up, turn * Vector3.up);
             _renderer.SetPropertyBlock(block);
         }
 
@@ -89,6 +99,22 @@ namespace AnimeShaders.Tests
             return added[Row(y) * _stage.Size + _stage.Column(x)].g;
         }
 
+        /** <summary>The height on the sphere's front where the direction from a centre raised by <paramref name="lift" /> is at the ring's height.</summary> */
+        private static float Expected(float lift)
+        {
+            float low = lift, high = 1f;
+            for (int step = 0; step < 40; step++)
+            {
+                float y = (low + high) * 0.5f;
+                float latitude = (y - lift) / Mathf.Sqrt((y - lift) * (y - lift) + 1f - y * y);
+                if (latitude < Height)
+                    low = y;
+                else
+                    high = y;
+            }
+            return (low + high) * 0.5f;
+        }
+
         #endregion
 
         [SetUp]
@@ -108,6 +134,13 @@ namespace AnimeShaders.Tests
             _hair.SetFloat(Ids.RingHairTint, 0f);
             _hair.SetFloat(Ids.RingLightColor, 0f);
             _hair.SetFloat(Ids.RingLift, 0f);
+            _hair.SetFloat(Ids.RingSoftness, 1f);
+            _hair.SetFloat(Ids.RingTilt, 0f);
+            _hair.SetFloat(Ids.RingSphereBlend, 1f);
+            _hair.SetFloat(Ids.RingFollowsView, 0f);
+            _hair.SetFloat(Ids.RingBreakupCount, Strands);
+            _hair.SetFloat(Ids.RingBrightest, 1f);
+            TestMaterials.SetLinear(_hair, Ids.RingColor, Color.white);
             _renderer = _stage.Add(TestMeshes.Sphere(), _hair, Vector3.zero, Quaternion.identity, Vector3.one * 2f);
             HeadFrame();
         }
@@ -123,7 +156,7 @@ namespace AnimeShaders.Tests
         public void TheRing_SitsAtItsHeight()
         {
             Color[] added = Added();
-            Assert.AreEqual(Height, Peak(added), 0.06f, "the band's centre on the head");
+            Assert.AreEqual(Height, Peak(added), PeakClose, "the band's centre on the head");
             Assert.Greater(At(added, 0f, Height), 0.2f, "visible");
             Assert.Less(At(added, 0f, 0f), Close, "none at the middle of the head");
             Assert.Less(At(added, 0f, -Height), Close, "none below");
@@ -207,7 +240,10 @@ namespace AnimeShaders.Tests
             _hair.SetFloat(Ids.RingStrength, 2f);
             TestMaterials.SetLinear(_hair, Ids.RingColor, new Color(4f, 4f, 4f));
             _hair.SetFloat(Ids.RingBrightest, 0.1f);
-            Assert.LessOrEqual(Added().Max(pixel => pixel.g), 0.1f + Close);
+            Color[] added = Added();
+            float most = added.Max(pixel => Mathf.Max(pixel.r, Mathf.Max(pixel.g, pixel.b)));
+            Assert.LessOrEqual(most, 0.1f + Close, "never past the cap");
+            Assert.Greater(most, 0.1f - Close, "but up to it: the ring is there");
         }
 
         [Test]
@@ -235,6 +271,23 @@ namespace AnimeShaders.Tests
             float dark = AddedOn(new Color(0.1f, 0.1f, 0.1f));
             Assert.Greater(light, 0.1f, "visible on light hair");
             Assert.AreEqual(0.1f / 0.8f, dark / light, 0.03f, "on dark hair, as much less as the hair is darker");
+        }
+
+        [Test]
+        public void TheHeadsCentreMovingUp_MovesTheRingUp()
+        {
+            const float lift = 0.3f;
+            HeadFrame(new Vector3(0f, lift, 0f), Quaternion.identity);
+            float expected = Expected(lift);
+            Assert.AreEqual(expected, Peak(Added()), PeakClose, "where the point's direction from the moved centre is at the ring's height");
+        }
+
+        [Test]
+        public void TheHeadTipping_TipsTheRing()
+        {
+            float tilt = Mathf.Asin(Height) * Mathf.Rad2Deg;
+            HeadFrame(Vector3.zero, Quaternion.AngleAxis(-tilt, Vector3.right));
+            Assert.AreEqual(0f, Peak(Added()), PeakClose, "its up tipped toward the camera by the ring's own angle: the band crosses the face's middle");
         }
     }
 }

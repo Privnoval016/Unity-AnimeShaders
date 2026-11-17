@@ -36,14 +36,14 @@ namespace AnimeShaders.EditorTools
             AssetDatabase.SaveAssetIfDirty(faceMap);
         }
 
-        /** <summary>A hash of the mesh's model file and the settings: when it differs from the recorded one, the map is out of date.</summary> */
+        /** <summary>A hash of the mesh's model (its file and import settings) and the settings: when it differs from the recorded one, the map is out of date.</summary> */
         public static string HashOf(AnimeFaceMap faceMap)
         {
             var hash = new Hash128();
             hash.Append(Version);
             Mesh mesh = faceMap.Mesh;
             string path = mesh == null ? string.Empty : AssetDatabase.GetAssetPath(mesh);
-            hash.Append(string.IsNullOrEmpty(path) ? string.Empty : DataTextures.FileHash(path));
+            hash.Append(File.Exists(path) ? AssetDatabase.GetAssetDependencyHash(path).ToString() : string.Empty);
             hash.Append(mesh == null ? string.Empty : mesh.name);
             FaceMapSettings settings = faceMap.Settings;
             hash.Append(settings.Size);
@@ -105,6 +105,8 @@ namespace AnimeShaders.EditorTools
                 return $"{model.name}: turn on Read/Write in the model's import settings.";
             if (mesh.uv.Length != mesh.vertexCount || mesh.normals.Length != mesh.vertexCount)
                 return $"{mesh.name} needs UVs and normals.";
+            if (mesh.GetBonesPerVertex().Length != mesh.vertexCount)
+                return $"{mesh.name} has no skin weights.";
             head = HeadOf(model);
             if (head == null)
                 return $"{model.name} needs a humanoid avatar with a head bone.";

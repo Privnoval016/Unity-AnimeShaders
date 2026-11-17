@@ -6,7 +6,8 @@ namespace AnimeShaders
 {
     /**
      * <summary>The eyes over their fringe: after the opaques, every <see cref="AnimeShaderIds.EyesOverHairLightMode" />
-     * pass in view drawn over the camera colour, where the eyes marked the stencil (their pass tests it and blends).</summary>
+     * pass in view drawn over the camera colour, where the eyes marked the stencil (their pass tests it and blends),
+     * farthest first so a nearer layer (lashes over an iris) blends over a farther one.</summary>
      */
     internal sealed class AnimeEyesOverHairPass : ScriptableRenderPass
     {
@@ -41,7 +42,7 @@ namespace AnimeShaders
                 return;
 
             using IRasterRenderGraphBuilder builder = renderGraph.AddRasterRenderPass(_sampler.name, out PassData passData, _sampler);
-            DrawingSettings drawing = RenderingUtils.CreateDrawingSettings(_tag, renderingData, cameraData, lightData, SortingCriteria.CommonOpaque);
+            DrawingSettings drawing = RenderingUtils.CreateDrawingSettings(_tag, renderingData, cameraData, lightData, SortingCriteria.CommonTransparent);
             FilteringSettings filtering = new(RenderQueueRange.opaque, cameraData.camera.cullingMask);
             passData.Renderers = renderGraph.CreateRendererList(new RendererListParams(renderingData.cullResults, drawing, filtering));
 

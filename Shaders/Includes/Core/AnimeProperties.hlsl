@@ -188,6 +188,7 @@ CBUFFER_START(UnityPerMaterial)
     float _HairShadowReach;
     float _HairShadowBias;
     float _HairShadowSoftness;
+    float _HairShadowRange;
 #endif
 #if defined(ANIME_GROUP_HAIR)
     half4 _RingColor;

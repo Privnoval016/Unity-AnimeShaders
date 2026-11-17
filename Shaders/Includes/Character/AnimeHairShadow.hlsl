@@ -5,7 +5,7 @@
 // 0 for none) read at the face's point moved toward the light across the screen by Hair Shadow Reach (metres, so the
 // same at any distance; it shrinks to nothing as the light lines up with the view). Where hair there is nearer than the
 // face by more than Hair Shadow Bias, the face is in its shadow, softened over Hair Shadow Softness (metres) and faded
-// near the screen's edge. The four nearest texels are each compared and the results blended by position (a bilinear
+// near the screen's edge; hair farther in front than Hair Shadow Range (another's, metres away) casts none. The four nearest texels are each compared and the results blended by position (a bilinear
 // comparison), so the edge is smooth across a texel instead of stepping at the half resolution: four reads. With no
 // hair drawn, or without the feature, there is no shadow (AnimeHairDepth.hlsl).
 
@@ -14,12 +14,15 @@
 
 // Within this share of the screen's edge, the shadow fades out (the moved point may fall off screen).
 #define ANIME_HAIR_SHADOW_EDGE 0.02
+// Over this last share of Hair Shadow Range, the shadow fades out.
+#define ANIME_HAIR_SHADOW_RANGE_FADE 0.25
 
 // How far the face at faceDepth is behind the hair at one texel of the hair's depth, 0 to 1.
 half AnimeHairShadowTap(int2 texel, float faceDepth)
 {
-    float hairDepth = AnimeHairDepthAt(texel);
-    return half(saturate((faceDepth - _HairShadowBias - hairDepth) / max(_HairShadowSoftness, 1e-4)));
+    float inFront = faceDepth - AnimeHairDepthAt(texel);
+    float shade = saturate((inFront - _HairShadowBias) / max(_HairShadowSoftness, 1e-4));
+    return half(shade * (1.0 - smoothstep(_HairShadowRange * (1.0 - ANIME_HAIR_SHADOW_RANGE_FADE), _HairShadowRange, inFront)));
 }
 
 // How far a face point is in the front hair's shadow, 0 to 1, before Hair Shadow Strength.
@@ -28,6 +31,8 @@ half AnimeHairShadow(float3 positionWS, float3 towardLight)
     float3 forward = GetViewForwardDir();
     float3 across = towardLight - dot(towardLight, forward) * forward;
     float4 movedCS = TransformWorldToHClip(positionWS + across * _HairShadowReach);
+    if (movedCS.w <= 0.0)
+        return 0.0h;
     float4 screen = ComputeScreenPos(movedCS);
     float2 uv = screen.xy / screen.w;
 

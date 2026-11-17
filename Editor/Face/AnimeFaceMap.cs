@@ -8,7 +8,7 @@ namespace AnimeShaders.EditorTools
      * turn in a clean line. The Inspector bakes it and says when the map is out of date or the mesh has a problem.</summary>
      */
     [CreateAssetMenu(menuName = "Anime Shaders/Face Map", fileName = "FaceMap")]
-    public class AnimeFaceMap : ScriptableObject
+    public sealed class AnimeFaceMap : ScriptableObject
     {
         #region Inspector Fields
 
