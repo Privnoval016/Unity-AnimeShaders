@@ -82,11 +82,12 @@ namespace AnimeShaders.EditorTools
             materialEditor.RenderQueueField();
         }
 
-        /** <summary>Keeps the depth-edge rim's pass in step with its switch whenever the material changes.</summary> */
+        /** <summary>Keeps the depth-edge rim's pass and the line's cull in step with their settings whenever the material changes.</summary> */
         public override void ValidateMaterial(Material material)
         {
             if (material.HasFloat(Ids.RimDepth))
                 material.SetShaderPassEnabled(AnimeShaderIds.RimLightMode, material.GetFloat(Ids.RimDepth) > 0.5f);
+            AnimeMaterials.SyncLineCull(material);
         }
 
         /** <summary>Whether a property is shown: every toggle it depends on is on (a material's float, 1 = on).</summary> */

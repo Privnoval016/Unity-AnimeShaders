@@ -1,11 +1,17 @@
 using System.Collections.Generic;
+using System.Linq;
 using AnimeShaders.EditorTools;
 using NUnit.Framework;
 using UnityEngine;
 
 namespace AnimeShaders.Tests
 {
-    /** <summary>The outline normal bake on a hard-edged cube: every corner's line normal points out of the corner.</summary> */
+    /**
+     * <summary>The outline normal bake on a hard-edged cube: every corner's line normal points out of the corner; a flat
+     * sheet's open edges push outward at a full width (corners too), its middle not; a UV seam is not an open edge; a
+     * closed mesh has none; a degenerate triangle is skipped; a mesh a ten-thousandth of the size bakes the same (Unity's
+     * normalize gives zero below 1e-5).</summary>
+     */
     public class OutlineNormalBakerTests
     {
         #region Private Fields
@@ -201,6 +207,123 @@ namespace AnimeShaders.Tests
             var packed = new List<Vector3>();
             mesh.GetUVs(AnimeShaderIds.OutlineNormalChannel, packed);
             Assert.IsEmpty(packed);
+        }
+
+        /** <summary>Each vertex's baked open-edge direction rebuilt in object space as the line pass rebuilds it, or zero.</summary> */
+        private static Vector3[] OpenEdges(Mesh mesh)
+        {
+            var packed = new List<Vector4>();
+            mesh.GetUVs(AnimeShaderIds.OutlineNormalChannel, packed);
+            Vector3[] normals = mesh.normals;
+            Vector4[] tangents = mesh.tangents;
+            var result = new Vector3[packed.Count];
+            for (int i = 0; i < packed.Count; i++)
+            {
+                if (packed[i].w <= AnimeShaderIds.OutlineOpenEdgeAbove)
+                    continue;
+                Vector3 n = normals[i].normalized;
+                Vector3 t = ((Vector3)tangents[i] - n * Vector3.Dot(n, tangents[i])).normalized;
+                Vector3 b = Vector3.Cross(n, t) * (tangents[i].w < 0f ? -1f : 1f);
+                float angle = packed[i].w - AnimeShaderIds.OutlineOpenEdgeOffset;
+                result[i] = t * Mathf.Cos(angle) + b * Mathf.Sin(angle);
+            }
+            return result;
+        }
+
+        /** <summary>A flat grid of quads in the XY plane, <paramref name="cells" /> by <paramref name="cells" />, facing -Z.</summary> */
+        private Mesh Grid(int cells, bool splitAtTheMiddleColumn = false)
+        {
+            var vertices = new List<Vector3>();
+            var uvs = new List<Vector2>();
+            var triangles = new List<int>();
+            for (int cy = 0; cy < cells; cy++)
+            {
+                for (int cx = 0; cx < cells; cx++)
+                {
+                    int start = vertices.Count;
+                    float x0 = cx - cells * 0.5f, y0 = cy - cells * 0.5f;
+                    float u = splitAtTheMiddleColumn && cx >= cells / 2 ? 0.5f : 0f;
+                    vertices.AddRange(new[] { new Vector3(x0, y0, 0f), new Vector3(x0, y0 + 1f, 0f), new Vector3(x0 + 1f, y0 + 1f, 0f), new Vector3(x0 + 1f, y0, 0f) });
+                    uvs.AddRange(new[] { new Vector2(u, 0f), new Vector2(u, 1f), new Vector2(u + 0.5f, 1f), new Vector2(u + 0.5f, 0f) });
+                    triangles.AddRange(new[] { start, start + 1, start + 2, start + 2, start + 3, start });
+                }
+            }
+            var mesh = new Mesh { name = "TestGrid" };
+            mesh.SetVertices(vertices);
+            mesh.SetNormals(Enumerable.Repeat(Vector3.back, vertices.Count).ToList());
+            mesh.SetTangents(Enumerable.Repeat(new Vector4(1f, 0f, 0f, 1f), vertices.Count).ToList());
+            mesh.SetUVs(0, uvs);
+            mesh.SetTriangles(triangles, 0);
+            return Made(mesh);
+        }
+
+        [Test]
+        public void AFlatSheetsOpenEdges_PushOutward_ItsMiddleDoesNot()
+        {
+            Mesh grid = Grid(3);
+            Assert.IsTrue(OutlineNormalBaker.Bake(grid));
+            Vector3[] outward = OpenEdges(grid);
+            Vector3[] vertices = grid.vertices;
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                bool onTheEdge = Mathf.Abs(vertices[i].x) > 1.4f || Mathf.Abs(vertices[i].y) > 1.4f;
+                if (!onTheEdge)
+                {
+                    Assert.AreEqual(Vector3.zero, outward[i], $"vertex {i} inside the sheet");
+                    continue;
+                }
+                Assert.Greater(Vector3.Dot(outward[i], vertices[i]), 0f, $"vertex {i} on the edge points away from the middle");
+                Assert.AreEqual(1f, outward[i].magnitude, 1e-3f, $"vertex {i}: a full width, corners too");
+            }
+        }
+
+        [Test]
+        public void AUvSeam_IsNotAnOpenEdge()
+        {
+            Mesh grid = Grid(2, splitAtTheMiddleColumn: true);
+            OutlineNormalBaker.Bake(grid);
+            Vector3[] outward = OpenEdges(grid);
+            Vector3[] vertices = grid.vertices;
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                if (Mathf.Abs(vertices[i].x) > 1e-3f)
+                    continue;
+                Assert.Less(Mathf.Abs(outward[i].x), 1e-3f, $"seam vertex {i}: no push across the seam");
+            }
+        }
+
+        [Test]
+        public void AClosedMesh_HasNoOpenEdges()
+        {
+            Mesh cube = Cube();
+            OutlineNormalBaker.Bake(cube);
+            CollectionAssert.AreEqual(new Vector3[cube.vertexCount], OpenEdges(cube));
+        }
+
+        [Test]
+        public void ADegenerateTriangle_IsSkipped()
+        {
+            Mesh plain = Grid(1);
+            Mesh withDegenerate = Grid(1);
+            var triangles = new List<int>(withDegenerate.triangles) { 0, 0, 1 };
+            withDegenerate.SetTriangles(triangles, 0);
+            OutlineNormalBaker.Bake(plain);
+            OutlineNormalBaker.Bake(withDegenerate);
+            CollectionAssert.AreEqual(OpenEdges(plain), OpenEdges(withDegenerate));
+        }
+
+        [Test]
+        public void AMeshATenThousandthTheSize_BakesTheSame()
+        {
+            Mesh full = Grid(3);
+            Mesh small = Grid(3);
+            small.SetVertices(small.vertices.Select(vertex => vertex * 1e-4f).ToList());
+            small.RecalculateBounds();
+            OutlineNormalBaker.Bake(full);
+            OutlineNormalBaker.Bake(small);
+            Vector3[] expected = OpenEdges(full), actual = OpenEdges(small);
+            for (int i = 0; i < expected.Length; i++)
+                Assert.Less(Vector3.Distance(expected[i], actual[i]), 1e-3f, $"vertex {i}");
         }
     }
 }

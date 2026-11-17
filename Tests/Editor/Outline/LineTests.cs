@@ -8,7 +8,9 @@ namespace AnimeShaders.Tests
     /**
      * <summary>The hull line: drawn only by its pass; around a sphere (radius 1) in perspective its thickness in pixels
      * follows the width and the director's multiplier, holds as the camera backs away inside the distance clamp and
-     * thins past it; on a hard-edged cube, baked normals close the corners whatever the tangents' handedness.</summary>
+     * thins past it; on a hard-edged cube, baked normals close the corners whatever the tangents' handedness; a flat
+     * two-sided sheet seen face-on has a line past its edges with Line On Open Edges, from the front and the back, none
+     * without it, and the line never covers the sheet even pulled toward the camera.</summary>
      */
     public class LineTests
     {
@@ -168,6 +170,90 @@ namespace AnimeShaders.Tests
             finally
             {
                 Object.DestroyImmediate(cube);
+            }
+        }
+
+        /** <summary>A flat two-sided sheet (a unit quad, baked), drawn with Line On Open Edges at <paramref name="openEdges" />.</summary> */
+        private Mesh Sheet(float openEdges)
+        {
+            Mesh sheet = TestMeshes.Quad();
+            Assert.IsTrue(OutlineNormalBaker.Bake(sheet));
+            _body.GetComponent<MeshFilter>().sharedMesh = sheet;
+            _body.transform.localScale = Vector3.one;
+            _material.SetFloat(AnimeShaderIds.Switches.Cull, (float)UnityEngine.Rendering.CullMode.Off);
+            AnimeMaterials.SetFeature(_material, AnimeShaderIds.Keywords.OutlineBakedName, AnimeShaderIds.Switches.OutlineBakedNormals, true);
+            AnimeMaterials.SetOpenEdges(_material, openEdges);
+            return sheet;
+        }
+
+        /** <summary>How many of the four points just past the sheet's edge midpoints the line covers.</summary> */
+        private int EdgesLined()
+        {
+            Color[] frame = _stage.Render();
+            const float justOutside = 0.53f;
+            int lined = 0;
+            foreach ((float x, float y) in new[] { (-justOutside, 0f), (justOutside, 0f), (0f, -justOutside), (0f, justOutside) })
+            {
+                if (IsLine(FrameReads.At(frame, _stage.Column(x), _stage.Column(y))))
+                    lined++;
+            }
+            return lined;
+        }
+
+        [Test]
+        public void OpenEdges_LineAFlatSheetsEdges_FromTheFrontAndTheBack()
+        {
+            Mesh sheet = Sheet(1f);
+            try
+            {
+                Assert.AreEqual(4, EdgesLined(), "facing the camera");
+                _body.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
+                Assert.AreEqual(4, EdgesLined(), "turned away");
+            }
+            finally
+            {
+                Object.DestroyImmediate(sheet);
+            }
+        }
+
+        [Test]
+        public void WithoutOpenEdges_AFlatSheetSeenFaceOnHasNoLine()
+        {
+            Mesh sheet = Sheet(0f);
+            try
+            {
+                Assert.AreEqual(0, EdgesLined(), "an inverted hull has nothing past a flat sheet's edge");
+            }
+            finally
+            {
+                Object.DestroyImmediate(sheet);
+            }
+        }
+
+        [Test]
+        public void OpenEdges_TheLineNeverCoversTheSheet_EvenPulledForward()
+        {
+            Mesh sheet = Sheet(1f);
+            try
+            {
+                float width = Width * 0.001f * 2f * _stage.Camera.orthographicSize;
+                _material.SetFloat(Ids.OutlineZOffset, -0.5f * width);
+                Color[] frame = _stage.Render();
+                int covered = 0;
+                for (float x = -0.45f; x <= 0.45f; x += 0.05f)
+                {
+                    for (float y = -0.45f; y <= 0.45f; y += 0.05f)
+                    {
+                        if (IsLine(FrameReads.At(frame, _stage.Column(x), _stage.Column(y))))
+                            covered++;
+                    }
+                }
+                Assert.AreEqual(0, covered, "the hull's part toward the camera turned behind the sheet");
+                Assert.AreEqual(4, EdgesLined(), "and still past its edges");
+            }
+            finally
+            {
+                Object.DestroyImmediate(sheet);
             }
         }
     }

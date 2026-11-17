@@ -11,8 +11,12 @@ namespace AnimeShaders.EditorTools
      * <see cref="AnimeShaderIds.OutlineNormalLabel"/> asset label.</summary>
      * <remarks>Each vertex's normal is averaged, weighted by corner angle, with those of every vertex of the mesh at
      * the same quantised position (across submeshes, so a material seam doesn't crack the line), and stored in that
-     * vertex's own tangent space, so the value follows skinning. Lighting normals are never changed; a mesh with no
-     * tangents gets them built from its UVs. A mesh that already has UV3 is left alone with a warning. Changing a
+     * vertex's own tangent space, so the value follows skinning (UV3.xyz). A vertex on an open edge (an edge of one
+     * triangle, positions welded as above so UV and material seams are not edges) also gets the outward direction in its
+     * sheet's plane, summed over its open edges and normalised, as an angle in its tangent plane plus
+     * <see cref="AnimeShaderIds.OutlineOpenEdgeOffset" /> (UV3.w; 0 elsewhere): the line widens past hems with Line On
+     * Open Edges. Degenerate triangles are skipped; an edge on three or more triangles is not open; two coincident
+     * layers read as closed. Lighting normals are never changed; a mesh with no tangents gets them built from its UVs. A mesh that already has UV3 is left alone with a warning. Changing a
      * model's labels does not reimport it: reimport the model after adding the label.</remarks>
      */
     public class OutlineNormalBaker : AssetPostprocessor
@@ -21,15 +25,23 @@ namespace AnimeShaders.EditorTools
 
         private const VertexAttribute OutlineAttribute = VertexAttribute.TexCoord0 + AnimeShaderIds.OutlineNormalChannel;
 
+        /** <summary>Below this sine of its smallest corner a triangle is too thin to have a plane: skipped.</summary> */
+        private const float ThinnestTriangle = 1e-6f;
+
         #endregion
 
         #region Properties
 
-        /** <summary>The default position quantisation: vertices closer than this share a smoothed normal.</summary> */
-        public const float DefaultQuantise = 1e-4f;
+        /**
+         * <summary>The default position quantisation, as a share of the mesh's size (its bounds' diagonal): vertices
+         * closer than that share a smoothed normal and an edge. Relative, so a model imported at a hundredth of its size
+         * (a centimetre export) welds as finely as one in metres.</summary>
+         */
+        public const float DefaultQuantise = 1e-5f;
+
 
         /** <summary>The bake's version: raising it reimports every model (labelled or not) once.</summary> */
-        public const uint BakeVersion = 2u;
+        public const uint BakeVersion = 4u;
 
         #endregion
 
@@ -38,7 +50,7 @@ namespace AnimeShaders.EditorTools
         /**
          * <summary>Bakes the outline normals of one mesh into <see cref="AnimeShaderIds.OutlineNormalChannel"/>.</summary>
          * <param name="mesh">A readable mesh.</param>
-         * <param name="quantise">Positions are grouped at this grid size.</param>
+         * <param name="quantise">Positions are grouped at this share of the mesh's size.</param>
          * <returns>True when the channel was written; false when the mesh has no normals or already uses the channel
          * for something else (a model's own fourth UV set is never overwritten).</returns>
          */
@@ -61,10 +73,15 @@ namespace AnimeShaders.EditorTools
                 tangents = mesh.tangents;
             }
 
-            Vector3[] smoothed = SmoothByPosition(mesh, vertices, normals, Mathf.Max(quantise, 1e-7f));
-            var packed = new List<Vector3>(vertices.Length);
+            float grid = Mathf.Max(quantise * mesh.bounds.size.magnitude, 1e-9f);
+            Vector3[] smoothed = SmoothByPosition(mesh, vertices, normals, grid);
+            Vector3[] outward = OpenEdgeOutward(mesh, vertices, grid);
+            var packed = new List<Vector4>(vertices.Length);
             for (int i = 0; i < vertices.Length; i++)
-                packed.Add(ToTangentSpace(smoothed[i], normals[i], tangents[i]));
+            {
+                Vector3 normal = ToTangentSpace(smoothed[i], normals[i], tangents[i]);
+                packed.Add(new Vector4(normal.x, normal.y, normal.z, OpenEdgeAngle(outward[i], normals[i], tangents[i])));
+            }
             mesh.SetUVs(AnimeShaderIds.OutlineNormalChannel, packed);
             return true;
         }
@@ -180,6 +197,90 @@ namespace AnimeShaders.EditorTools
                 (int)Math.Round(position.x / quantise),
                 (int)Math.Round(position.y / quantise),
                 (int)Math.Round(position.z / quantise));
+        }
+
+        /**
+         * <summary>Each vertex's outward direction along the open edges it lies on (zero inside the mesh): per open edge,
+         * perpendicular to it in its triangle's plane, away from the triangle's third corner; summed over the welded
+         * position's open edges and normalised.</summary>
+         */
+        private static Vector3[] OpenEdgeOutward(Mesh mesh, Vector3[] vertices, float quantise)
+        {
+            var welded = new int[vertices.Length];
+            var ids = new Dictionary<Vector3Int, int>(vertices.Length);
+            for (int v = 0; v < vertices.Length; v++)
+            {
+                Vector3Int key = Quantise(vertices[v], quantise);
+                if (!ids.TryGetValue(key, out int id))
+                {
+                    id = ids.Count;
+                    ids[key] = id;
+                }
+                welded[v] = id;
+            }
+
+            var edges = new Dictionary<(int, int), (int Count, Vector3 Outward)>();
+            for (int submesh = 0; submesh < mesh.subMeshCount; submesh++)
+            {
+                if (mesh.GetTopology(submesh) != MeshTopology.Triangles)
+                    continue;
+                int[] triangles = mesh.GetTriangles(submesh);
+                for (int t = 0; t + 2 < triangles.Length; t += 3)
+                {
+                    int a = triangles[t], b = triangles[t + 1], c = triangles[t + 2];
+                    if (welded[a] == welded[b] || welded[b] == welded[c] || welded[a] == welded[c])
+                        continue;
+                    Vector3 ab = vertices[b] - vertices[a], ac = vertices[c] - vertices[a];
+                    Vector3 face = Vector3.Cross(ab, ac);
+                    if (face.sqrMagnitude <= ThinnestTriangle * ThinnestTriangle * ab.sqrMagnitude * ac.sqrMagnitude)
+                        continue;
+                    AddEdge(edges, welded, vertices, face, a, b, c);
+                    AddEdge(edges, welded, vertices, face, b, c, a);
+                    AddEdge(edges, welded, vertices, face, c, a, b);
+                }
+            }
+
+            var sums = new Vector3[ids.Count];
+            foreach (KeyValuePair<(int, int), (int Count, Vector3 Outward)> edge in edges)
+            {
+                if (edge.Value.Count != 1)
+                    continue;
+                sums[edge.Key.Item1] += edge.Value.Outward;
+                sums[edge.Key.Item2] += edge.Value.Outward;
+            }
+
+            var outward = new Vector3[vertices.Length];
+            for (int v = 0; v < vertices.Length; v++)
+            {
+                Vector3 sum = sums[welded[v]];
+                outward[v] = sum.sqrMagnitude > 1e-8f ? sum.normalized : Vector3.zero;
+            }
+            return outward;
+        }
+
+        private static void AddEdge(Dictionary<(int, int), (int Count, Vector3 Outward)> edges, int[] welded, Vector3[] vertices,
+            Vector3 face, int from, int to, int third)
+        {
+            Vector3 along = vertices[to] - vertices[from];
+            Vector3 across = Vector3.Cross(face / face.magnitude, along / along.magnitude);
+            if (Vector3.Dot(across, vertices[third] - vertices[from]) > 0f)
+                across = -across;
+            (int, int) key = welded[from] < welded[to] ? (welded[from], welded[to]) : (welded[to], welded[from]);
+            edges.TryGetValue(key, out (int Count, Vector3 Outward) seen);
+            edges[key] = (seen.Count + 1, seen.Outward + across);
+        }
+
+        /** <summary>The outward direction as an angle in the vertex's tangent plane plus the offset, or 0 for none.</summary> */
+        private static float OpenEdgeAngle(Vector3 outward, Vector3 normal, Vector4 tangent)
+        {
+            Vector3 n = normal.normalized;
+            Vector3 inPlane = outward - n * Vector3.Dot(outward, n);
+            Vector3 t = (Vector3)tangent - n * Vector3.Dot(n, tangent);
+            if (inPlane.sqrMagnitude < 1e-8f || t.sqrMagnitude < 1e-8f)
+                return 0f;
+            t.Normalize();
+            Vector3 b = Vector3.Cross(n, t) * (tangent.w < 0f ? -1f : 1f);
+            return Mathf.Atan2(Vector3.Dot(inPlane, b), Vector3.Dot(inPlane, t)) + AnimeShaderIds.OutlineOpenEdgeOffset;
         }
 
         private static Vector3 ToTangentSpace(Vector3 smoothed, Vector3 normal, Vector4 tangent)

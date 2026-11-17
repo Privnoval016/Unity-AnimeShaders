@@ -39,6 +39,25 @@ namespace AnimeShaders
             material.SetShaderPassEnabled(AnimeShaderIds.RimLightMode, on);
         }
 
+        /**
+         * <summary>Sets <paramref name="material" />'s Line On Open Edges (0 to 1) and the line's cull with it: drawn
+         * from both sides while it is on, as two-sided cloth needs, else with front faces culled.</summary>
+         */
+        public static void SetOpenEdges(Material material, float amount)
+        {
+            material.SetFloat(AnimeShaderIds.MaterialProperties.OutlineOpenEdges, amount);
+            SyncLineCull(material);
+        }
+
+        /** <summary>Puts <paramref name="material" />'s line cull in step with its Line On Open Edges.</summary> */
+        public static void SyncLineCull(Material material)
+        {
+            if (!material.HasFloat(AnimeShaderIds.MaterialProperties.OutlineOpenEdges) || !material.HasFloat(AnimeShaderIds.Switches.OutlineCull))
+                return;
+            bool open = material.GetFloat(AnimeShaderIds.MaterialProperties.OutlineOpenEdges) > 0f;
+            material.SetFloat(AnimeShaderIds.Switches.OutlineCull, (float)(open ? CullMode.Off : CullMode.Front));
+        }
+
         /** <summary>Draws or hides <paramref name="material" />'s line pass.</summary> */
         public static void SetLine(Material material, bool on)
         {

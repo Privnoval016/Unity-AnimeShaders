@@ -10,6 +10,15 @@ namespace AnimeShaders
         /** <summary>The mesh channel (UV3) that carries the baked outline normals, in tangent space.</summary> */
         public const int OutlineNormalChannel = 3;
 
+        /**
+         * <summary>Added to an open edge's outward angle (radians, in the vertex's tangent plane) in the outline
+         * channel's w, so every open-edge vertex reads above <see cref="OutlineOpenEdgeAbove" /> and every other reads 0.</summary>
+         */
+        public const float OutlineOpenEdgeOffset = 4f;
+
+        /** <summary>An outline channel w above this marks an open edge.</summary> */
+        public const float OutlineOpenEdgeAbove = 0.5f;
+
         /** <summary>The asset label that opts a model into the outline normal bake.</summary> */
         public const string OutlineNormalLabel = "AnimeOutlineNormals";
 
@@ -890,6 +899,12 @@ namespace AnimeShaders
             /** <summary>The property id of _OutlineZOffset.</summary> */
             public static readonly int OutlineZOffset = Shader.PropertyToID(OutlineZOffsetName);
 
+            /** <summary>The name _OutlineOpenEdges.</summary> */
+            public const string OutlineOpenEdgesName = "_OutlineOpenEdges";
+
+            /** <summary>The property id of _OutlineOpenEdges.</summary> */
+            public static readonly int OutlineOpenEdges = Shader.PropertyToID(OutlineOpenEdgesName);
+
             /** <summary>The name _OutlineVertexZ.</summary> */
             public const string OutlineVertexZName = "_OutlineVertexZ";
 
@@ -1020,6 +1035,12 @@ namespace AnimeShaders
 
             /** <summary>The property id of _RimDepthBlend.</summary> */
             public static readonly int RimDepthBlend = Shader.PropertyToID(RimDepthBlendName);
+
+            /** <summary>The line pass's cull: Front, or Off with Line On Open Edges (kept in step by <see cref="AnimeMaterials.SetOpenEdges" />).</summary> */
+            public const string OutlineCullName = "_OutlineCull";
+
+            /** <summary>The property id of _OutlineCull.</summary> */
+            public static readonly int OutlineCull = Shader.PropertyToID(OutlineCullName);
 
             /** <summary>The cull mode (Off draws both sides).</summary> */
             public const string CullName = "_Cull";

@@ -80,6 +80,8 @@ Shader "Anime/Face"
         _OutlineDistanceMin("Line Near Distance", Float) = 1
         _OutlineDistanceMax("Line Far Distance", Float) = 12
         _OutlineZOffset("Line Z Offset", Float) = 0.01
+        _OutlineOpenEdges("Line On Open Edges (two-sided cloth: the line widens past hems and open edges; needs the line bake)", Range(0, 1)) = 0
+        [HideInInspector] _OutlineCull("Line Cull (kept in step by Line On Open Edges: Off with it on, else Front)", Float) = 1
         [Toggle(_ANIME_OUTLINE_BAKED)] _OutlineBakedNormals("Line From Baked Normals", Float) = 0
         [Toggle(_ANIME_OUTLINE_BASETINT)] _OutlineBaseTintOn("Tint Line By Base Map", Float) = 0
         _OutlineBaseTint("Line Base Tint", Range(0, 1)) = 0.5
@@ -152,7 +154,7 @@ Shader "Anime/Face"
             Tags { "LightMode" = "SRPDefaultUnlit" }
 
             ZWrite On
-            Cull Front
+            Cull [_OutlineCull]
 
             HLSLPROGRAM
             #pragma target 2.0

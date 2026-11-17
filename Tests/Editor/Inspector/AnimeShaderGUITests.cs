@@ -7,7 +7,11 @@ using Switches = AnimeShaders.AnimeShaderIds.Switches;
 
 namespace AnimeShaders.Tests
 {
-    /** <summary>The inspector shows each feature's settings only while it is on, and its ramp preview matches what the shader draws.</summary> */
+    /**
+     * <summary>The inspector shows each feature's settings only while it is on, and its ramp preview matches what the
+     * shader draws; the line's cull follows Line On Open Edges, set by script or the inspector, on every material in the
+     * project.</summary>
+     */
     public class AnimeShaderGUITests
     {
         #region Private Fields
@@ -74,6 +78,40 @@ namespace AnimeShaders.Tests
             float pixelCentreX = (column + 0.5f) / stage.Size * 2f * stage.Camera.orthographicSize - stage.Camera.orthographicSize;
             Color preview = AnimeShaderGUI.RampColour(_material, pixelCentreX * 0.5f + 0.5f);
             Assert.IsTrue(FrameReads.Near(rendered, preview, 0.02f), $"rendered {rendered}, preview {preview}");
+        }
+
+        [Test]
+        public void OpenEdges_DrawTheLineFromBothSides_AndOffPutsTheCullBack()
+        {
+            AnimeMaterials.SetOpenEdges(_material, 1f);
+            Assert.AreEqual((float)UnityEngine.Rendering.CullMode.Off, _material.GetFloat(Switches.OutlineCull));
+            AnimeMaterials.SetOpenEdges(_material, 0f);
+            Assert.AreEqual((float)UnityEngine.Rendering.CullMode.Front, _material.GetFloat(Switches.OutlineCull));
+        }
+
+        [Test]
+        public void AScriptsEdit_IsPutInStep_AsTheInspectorValidates()
+        {
+            _material.SetFloat(Ids.OutlineOpenEdges, 0.5f);
+            new AnimeShaderGUI().ValidateMaterial(_material);
+            Assert.AreEqual((float)UnityEngine.Rendering.CullMode.Off, _material.GetFloat(Switches.OutlineCull));
+        }
+
+        [Test]
+        public void EveryMaterialInTheProject_HasItsLineCullInStep()
+        {
+            var outOfStep = new System.Collections.Generic.List<string>();
+            foreach (string guid in UnityEditor.AssetDatabase.FindAssets("t:Material"))
+            {
+                string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
+                var material = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>(path);
+                if (material == null || !material.HasFloat(Ids.OutlineOpenEdges) || !material.HasFloat(Switches.OutlineCull))
+                    continue;
+                float expected = (float)(material.GetFloat(Ids.OutlineOpenEdges) > 0f ? UnityEngine.Rendering.CullMode.Off : UnityEngine.Rendering.CullMode.Front);
+                if (!Mathf.Approximately(material.GetFloat(Switches.OutlineCull), expected))
+                    outOfStep.Add(path);
+            }
+            CollectionAssert.IsEmpty(outOfStep, "set Line On Open Edges through AnimeMaterials.SetOpenEdges or the inspector");
         }
     }
 }

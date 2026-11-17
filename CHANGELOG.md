@@ -16,6 +16,13 @@
   whose bone axes differ from the model's, turning, still and moving, letting go; break proofs.
 - The head frame reads the model's front from the character root (`BindAxes` takes it; `MeshFromModel`): Blender's
   meshes import turned 270° about X from their root, so the mesh's own +Z was up. The test rig's mesh is turned the same way.
+- Lines on open cloth: **Line On Open Edges** (two-sided cloth: the line drawn from both sides behind the sheet, and
+  pushed past open edges and hems), the hidden `_OutlineCull` kept in step by `AnimeMaterials.SetOpenEdges` /
+  `SyncLineCull` and the inspector; the outline bake (version 4) adds each open edge's outward angle in UV3.w and welds
+  on a grid relative to the mesh's size (tiny-unit models found no open edge and over-welded before). Closed meshes
+  draw exactly as before. Tests: a flat sheet lined from front and back, none without it, the line never over the sheet;
+  the cull in step on every project material; open edges outward, none inside, at seams, on closed meshes, on
+  degenerate triangles; a mesh a ten-thousandth the size; break proofs.
 - Characters over the world: the **Colour** group (`Core/AnimeColour.hlsl`): Brightness and Saturation on the shaded
   colour before the haze, taken by `Anime/Character`, `Anime/Face`, `Anime/Hair` and `Anime/Eyes` only; **Depth Rim
   Blend** (Add, or Brighten: the colour beneath brightened by the rim, the Rim Colour its tint). Tests: unchanged at 1,

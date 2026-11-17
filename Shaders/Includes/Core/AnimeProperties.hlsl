@@ -231,6 +231,7 @@ CBUFFER_START(UnityPerMaterial)
     float _OutlineDistanceMin;
     float _OutlineDistanceMax;
     float _OutlineZOffset;
+    half _OutlineOpenEdges;
     float _OutlineVertexZ;
     half _OutlineWidthChannel;
     half _OutlineZChannel;

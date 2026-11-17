@@ -1,7 +1,11 @@
 #ifndef ANIME_OUTLINE_INCLUDED
 #define ANIME_OUTLINE_INCLUDED
 
-// The hull outline pass: the mesh drawn again with Cull Front, pushed out along a smoothed normal.
+// The hull outline pass: the mesh drawn again with Cull Front, pushed out along a smoothed normal. With Line On Open
+// Edges (two-sided cloth) it is drawn from both sides (_OutlineCull Off, kept in step by AnimeMaterials.SetOpenEdges and
+// the inspector), the hull's part toward the camera turned away so it lies behind the sheet, and a vertex of an open
+// edge (UV3.w, baked) is also pushed outward in its sheet's plane by the same width, so a hem seen face-on has its line.
+// The Line Z Offset must still keep the hull behind a curved sheet where it widens past it.
 //
 // With _ANIME_OUTLINE_BAKED, outline normals come from TEXCOORD3, baked on import as a TANGENT-SPACE vector relative to
 // the vertex's own normal, tangent and bitangent (AnimeShaders.EditorTools.OutlineNormalBaker). The vertex rebuilds the
@@ -21,6 +25,10 @@
 #include "../Core/AnimeFade.hlsl"
 #include "../Core/AnimeFog.hlsl"
 
+// An outline channel w above this marks an open edge; its angle is w less the offset (AnimeShaderIds).
+#define ANIME_OUTLINE_OPEN_EDGE_ABOVE 0.5
+#define ANIME_OUTLINE_OPEN_EDGE_OFFSET 4.0
+
 struct AnimeOutlineAttributes
 {
     float4 positionOS : POSITION;
@@ -28,7 +36,7 @@ struct AnimeOutlineAttributes
     float4 tangentOS : TANGENT;
     float2 texcoord : TEXCOORD0;
 #if defined(_ANIME_OUTLINE_BAKED)
-    float3 outlineNormal : TEXCOORD3;
+    float4 outlineNormal : TEXCOORD3;
 #endif
     float4 color : COLOR;
     UNITY_VERTEX_INPUT_INSTANCE_ID
@@ -44,15 +52,38 @@ struct AnimeOutlineVaryings
     UNITY_VERTEX_OUTPUT_STEREO
 };
 
+// The vertex's own frame: its normal, and its tangent made square to it (false when the tangent is unusable).
+bool AnimeOutlineFrame(float3 normalOS, float4 tangentOS, out float3 t, out float3 b, out float3 n)
+{
+    n = normalize(normalOS);
+    t = tangentOS.xyz - n * dot(n, tangentOS.xyz);
+    bool usable = dot(t, t) > 1e-8;
+    t = usable ? normalize(t) : float3(0.0, 0.0, 0.0);
+    b = cross(n, t) * (tangentOS.w < 0.0 ? -1.0 : 1.0);
+    return usable;
+}
+
 float3 AnimeOutlineNormalOS(float3 normalOS, float4 tangentOS, float3 packedNormal)
 {
-    float3 n = normalize(normalOS);
-    float3 t = tangentOS.xyz - n * dot(n, tangentOS.xyz);
-    bool usable = dot(packedNormal, packedNormal) > 1e-6 && dot(t, t) > 1e-8;
-    t = normalize(t);
-    float3 b = cross(n, t) * (tangentOS.w < 0.0 ? -1.0 : 1.0);
+    float3 t, b, n;
+    bool usable = AnimeOutlineFrame(normalOS, tangentOS, t, b, n) && dot(packedNormal, packedNormal) > 1e-6;
     float3 rebuilt = t * packedNormal.x + b * packedNormal.y + n * packedNormal.z;
     return usable ? normalize(rebuilt) : n;
+}
+
+// An open edge's outward direction in object space from its baked angle (UV3.w), or zero inside the mesh.
+float3 AnimeOutlineOpenEdgeOS(float3 normalOS, float4 tangentOS, float packedAngle)
+{
+    float3 t, b, n;
+    bool usable = AnimeOutlineFrame(normalOS, tangentOS, t, b, n) && packedAngle > ANIME_OUTLINE_OPEN_EDGE_ABOVE;
+    float angle = packedAngle - ANIME_OUTLINE_OPEN_EDGE_OFFSET;
+    return usable ? t * cos(angle) + b * sin(angle) : float3(0.0, 0.0, 0.0);
+}
+
+// The outline direction with its part toward the camera turned away (towardCamera unit length).
+float3 AnimeOutlineAwayFromCamera(float3 normalWS, float3 towardCamera)
+{
+    return normalWS - 2.0 * max(0.0, dot(normalWS, towardCamera)) * towardCamera;
 }
 
 float AnimeOutlineWorldWidth(float3 positionWS)
@@ -80,7 +111,7 @@ AnimeOutlineVaryings AnimeOutlineVertex(AnimeOutlineAttributes input)
 
     float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
 #if defined(_ANIME_OUTLINE_BAKED)
-    float3 normalWS = TransformObjectToWorldNormal(AnimeOutlineNormalOS(input.normalOS, input.tangentOS, input.outlineNormal));
+    float3 normalWS = TransformObjectToWorldNormal(AnimeOutlineNormalOS(input.normalOS, input.tangentOS, input.outlineNormal.xyz));
 #else
     float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
 #endif
@@ -93,6 +124,15 @@ AnimeOutlineVaryings AnimeOutlineVertex(AnimeOutlineAttributes input)
 #endif
 
     float3 hullWS = positionWS + normalWS * width;
+    UNITY_BRANCH
+    if (_OutlineOpenEdges > 0.0)
+    {
+        hullWS = positionWS + AnimeOutlineAwayFromCamera(normalWS, GetWorldSpaceNormalizeViewDir(positionWS)) * width;
+#if defined(_ANIME_OUTLINE_BAKED)
+        float3 openEdgeWS = TransformObjectToWorldDir(AnimeOutlineOpenEdgeOS(input.normalOS, input.tangentOS, input.outlineNormal.w), false);
+        hullWS += openEdgeWS * (width * _OutlineOpenEdges);
+#endif
+    }
     hullWS -= GetWorldSpaceNormalizeViewDir(hullWS) * zOffset;
 
     output.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);

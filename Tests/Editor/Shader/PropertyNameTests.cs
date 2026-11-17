@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
@@ -144,6 +145,8 @@ namespace AnimeShaders.Tests
                 Convert.ToUInt32(PackSources.Capture(fade, @"#define ANIME_FADE_LEVEL_MASK (0x[0-9A-Fa-f]+)u"), 16));
             Assert.AreEqual(AnimeShaderIds.Fade.Full.ToString(), PackSources.Capture(fade, @"#define ANIME_FADE_LEVEL_FULL (\d+)u"));
             Assert.AreEqual(AnimeShaderIds.OutlineNormalChannel.ToString(), PackSources.Capture(outline, @"outlineNormal : TEXCOORD(\d)"));
+            Assert.AreEqual(AnimeShaderIds.OutlineOpenEdgeOffset, float.Parse(PackSources.Capture(outline, @"#define ANIME_OUTLINE_OPEN_EDGE_OFFSET ([\d.]+)"), CultureInfo.InvariantCulture));
+            Assert.AreEqual(AnimeShaderIds.OutlineOpenEdgeAbove, float.Parse(PackSources.Capture(outline, @"#define ANIME_OUTLINE_OPEN_EDGE_ABOVE ([\d.]+)"), CultureInfo.InvariantCulture));
         }
 
         [Test]
