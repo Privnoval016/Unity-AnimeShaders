@@ -632,6 +632,12 @@ namespace AnimeShaders
             /** <summary>The property id of _RingBreakupShape.</summary> */
             public static readonly int RingBreakupShape = Shader.PropertyToID(RingBreakupShapeName);
 
+            /** <summary>The name _RingStrandGap.</summary> */
+            public const string RingStrandGapName = "_RingStrandGap";
+
+            /** <summary>The property id of _RingStrandGap.</summary> */
+            public static readonly int RingStrandGap = Shader.PropertyToID(RingStrandGapName);
+
             /** <summary>The name _RingBrightest.</summary> */
             public const string RingBrightestName = "_RingBrightest";
 

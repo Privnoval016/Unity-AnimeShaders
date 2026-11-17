@@ -205,6 +205,7 @@ CBUFFER_START(UnityPerMaterial)
     half _RingBreakup;
     half _RingBreakupCount;
     half _RingBreakupShape;
+    half _RingStrandGap;
     half _RingBrightest;
 #endif
 #if defined(ANIME_GROUP_LINE)

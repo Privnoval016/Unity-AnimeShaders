@@ -18,10 +18,11 @@
   meshes import turned 270° about X from their root, so the mesh's own +Z was up. The test rig's mesh is turned the same way.
 - The angel ring (step 3, B5) on `Anime/Hair` (`Includes/Character/AnimeHair.hlsl`, group `ANIME_GROUP_HAIR`): Ring
   Strength, Colour, Hair Tint, Light Colour, Height, Width, Softness, Tilt, Sphere Blend, Facing, Follows View, Outer
-  Glow, Breakup, Breakup Count, Breakup Shape, Brightest, Mask; `AnimeSurface.litHighlight`, added by the lit weight in
-  `AnimeShade` (zero: unchanged). Tests: at its height and not away from it, none in shade, at strength 0 as
+  Glow, Breakup, Breakup Count, Breakup Shape, Strand Gap, Brightest, Mask (drawn as strand strokes: a top edge fading up,
+  thin lines between strands, strand tips below; after Pranav's first look: "more subtle", "choppy"); `AnimeSurface.litHighlight`, added by the lit weight in
+  `AnimeShade` (zero: unchanged). `Core/AnimeHash.hlsl`: the sky's trig-free hash, shared (was `AnimeSkyHash`). Tests: at its height and not away from it, none in shade, at strength 0 as
   `Anime/Character`, none without a head frame, following the view moves it, the breakup breaks its lower edge, the cap,
-  the hair's hue; break proofs (the head-frame guard's absence isn't seen on this GPU: kept, as zeroed values could turn
+  the strand gap's lines, the hair's hue; break proofs (the head-frame guard's absence isn't seen on this GPU: kept, as zeroed values could turn
   the hair black elsewhere).
 - The front hair's shadow (step 3, B4): `Anime/Hair` (`Anime/Character`'s passes plus HairDepth), `AnimeHairDepthFeature`
   and its render-graph pass (the hair's depth before the opaques into `_AnimeHairDepth`, half resolution or full, with

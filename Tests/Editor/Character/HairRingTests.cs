@@ -10,8 +10,8 @@ namespace AnimeShaders.Tests
      * <summary>The angel ring on a sphere of hair (radius 1) facing the camera, its head frame at its centre: the band
      * sits at its height on the head and nowhere well away from it; none in shade, at strength 0 (as Anime/Character) or
      * without a head frame; following the view moves it to where the hair meets the view at that height; the breakup
-     * breaks its lower edge strand by strand; what it adds never passes the cap; the hair's tint gives it the hair's
-     * hue.</summary>
+     * gives each strand's stroke its own height and length; the strand gap draws thin lines through the band; what it adds
+     * never passes the cap; the hair's tint gives it the hair's hue.</summary>
      */
     public class HairRingTests
     {
@@ -100,6 +100,8 @@ namespace AnimeShaders.Tests
             _hair.SetFloat(Ids.RingHeight, Height);
             _hair.SetFloat(Ids.RingWidth, Width);
             _hair.SetFloat(Ids.RingBreakup, 0f);
+            _hair.SetFloat(Ids.RingStrandGap, 0f);
+            _hair.SetFloat(Ids.RingBreakupShape, 0f);
             _hair.SetFloat(Ids.RingGlow, 0f);
             _hair.SetFloat(Ids.RingFacing, 0f);
             _hair.SetFloat(Ids.RingHairTint, 0f);
@@ -166,9 +168,9 @@ namespace AnimeShaders.Tests
         }
 
         [Test]
-        public void TheBreakup_BreaksTheLowerEdgeStrandByStrand()
+        public void TheBreakup_GivesEachStrandItsOwnStroke()
         {
-            float edge = Height - Width * 0.8f;
+            float edge = Height - Width * 0.5f;
             float Spread(Color[] added)
             {
                 float[] row = Enumerable.Range(0, 40).Select(i => At(added, -0.4f + i * 0.02f, edge)).ToArray();
@@ -180,6 +182,21 @@ namespace AnimeShaders.Tests
             float broken = Spread(Added());
             Assert.Less(clean, 0.1f, "a clean band: even along its lower edge");
             Assert.Greater(broken, clean + 0.2f, "broken: strands in and out along it");
+        }
+
+        [Test]
+        public void TheStrandGap_DrawsThinLinesThroughTheBand()
+        {
+            float Spread(Color[] added)
+            {
+                float[] row = Enumerable.Range(0, 40).Select(i => At(added, -0.4f + i * 0.02f, Height)).ToArray();
+                return row.Max() - row.Min();
+            }
+            float solid = Spread(Added());
+            _hair.SetFloat(Ids.RingStrandGap, 0.4f);
+            float lined = Spread(Added());
+            Assert.Less(solid, 0.1f, "no gap: even along the band's middle");
+            Assert.Greater(lined, solid + 0.2f, "gaps: dark lines between the strands");
         }
 
         [Test]

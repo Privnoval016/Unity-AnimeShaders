@@ -9,6 +9,7 @@
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 #include "../Core/AnimeDirector.hlsl"
 #include "../Core/AnimeClouds.hlsl"
+#include "../Core/AnimeHash.hlsl"
 #include "../Core/AnimeFog.hlsl"
 
 #if defined(_ANIME_SKY_STARS_KEYWORD_DECLARED)
@@ -90,14 +91,6 @@ half3 AnimeSkyGradient(float height)
     return lerp(_HorizonColor.rgb, _BelowColor.rgb, half(smoothstep(0.0, ANIME_SKY_BELOW_FADE, -height)));
 }
 
-// A value per cell from arithmetic alone (no sine, which loses precision on large arguments on mobile GPUs), 0 to 1.
-float AnimeSkyHash(float cell, float seed)
-{
-    float p = frac((cell + seed * 17.0) * 0.1031);
-    p *= p + 33.33;
-    p *= p + p;
-    return frac(p);
-}
 
 // The dimmest a star shows, as a share of the brightest.
 #define ANIME_SKY_STAR_DIMMEST 0.3
@@ -118,11 +111,11 @@ half AnimeSkyStars(float2 p, half density, half size)
         {
             float2 neighbour = cell + float2(x, y);
             float key = neighbour.x + neighbour.y * ANIME_SKY_STAR_ROW;
-            float2 centre = neighbour + float2(AnimeSkyHash(key, 2.0), AnimeSkyHash(key, 3.0));
+            float2 centre = neighbour + float2(AnimeHash(key, 2.0), AnimeHash(key, 3.0));
             float distance = length(p - centre);
-            half shown = AnimeSkyHash(key, 1.0) < density ? 1.0h : 0.0h;
+            half shown = AnimeHash(key, 1.0) < density ? 1.0h : 0.0h;
             half glow = half(smoothstep(size + pixel, max(size - pixel, 0.0), distance));
-            half light = half(lerp(ANIME_SKY_STAR_DIMMEST, 1.0, AnimeSkyHash(key, 4.0)));
+            half light = half(lerp(ANIME_SKY_STAR_DIMMEST, 1.0, AnimeHash(key, 4.0)));
             brightest = max(brightest, glow * light * shown);
         }
     }
@@ -135,8 +128,8 @@ float AnimeSkyRingNoise(float position, float period, float seed)
     float cell = floor(position);
     float t = position - cell;
     t = t * t * (3.0 - 2.0 * t);
-    float a = AnimeSkyHash(fmod(cell, period), seed);
-    float b = AnimeSkyHash(fmod(cell + 1.0, period), seed);
+    float a = AnimeHash(fmod(cell, period), seed);
+    float b = AnimeHash(fmod(cell + 1.0, period), seed);
     return lerp(a, b, t);
 }
 
