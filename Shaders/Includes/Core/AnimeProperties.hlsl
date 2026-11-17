@@ -180,6 +180,10 @@ CBUFFER_START(UnityPerMaterial)
     half _FaceShadowSoftness;
     half _FaceShadowBias;
     half _FaceLightHeight;
+    half _HairShadowStrength;
+    float _HairShadowReach;
+    float _HairShadowBias;
+    float _HairShadowSoftness;
 #endif
 #if defined(ANIME_GROUP_LINE)
     half4 _OutlineColor;

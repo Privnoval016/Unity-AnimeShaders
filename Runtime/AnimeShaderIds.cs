@@ -22,6 +22,12 @@ namespace AnimeShaders
         /** <summary>The face shader's name.</summary> */
         public const string FaceShader = "Anime/Face";
 
+        /** <summary>The hair shader's name.</summary> */
+        public const string HairShader = "Anime/Hair";
+
+        /** <summary>The light mode of the hair's depth pass, drawn by <c>AnimeHairDepthFeature</c>.</summary> */
+        public const string HairDepthLightMode = "AnimeHairDepth";
+
         #endregion
 
         /** <summary>The head frame's per-renderer values (set through <see cref="AnimeBlocks" /> by <see cref="AnimeHeadFrame" />): world space.</summary> */
@@ -50,6 +56,28 @@ namespace AnimeShaders
 
             /** <summary>The property id of _AnimeHeadUp.</summary> */
             public static readonly int Up = Shader.PropertyToID(UpName);
+        }
+
+        /** <summary>The hair's depth, a global texture written by <c>AnimeHairDepthFeature</c> for the face's front-hair shadow.</summary> */
+        public static class HairDepth
+        {
+            /** <summary>The name _AnimeHairDepth.</summary> */
+            public const string TextureName = "_AnimeHairDepth";
+
+            /** <summary>The property id of _AnimeHairDepth.</summary> */
+            public static readonly int Texture = Shader.PropertyToID(TextureName);
+
+            /** <summary>The name _AnimeHairDepthOn: 1 while the texture holds this camera's hair, 0 (never set included) otherwise.</summary> */
+            public const string OnName = "_AnimeHairDepthOn";
+
+            /** <summary>The property id of _AnimeHairDepthOn.</summary> */
+            public static readonly int On = Shader.PropertyToID(OnName);
+
+            /** <summary>The name _AnimeHairDepthSize: the texture's width and height in texels (xy), and their reciprocals (zw).</summary> */
+            public const string SizeName = "_AnimeHairDepthSize";
+
+            /** <summary>The property id of _AnimeHairDepthSize.</summary> */
+            public static readonly int Size = Shader.PropertyToID(SizeName);
         }
 
         /** <summary>The light director's global properties: all zero when never set, which means no change.</summary> */
@@ -483,6 +511,30 @@ namespace AnimeShaders
 
             /** <summary>The property id of _FaceLightHeight.</summary> */
             public static readonly int FaceLightHeight = Shader.PropertyToID(FaceLightHeightName);
+
+            /** <summary>The name _HairShadowStrength.</summary> */
+            public const string HairShadowStrengthName = "_HairShadowStrength";
+
+            /** <summary>The property id of _HairShadowStrength.</summary> */
+            public static readonly int HairShadowStrength = Shader.PropertyToID(HairShadowStrengthName);
+
+            /** <summary>The name _HairShadowReach.</summary> */
+            public const string HairShadowReachName = "_HairShadowReach";
+
+            /** <summary>The property id of _HairShadowReach.</summary> */
+            public static readonly int HairShadowReach = Shader.PropertyToID(HairShadowReachName);
+
+            /** <summary>The name _HairShadowBias.</summary> */
+            public const string HairShadowBiasName = "_HairShadowBias";
+
+            /** <summary>The property id of _HairShadowBias.</summary> */
+            public static readonly int HairShadowBias = Shader.PropertyToID(HairShadowBiasName);
+
+            /** <summary>The name _HairShadowSoftness.</summary> */
+            public const string HairShadowSoftnessName = "_HairShadowSoftness";
+
+            /** <summary>The property id of _HairShadowSoftness.</summary> */
+            public static readonly int HairShadowSoftness = Shader.PropertyToID(HairShadowSoftnessName);
 
             /** <summary>The name _CircleStoneShade.</summary> */
             public const string CircleStoneShadeName = "_CircleStoneShade";

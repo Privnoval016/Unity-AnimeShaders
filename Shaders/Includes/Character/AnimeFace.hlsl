@@ -6,12 +6,14 @@
 // onto the head's horizontal plane (smoothed, in the model's front-right frame) and its face weight; the light is
 // flattened onto the same plane through the head frame, and the face is lit where the two face each other (Lambert
 // round the horizon, offset by the bias and softened by the softness). A light high above or below dims it by Light
-// Height. Where the map's face weight is 0, without a map, or without a head frame, the surface shades as plain.
+// Height. The front hair's shadow (AnimeHairShadow.hlsl) darkens it by Hair Shadow Strength. Where the map's face weight
+// is 0, without a map, or without a head frame, the surface shades as plain.
 //
-// Reads: the face map once.
+// Reads: the face map once, the hair's depth four times.
 
 #include "../Core/AnimeLighting.hlsl"
 #include "AnimeHead.hlsl"
+#include "AnimeHairShadow.hlsl"
 
 // Below this, a light's horizontal part is too short to say where round the head it is: taken as from the front.
 #define ANIME_FACE_SHORTEST 1e-3
@@ -37,7 +39,8 @@ void AnimeCustomSurface(float3 positionWS, float2 uv, inout AnimeSurface surface
 
     Light mainLight = GetMainLight();
     float3 towardLight = AnimeDirectorLightDirection(mainLight.direction);
-    surface.formOverride = AnimeFaceLit(normalH, towardLight, _AnimeHeadRight.xyz, _AnimeHeadForward.xyz, _AnimeHeadUp.xyz);
+    half lit = AnimeFaceLit(normalH, towardLight, _AnimeHeadRight.xyz, _AnimeHeadForward.xyz, _AnimeHeadUp.xyz);
+    surface.formOverride = lit * (1.0h - _HairShadowStrength * AnimeHairShadow(positionWS, towardLight));
     surface.formOverrideWeight = AnimeHeadFrameSet() ? map.b * map.a * _FaceMapStrength : 0.0h;
 }
 

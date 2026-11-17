@@ -52,6 +52,7 @@ namespace AnimeShaders.Tests
         [TestCase("Anime/World")]
         [TestCase("Anime/Ground")]
         [TestCase(AnimeShaderIds.FaceShader)]
+        [TestCase(AnimeShaderIds.HairShader)]
         public void SrpBatcher_IsCompatible(string name)
         {
             Assert.IsNull(ShaderChecks.SrpBatcherProblem(Shader.Find(name)));

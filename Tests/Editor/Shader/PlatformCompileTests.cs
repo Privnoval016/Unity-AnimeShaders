@@ -37,7 +37,7 @@ namespace AnimeShaders.Tests
 
         private static readonly string[] NormalMapAlone = { AnimeShaderIds.Keywords.NormalmapName };
 
-        private static readonly string[] PackShaders = { "Anime/Character", "Anime/World", "Anime/Ground", "Anime/Sky", AnimeShaderIds.FaceShader };
+        private static readonly string[] PackShaders = { "Anime/Character", "Anime/World", "Anime/Ground", "Anime/Sky", AnimeShaderIds.FaceShader, AnimeShaderIds.HairShader };
 
         #endregion
 

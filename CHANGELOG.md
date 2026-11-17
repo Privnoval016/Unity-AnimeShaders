@@ -16,6 +16,13 @@
   whose bone axes differ from the model's, turning, still and moving, letting go; break proofs.
 - The head frame reads the model's front from the character root (`BindAxes` takes it; `MeshFromModel`): Blender's
   meshes import turned 270° about X from their root, so the mesh's own +Z was up. The test rig's mesh is turned the same way.
+- The front hair's shadow (step 3, B4): `Anime/Hair` (`Anime/Character`'s passes plus HairDepth), `AnimeHairDepthFeature`
+  and its render-graph pass (the hair's depth before the opaques into `_AnimeHairDepth`, half resolution or full, with
+  `_AnimeHairDepthOn` and `_AnimeHairDepthSize`; every camera starts with it off), and on `Anime/Face` Hair Shadow
+  Strength, Reach, Bias and Softness (a bilinear comparison of four texels). `AnimeShaderIds.HairShader`,
+  `HairDepthLightMode`, `HairDepth`. Tests: the fringe shades just below it and not well below, at full resolution too;
+  none without the feature, at reach or strength 0, with the hair level with the face, or once the hair is gone; break
+  proofs (the per-camera reset matters only for a camera without the feature, which the stage can't stand up: untested).
 - `Anime/Face` (`Shaders/AnimeFace.shader`, `Includes/Character/`): the face's form lit from its face map round the head
   frame, with Face Map Strength, Face Shadow Softness, Face Shadow Bias and Face Light Height (group `ANIME_GROUP_FACE`);
   `AnimeSurface` gains `formOverride` and `formOverrideWeight` (zero: unchanged), which `AnimeShade` blends into the form

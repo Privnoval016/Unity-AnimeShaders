@@ -28,6 +28,12 @@ Shader "Anime/Face"
         _FaceShadowBias("Face Shadow Bias (up: more of the face lit)", Range(-1, 1)) = 0
         _FaceLightHeight("Face Light Height (a light above or below dims the face)", Range(0, 1)) = 0.3
 
+        [Header(Front Hair Shadow)]
+        _HairShadowStrength("Hair Shadow Strength (needs the Anime Hair Depth feature)", Range(0, 1)) = 1
+        _HairShadowReach("Hair Shadow Reach (m toward the light)", Range(0, 0.2)) = 0.03
+        _HairShadowBias("Hair Shadow Bias (m: hair nearer than this casts none)", Range(0, 0.1)) = 0.01
+        _HairShadowSoftness("Hair Shadow Softness (m)", Range(0.001, 0.1)) = 0.01
+
         [Header(Shadows and Lights)]
         [ToggleOff(_RECEIVE_SHADOWS_OFF)] _ReceiveShadows("Receive Shadows", Float) = 1
         _CastShadowStrength("Cast Shadow Strength", Range(0, 1)) = 1
