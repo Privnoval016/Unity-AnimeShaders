@@ -33,7 +33,7 @@ namespace AnimeShaders.EditorTools
             [Switches.BodyShadowName] = new[] { Ids.BodyShadowReachName },
             [Switches.ExtraLightsName] = new[] { Ids.ExtraLightStrengthName, Ids.ExtraLightCapName },
             [Switches.RimName] = new[] { Ids.RimWidthName },
-            [Ids.RimDepthName] = new[] { Ids.RimDepthWidthName, Ids.RimDepthThresholdName },
+            [Ids.RimDepthName] = new[] { Ids.RimDepthWidthName, Ids.RimDepthThresholdName, Switches.RimDepthBlendName },
             [Switches.EmissionName] = new[] { Ids.EmissionColorName, Switches.EmissionMapOnName, Ids.EmissionMapName },
             [Switches.EmissionMapOnName] = new[] { Ids.EmissionMapName },
             [Switches.NormalMapOnName] = new[] { Ids.BumpMapName, Ids.BumpScaleName },

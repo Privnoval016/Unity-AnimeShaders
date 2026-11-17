@@ -43,6 +43,10 @@ Shader "Anime/Eyes"
         _ExtraLightStrength("Additional Light Strength", Range(0, 2)) = 1
         _ExtraLightCap("Additional Light Cap", Range(0, 2)) = 0.6
 
+        [Header(Colour)]
+        _ColourBrightness("Brightness (the shaded colour times this: lift characters above the world)", Range(0, 2)) = 1
+        _ColourSaturation("Saturation (0 grey, 1 as shaded, above 1 richer)", Range(0, 2)) = 1
+
         [Header(Rim)]
         [Toggle(_ANIME_RIM)] _Rim("Use Fresnel Rim", Float) = 0
         [HDR] _RimColor("Rim Colour", Color) = (1, 1, 1, 1)
@@ -86,6 +90,7 @@ Shader "Anime/Eyes"
         #define ANIME_GROUP_BODY
         #define ANIME_GROUP_EMISSION
         #define ANIME_GROUP_RIM
+        #define ANIME_GROUP_COLOUR
         #define ANIME_GROUP_EYES
         ENDHLSL
 

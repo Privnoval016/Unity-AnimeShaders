@@ -1,14 +1,16 @@
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.Rendering;
 using Ids = AnimeShaders.AnimeShaderIds.MaterialProperties;
+using Switches = AnimeShaders.AnimeShaderIds.Switches;
 
 namespace AnimeShaders.Tests
 {
     /**
      * <summary>The depth-edge rim, drawn by <see cref="AnimeRimFeature" /> in a made pipeline: a band inside a
      * sphere's silhouette where what lies behind is farther than the threshold, of the width asked, none while fading,
-     * none on a renderer without the feature. Every check compares the frame with the rim on to the same frame with it
-     * off.</summary>
+     * none on a renderer without the feature; Brighten lifts the part's own colour (its channels in proportion) where Add
+     * adds the same light to each. Every check compares the frame with the rim on to the same frame with it off.</summary>
      */
     public class DepthRimTests
     {
@@ -217,6 +219,35 @@ namespace AnimeShaders.Tests
             _pipeline.Dispose();
             MakeStage(withFeature: false);
             Assert.AreEqual(0, Count(RimPixels()));
+        }
+
+        [Test]
+        public void Brighten_LiftsThePartsOwnColour_AddAddsLight()
+        {
+            MakeStage(true);
+            TestMaterials.SetLinear(_material, Ids.RimColor, Color.white);
+            _material.SetFloat(Ids.RimStrength, 0.5f);
+            AnimeMaterials.SetRimDepth(_material, false);
+            Color[] off = _stage.Render();
+            AnimeMaterials.SetRimDepth(_material, true);
+            int brightest = 0;
+            _material.SetFloat(Switches.RimDepthBlend, (float)BlendMode.DstColor);
+            Color[] lifted = _stage.Render();
+            for (int i = 0; i < lifted.Length; i++)
+            {
+                if (lifted[i].g - off[i].g > lifted[brightest].g - off[brightest].g)
+                    brightest = i;
+            }
+            Color under = off[brightest];
+            Color lift = lifted[brightest];
+            Assert.AreEqual(1.5f, lift.r / under.r, 0.05f, $"red brightened by the rim: {under} to {lift}");
+            Assert.AreEqual(lift.r / under.r, lift.g / under.g, 0.03f, "green in proportion");
+            Assert.AreEqual(lift.r / under.r, lift.b / under.b, 0.03f, "blue in proportion: its own hue, no white");
+
+            _material.SetFloat(Switches.RimDepthBlend, (float)BlendMode.One);
+            Color added = _stage.Render()[brightest];
+            Assert.AreEqual(added.r - under.r, added.g - under.g, 0.03f, "Add: the same light on each channel");
+            Assert.AreEqual(0.5f, added.g - under.g, 0.05f, "Add: the rim's strength in white");
         }
     }
 }

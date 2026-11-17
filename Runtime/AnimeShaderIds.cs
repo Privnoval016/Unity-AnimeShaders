@@ -830,6 +830,18 @@ namespace AnimeShaders
             /** <summary>The property id of _InsideDarken.</summary> */
             public static readonly int InsideDarken = Shader.PropertyToID(InsideDarkenName);
 
+            /** <summary>The name _ColourBrightness.</summary> */
+            public const string ColourBrightnessName = "_ColourBrightness";
+
+            /** <summary>The property id of _ColourBrightness.</summary> */
+            public static readonly int ColourBrightness = Shader.PropertyToID(ColourBrightnessName);
+
+            /** <summary>The name _ColourSaturation.</summary> */
+            public const string ColourSaturationName = "_ColourSaturation";
+
+            /** <summary>The property id of _ColourSaturation.</summary> */
+            public static readonly int ColourSaturation = Shader.PropertyToID(ColourSaturationName);
+
             /** <summary>The name _InsideSaturation.</summary> */
             public const string InsideSaturationName = "_InsideSaturation";
 
@@ -1002,6 +1014,12 @@ namespace AnimeShaders
 
             /** <summary>The property id of _WorldUV.</summary> */
             public static readonly int WorldUV = Shader.PropertyToID(WorldUVName);
+
+            /** <summary>The depth rim's blend: Add (1) adds light, Brighten (2) multiplies the colour beneath by one plus the rim.</summary> */
+            public const string RimDepthBlendName = "_RimDepthBlend";
+
+            /** <summary>The property id of _RimDepthBlend.</summary> */
+            public static readonly int RimDepthBlend = Shader.PropertyToID(RimDepthBlendName);
 
             /** <summary>The cull mode (Off draws both sides).</summary> */
             public const string CullName = "_Cull";

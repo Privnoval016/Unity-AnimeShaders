@@ -141,6 +141,10 @@ CBUFFER_START(UnityPerMaterial)
     float _RimDepthWidth;
     float _RimDepthThreshold;
 #endif
+#if defined(ANIME_GROUP_COLOUR)
+    half _ColourBrightness;
+    half _ColourSaturation;
+#endif
 #if defined(ANIME_GROUP_GROUND)
     half4 _FieldDark;
     half4 _FieldLight;

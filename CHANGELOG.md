@@ -16,6 +16,11 @@
   whose bone axes differ from the model's, turning, still and moving, letting go; break proofs.
 - The head frame reads the model's front from the character root (`BindAxes` takes it; `MeshFromModel`): Blender's
   meshes import turned 270° about X from their root, so the mesh's own +Z was up. The test rig's mesh is turned the same way.
+- Characters over the world: the **Colour** group (`Core/AnimeColour.hlsl`): Brightness and Saturation on the shaded
+  colour before the haze, taken by `Anime/Character`, `Anime/Face`, `Anime/Hair` and `Anime/Eyes` only; **Depth Rim
+  Blend** (Add, or Brighten: the colour beneath brightened by the rim, the Rim Colour its tint). Tests: unchanged at 1,
+  brightness by ratio, saturation from its own grey with the grey kept, every character shader takes it; Brighten keeps
+  the part's hue where Add adds white; break proofs.
 - Step 3's code review (four reviewers): the hair depth read checks the feature first and every camera resets its
   size; the front hair's shadow takes **Hair Shadow Range** (other characters' hair casts none) and none from behind
   the camera; eyes over the fringe draw far to near and keep the target's alpha; Eye Stencil Bit a dropdown; the

@@ -12,6 +12,7 @@
 #include "../Core/AnimeLighting.hlsl"
 #include "../Core/AnimeFade.hlsl"
 #include "../Core/AnimeFog.hlsl"
+#include "../Core/AnimeColour.hlsl"
 
 #if !defined(ANIME_FORWARD_ALPHA)
     #define ANIME_FORWARD_ALPHA 1.0h
@@ -152,6 +153,9 @@ void AnimeForwardFragment(
     AnimeInitializeInputData(input, surface.normalWS, inputData);
 
     half3 color = AnimeShade(surface, inputData);
+#if defined(ANIME_GROUP_COLOUR)
+    color = AnimeColour(color);
+#endif
     color = AnimeApplyFog(color, input.positionWS, inputData.fogCoord);
     outColor = half4(color, ANIME_FORWARD_ALPHA);
 

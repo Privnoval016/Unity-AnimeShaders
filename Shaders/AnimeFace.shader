@@ -48,6 +48,10 @@ Shader "Anime/Face"
         _ExtraLightStrength("Additional Light Strength", Range(0, 2)) = 1
         _ExtraLightCap("Additional Light Cap", Range(0, 2)) = 0.6
 
+        [Header(Colour)]
+        _ColourBrightness("Brightness (the shaded colour times this: lift characters above the world)", Range(0, 2)) = 1
+        _ColourSaturation("Saturation (0 grey, 1 as shaded, above 1 richer)", Range(0, 2)) = 1
+
         [Header(Rim)]
         [Toggle(_ANIME_RIM)] _Rim("Use Fresnel Rim", Float) = 0
         [HDR] _RimColor("Rim Colour", Color) = (1, 1, 1, 1)
@@ -58,6 +62,7 @@ Shader "Anime/Face"
         [ToggleUI] _RimDepth("Use Depth Edge Rim", Float) = 0
         _RimDepthWidth("Depth Rim Width (px at 1080p)", Range(0, 12)) = 3
         _RimDepthThreshold("Depth Rim Threshold (m)", Range(0.01, 2)) = 0.15
+        [Enum(Add, 1, Brighten, 2)] _RimDepthBlend("Depth Rim Blend (Add: light added; Brighten: the part's own colour brightened, Rim Colour its tint)", Float) = 1
 
         [Header(Normal Map and Clipping)]
         [Toggle(_NORMALMAP)] _NormalMapOn("Use Normal Map", Float) = 0
@@ -98,6 +103,7 @@ Shader "Anime/Face"
         HLSLINCLUDE
         #define ANIME_GROUP_BODY
         #define ANIME_GROUP_RIM
+        #define ANIME_GROUP_COLOUR
         #define ANIME_GROUP_LINE
         #define ANIME_GROUP_FACE
         #define ANIME_CUSTOM_SURFACE
@@ -170,7 +176,7 @@ Shader "Anime/Face"
             Name "Rim"
             Tags { "LightMode" = "AnimeRim" }
 
-            Blend One One
+            Blend [_RimDepthBlend] One
             ZWrite Off
             ZTest LEqual
             Cull [_Cull]
