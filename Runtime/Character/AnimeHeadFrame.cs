@@ -6,8 +6,9 @@ namespace AnimeShaders
     /**
      * <summary>Tells a character's face, hair, eye and brow materials where the head is and which way it faces: each
      * frame, after animation and cloth, it writes the head's centre and its forward, right and up (the model's own front
-     * and up at rest, carried by the head bone, whatever the bone's axes) into those renderers' property blocks
-     * (<see cref="AnimeBlocks" />), only when they change. Those renderers leave the SRP Batcher.</summary>
+     * and up at rest, carried by the head bone, whatever the bone's or the mesh's axes) into those renderers' property
+     * blocks (<see cref="AnimeBlocks" />), only when they change. Those renderers leave the SRP Batcher.</summary>
+     * <remarks>The model's front and up are this object's forward and up: put it on the character's root.</remarks>
      */
     [ExecuteAlways]
     [DisallowMultipleComponent]
@@ -54,10 +55,10 @@ namespace AnimeShaders
         /** <summary>Runs after animation, cloth and look-at code, so it reads the head as drawn.</summary> */
         public const int ExecutionOrder = 32000;
 
-        /** <summary>The model's front at rest, in its own space: imported models face +Z.</summary> */
+        /** <summary>The model's front at rest, in its root's space: a character faces its root's +Z.</summary> */
         public static readonly Vector3 ModelFront = Vector3.forward;
 
-        /** <summary>The model's up at rest, in its own space.</summary> */
+        /** <summary>The model's up at rest, in its root's space.</summary> */
         public static readonly Vector3 ModelUp = Vector3.up;
 
         /** <summary>The head's centre as last written, in world space.</summary> */
@@ -125,21 +126,31 @@ namespace AnimeShaders
         /**
          * <summary>The model's front and up at rest as directions in <paramref name="bone" />'s own space, read from
          * <paramref name="mesh" />'s bind pose for it; false when the mesh is not skinned to that bone.</summary>
+         * <param name="model">The character's root: its forward and up are the model's front and up.</param>
          */
-        public static bool BindAxes(SkinnedMeshRenderer mesh, Transform bone, out Vector3 localForward, out Vector3 localUp)
+        public static bool BindAxes(SkinnedMeshRenderer mesh, Transform bone, Transform model, out Vector3 localForward, out Vector3 localUp)
         {
             localForward = ModelFront;
             localUp = ModelUp;
-            if (mesh == null || bone == null || mesh.sharedMesh == null)
+            if (mesh == null || bone == null || model == null || mesh.sharedMesh == null)
                 return false;
             int index = Array.IndexOf(mesh.bones, bone);
             Matrix4x4[] bindposes = mesh.sharedMesh.bindposes;
             if (index < 0 || index >= bindposes.Length)
                 return false;
-            Matrix4x4 meshToBone = bindposes[index];
-            localForward = meshToBone.MultiplyVector(ModelFront).normalized;
-            localUp = meshToBone.MultiplyVector(ModelUp).normalized;
+            Matrix4x4 modelToBone = bindposes[index] * MeshFromModel(mesh.transform, model);
+            localForward = modelToBone.MultiplyVector(ModelFront).normalized;
+            localUp = modelToBone.MultiplyVector(ModelUp).normalized;
             return true;
+        }
+
+        /**
+         * <summary>Turns directions and points in <paramref name="model" />'s space into <paramref name="mesh" />'s, the
+         * space its mesh data is in (an imported model's meshes are often turned from its root, as Blender's are).</summary>
+         */
+        public static Matrix4x4 MeshFromModel(Transform mesh, Transform model)
+        {
+            return mesh.worldToLocalMatrix * model.localToWorldMatrix;
         }
 
         #endregion
@@ -169,7 +180,7 @@ namespace AnimeShaders
             _slots = new int[renderers.Length];
             for (int i = 0; i < renderers.Length; i++)
                 _slots[i] = renderers[i] != null ? renderers[i].sharedMaterials.Length : 0;
-            return _head != null && BindAxes(mesh, _head, out _localForward, out _localUp);
+            return _head != null && BindAxes(mesh, _head, transform, out _localForward, out _localUp);
         }
 
         private void Write()

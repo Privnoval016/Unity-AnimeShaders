@@ -7,8 +7,9 @@ using Object = UnityEngine.Object;
 namespace AnimeShaders.Tests
 {
     /**
-     * <summary>The head frame on a made rig whose head bone's axes differ from the model's (turned so its own forward
-     * points down): it writes the model's front, right and up as the head carries them, turning with the head; the
+     * <summary>The head frame on a made rig whose head bone's axes and mesh's axes both differ from the model's (the
+     * bone turned so its own forward points down, the mesh turned as Blender's imports are, its own +Z pointing up): it
+     * writes the model's front, right and up as the head carries them, turning with the head; the
      * centre offset along the head's own up; nothing rewritten while the head is still, rewritten once it moves; let go
      * on disable; the bind axes false for a mesh not skinned to the bone.</summary>
      */
@@ -18,6 +19,7 @@ namespace AnimeShaders.Tests
 
         private const float Close = 1e-3f;
         private static readonly Quaternion BoneAtRest = Quaternion.Euler(90f, 0f, 0f);
+        private static readonly Quaternion MeshTurned = Quaternion.Euler(270f, 0f, 0f);
 
         private GameObject _root;
         private Transform _head;
@@ -57,6 +59,7 @@ namespace AnimeShaders.Tests
             _head.SetLocalPositionAndRotation(new Vector3(0f, 1.5f, 0f), BoneAtRest);
             var body = new GameObject("Face");
             body.transform.SetParent(_root.transform, false);
+            body.transform.localRotation = MeshTurned;
             _skinned = body.AddComponent<SkinnedMeshRenderer>();
             _mesh = new Mesh
             {
@@ -133,8 +136,8 @@ namespace AnimeShaders.Tests
             var other = new GameObject("Other").transform;
             try
             {
-                Assert.IsFalse(AnimeHeadFrame.BindAxes(_skinned, other, out _, out _));
-                Assert.IsTrue(AnimeHeadFrame.BindAxes(_skinned, _head, out Vector3 forward, out _));
+                Assert.IsFalse(AnimeHeadFrame.BindAxes(_skinned, other, _root.transform, out _, out _));
+                Assert.IsTrue(AnimeHeadFrame.BindAxes(_skinned, _head, _root.transform, out Vector3 forward, out _));
                 AssertDirection(Quaternion.Inverse(BoneAtRest) * Vector3.forward, forward, "the model's front in the bone's own space");
             }
             finally
