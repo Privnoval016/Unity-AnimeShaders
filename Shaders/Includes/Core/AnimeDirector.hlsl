@@ -13,7 +13,8 @@
 //   _AnimeDirector[World]ShadowColor  rgb: shadow tone multiplier MINUS 1 (after the material's tint and the sky's shade)
 //   _AnimeDirector[World]Ambient      rgb: ambient colour, w: weight 0..1 of replacing the probe's ambient
 //   _AnimeDirector[World]Scalars      x: cast shadow strength multiplier MINUS 1; y: rim and z: line width multipliers
-//                                     MINUS 1 (characters only); w: reserved (keep 0)
+//                                     MINUS 1 (characters only), the world's y: the sky's and haze's brightness
+//                                     multiplier MINUS 1 (read by every shader the haze reaches); w: reserved (keep 0)
 //
 // The world has no direction override: the sun's angle is the sky's, so the haze, the sky and the cloud shadows read the
 // real light. Cast shadows always come from the real light.
@@ -80,6 +81,12 @@ half AnimeDirectorRimStrengthMultiplier()
 float AnimeDirectorOutlineWidthMultiplier()
 {
     return max(0.0, 1.0 + ANIME_DIRECTOR_SCALARS.z);
+}
+
+// The sky's and the haze's brightness: always the world channel's, whatever shader the haze or sky is drawn in.
+half AnimeDirectorSkyMultiplier()
+{
+    return max(0.0h, 1.0h + half(_AnimeDirectorWorldScalars.y));
 }
 
 #endif

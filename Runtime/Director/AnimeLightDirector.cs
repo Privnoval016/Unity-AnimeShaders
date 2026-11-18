@@ -143,7 +143,7 @@ namespace AnimeShaders
             LightColours colours = null, worldColours = null;
             LightAmbient ambient = null, worldAmbient = null;
             LightStrengths strengths = null;
-            WorldLight worldCast = null;
+            WorldLight worldCast = null, worldSky = null;
             foreach (LightToken token in Layers)
             {
                 if (token.Set == null)
@@ -157,6 +157,7 @@ namespace AnimeShaders
                 worldColours = world.Colours.Overrides ? world.Colours : worldColours;
                 worldAmbient = world.Ambient.Overrides ? world.Ambient : worldAmbient;
                 worldCast = world.CastShadowOverrides ? world : worldCast;
+                worldSky = world.SkyOverrides ? world : worldSky;
             }
 
             Shader.SetGlobalVector(Director.LightDirection, direction == null ? Vector4.zero : (Vector4)direction.TowardLight + new Vector4(0f, 0f, 0f, direction.Weight));
@@ -167,7 +168,7 @@ namespace AnimeShaders
             Shader.SetGlobalVector(Director.WorldLightColor, LessOne(worldColours?.Light));
             Shader.SetGlobalVector(Director.WorldShadowColor, LessOne(worldColours?.Shadow));
             Shader.SetGlobalVector(Director.WorldAmbient, Ambient(worldAmbient));
-            Shader.SetGlobalVector(Director.WorldScalars, worldCast == null ? Vector4.zero : new Vector4(worldCast.CastShadow - 1f, 0f, 0f, 0f));
+            Shader.SetGlobalVector(Director.WorldScalars, new Vector4(worldCast == null ? 0f : worldCast.CastShadow - 1f, worldSky == null ? 0f : worldSky.Sky - 1f, 0f, 0f));
             Writes++;
         }
 

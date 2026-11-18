@@ -86,6 +86,23 @@ namespace AnimeShaders.Tests
         }
 
         [Test]
+        public void TheSky_IsWrittenOnlyWhenSwitched_BesideTheWorldsCastShadow()
+        {
+            var set = ScriptableObject.CreateInstance<LightSet>();
+            _made.Add(set);
+            set.World.Sky = 0.5f;
+            set.World.CastShadowOverrides = true;
+            set.World.CastShadow = 0.75f;
+            AnimeLightDirector.Push(set, LightLevel.Base);
+            Assert.AreEqual(0f, Shader.GetGlobalVector(Director.WorldScalars).y, Close, "unswitched: no change to the sky");
+            set.World.SkyOverrides = true;
+            AnimeLightDirector.Changed(set);
+            Vector4 scalars = Shader.GetGlobalVector(Director.WorldScalars);
+            Assert.AreEqual(-0.5f, scalars.y, Close, "switched: the sky, less one");
+            Assert.AreEqual(-0.25f, scalars.x, Close, "the cast shadow beside it, untouched");
+        }
+
+        [Test]
         public void AHigherLevel_WinsOnlyWhereItSets()
         {
             LightSet below = Coloured(new Color(0.5f, 1f, 1f));

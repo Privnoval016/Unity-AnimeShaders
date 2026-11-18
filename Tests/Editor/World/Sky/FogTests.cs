@@ -10,7 +10,7 @@ namespace AnimeShaders.Tests
      * <summary>The pack's haze, published from a made sky state and seen on black surfaces drawn by Anime/World (so a
      * pixel's brightness is how much haze lies over it): off, nothing changes; it thickens with distance and thins with
      * height, on perspective and orthographic cameras; it glows toward the sun, on a character toward the real sun whatever
-     * the characters' light; the scene's own fog on as well fogs
+     * the characters' light; the director's sky dims it on the world and characters alike; the scene's own fog on as well fogs
      * nothing twice; and a wall at the sky's distance takes the colour of the sky beside it, so far ground and sky
      * meet. The scene's fog settings are put back after.</summary>
      */
@@ -113,6 +113,37 @@ namespace AnimeShaders.Tests
             Color[] off = Render();
             Assert.Greater(FrameReads.Count(neutral, FrameReads.Covered), 0, "the wall drew");
             Assert.IsTrue(neutral.SequenceEqual(off), "the haze off is the frame with no haze published");
+        }
+
+        [Test]
+        public void TheDirectorsSky_DimsTheHaze_OnTheWorldAndOnACharacter()
+        {
+            Material character = TestMaterials.Character(Color.black, Color.black);
+            var dim = ScriptableObject.CreateInstance<LightSet>();
+            dim.World.SkyOverrides = true;
+            dim.World.Sky = 0.5f;
+            try
+            {
+                LookFromOrigin();
+                Wall(new Vector3(-90f, 0f, 300f), 120f);
+                _stage.Add(_quad, character, new Vector3(90f, 0f, 300f), Quaternion.identity, Vector3.one * 120f);
+                Color[] before = Render();
+                Color[] dimmed;
+                using (AnimeLightDirector.Isolate())
+                {
+                    AnimeLightDirector.Push(dim, LightLevel.Shot);
+                    dimmed = Render();
+                }
+                Color world = At(before, 0.24f, 0.5f), characterHaze = At(before, 0.76f, 0.5f);
+                Assert.Greater(world.r, 0.1f, "the far wall is hazed");
+                Assert.AreEqual(0.5f, At(dimmed, 0.24f, 0.5f).r / world.r, 0.03f, "the world's haze halved");
+                Assert.AreEqual(0.5f, At(dimmed, 0.76f, 0.5f).r / characterHaze.r, 0.03f, "and a character's, the same air");
+            }
+            finally
+            {
+                Object.DestroyImmediate(character);
+                Object.DestroyImmediate(dim);
+            }
         }
 
         [Test]

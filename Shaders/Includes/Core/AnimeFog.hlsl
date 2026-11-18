@@ -1,12 +1,14 @@
 #ifndef ANIME_FOG_INCLUDED
 #define ANIME_FOG_INCLUDED
 
-// The haze: distance and height fog in the published haze colour, glowing toward the sun. With the atmosphere keyword
+// The haze: distance and height fog in the published haze colour, glowing toward the sun, as bright as the light
+// director's sky says. With the atmosphere keyword
 // off it is URP's own fog (MixFog), as before. Exact on orthographic cameras (distance from the camera's plane), and on
 // transparents, since it is applied per pixel by the shader that draws it.
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 #include "AnimeWorld.hlsl"
+#include "AnimeDirector.hlsl"
 
 // The largest exponent the height term takes, so a long ray up or down never overflows.
 #define ANIME_HAZE_MAX_EXPONENT 60.0
@@ -26,7 +28,7 @@ half3 AnimeHazeAlong(half3 colour, float3 origin, float3 ray, float distance)
     float3 sun = normalize(_MainLightPosition.xyz);
     float away = 1.0 - dot(ray, sun);
     half glow = half(exp(-away / max(_AnimeHazeSky.y * _AnimeHazeSky.y * 0.5, 1e-4))) * half(_AnimeHazeGlow.a);
-    half3 haze = lerp(half3(_AnimeHazeColor.rgb), half3(_AnimeHazeGlow.rgb), glow);
+    half3 haze = lerp(half3(_AnimeHazeColor.rgb), half3(_AnimeHazeGlow.rgb), glow) * AnimeDirectorSkyMultiplier();
     return lerp(colour, haze, cover);
 }
 

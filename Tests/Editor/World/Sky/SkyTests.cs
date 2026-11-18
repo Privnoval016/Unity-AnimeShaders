@@ -130,6 +130,36 @@ namespace AnimeShaders.Tests
         }
 
         [Test]
+        public void TheDirectorsSky_DimsTheWholeSkyByItsMultiplier_TheCharactersLightDoesNot()
+        {
+            var characters = ScriptableObject.CreateInstance<LightSet>();
+            characters.Characters.Colours.Overrides = true;
+            characters.Characters.Colours.Light = new Color(0.5f, 0.5f, 0.5f);
+            var dim = ScriptableObject.CreateInstance<LightSet>();
+            dim.World.SkyOverrides = true;
+            dim.World.Sky = 0.5f;
+            try
+            {
+                using (AnimeLightDirector.Isolate())
+                {
+                    Color before = FrameReads.Centre(Looking(Vector3.up));
+                    AnimeLightDirector.Push(characters, LightLevel.Base);
+                    Color same = FrameReads.Centre(Looking(Vector3.up));
+                    Assert.AreEqual(before.r, same.r, 1e-3f, "the characters' light never reaches the sky");
+                    AnimeLightDirector.Push(dim, LightLevel.Shot);
+                    Color dimmed = FrameReads.Centre(Looking(Vector3.up));
+                    Assert.AreEqual(0.5f, dimmed.r / before.r, 0.02f, $"halved: {before} to {dimmed}");
+                    Assert.AreEqual(0.5f, dimmed.b / before.b, 0.02f, "every channel alike");
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(characters);
+                Object.DestroyImmediate(dim);
+            }
+        }
+
+        [Test]
         public void TheSunDisc_IsWhereTheLightPoints()
         {
             _made.Set("discStrength", 3f);

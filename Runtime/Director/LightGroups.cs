@@ -139,7 +139,7 @@ namespace AnimeShaders
         public LightStrengths Strengths => strengths;
     }
 
-    /** <summary>The world's light, adjusting the sky's (no direction: the sun's angle is the sky's; no rim or line).</summary> */
+    /** <summary>The world's light, adjusting the sky preset's (no direction: the sun's angle is the sky's; no rim or line), and the sky's and haze's brightness.</summary> */
     [Serializable]
     public sealed class WorldLight
     {
@@ -152,6 +152,12 @@ namespace AnimeShaders
         [Tooltip("Multiplies how dark cast shadows are on the world (1 no change, 0 none).")]
         [SerializeField, Range(0f, 2f)] private float castShadow = 1f;
 
+        [Tooltip("Set the sky's brightness: off leaves what lies beneath.")]
+        [SerializeField] private bool skyOverrides;
+
+        [Tooltip("Multiplies the sky and the haze together (1 no change, below 1 dimmer), so far ground still meets the sky.")]
+        [SerializeField, Range(0f, 2f)] private float sky = 1f;
+
         /** <summary>The light and shadow colours.</summary> */
         public LightColours Colours => colours;
 
@@ -163,5 +169,11 @@ namespace AnimeShaders
 
         /** <summary>The cast shadow multiplier.</summary> */
         public float CastShadow { get => castShadow; set => castShadow = value; }
+
+        /** <summary>Whether it sets the sky's brightness.</summary> */
+        public bool SkyOverrides { get => skyOverrides; set => skyOverrides = value; }
+
+        /** <summary>The sky and haze multiplier.</summary> */
+        public float Sky { get => sky; set => sky = value; }
     }
 }

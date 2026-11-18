@@ -241,8 +241,9 @@ A **`LightSet`** (Create > Anime Shaders > Light Set) holds a light for the char
 groups, each with its own **Overrides** switch; a group switched off leaves what lies beneath. The characters':
 **Direction** (yaw and pitch toward the light, world space, and how much of it replaces the scene's light),
 **Colours** (light and shadow, multipliers: white changes nothing), **Ambient** (a colour and how much it replaces the
-probe's) and **Strengths** (cast shadow, rim and line width, multipliers). The world's: Colours, Ambient and its cast
-shadow, adjusting the sky preset's light, never its direction (the sun's angle is the preset's).
+probe's) and **Strengths** (cast shadow, rim and line width, multipliers). The world's: Colours, Ambient, its cast
+shadow, and **Sky** (the sky and the haze together, so far ground still meets the sky), adjusting the sky preset's light,
+never its direction (the sun's angle is the preset's).
 
 **`AnimeLightDirector`** keeps the lights pushed (`Push(set, level)` returns a `LightToken`; disposing it removes that
 light, and disposing again or late does nothing). Each group comes from the highest light switching it on; levels are
@@ -258,7 +259,7 @@ camera renders that camera with no director light (a figure framed on its own, a
 
 Never set, every global is zero and means no change. Names and ids in `AnimeShaderIds.Director`. The character shaders
 read the characters' channel; a shader defining `ANIME_DIRECTOR_WORLD` in its `HLSLINCLUDE` (`Anime/World`,
-`Anime/Ground`) reads the world's. The haze, the sky and cloud shadows take the real sun's direction.
+`Anime/Ground`) reads the world's. The haze, the sky and cloud shadows take the real sun's direction; the haze and the sky take only the world's Sky brightness.
 
 | Global | Encoding |
 |---|---|
@@ -266,7 +267,7 @@ read the characters' channel; a shader defining `ANIME_DIRECTOR_WORLD` in its `H
 | `_AnimeDirectorLightColor`, `_AnimeDirectorWorldLightColor` | rgb: light colour multiplier minus 1 |
 | `_AnimeDirectorShadowColor`, `_AnimeDirectorWorldShadowColor` | rgb: shadow tone multiplier minus 1 |
 | `_AnimeDirectorAmbient`, `_AnimeDirectorWorldAmbient` | rgb: ambient colour; w: weight 0..1 of replacing the probe's ambient |
-| `_AnimeDirectorScalars`, `_AnimeDirectorWorldScalars` | x: cast shadow strength multiplier minus 1; y: rim and z: line width multipliers minus 1 (characters only); w: reserved |
+| `_AnimeDirectorScalars`, `_AnimeDirectorWorldScalars` | x: cast shadow strength multiplier minus 1; y: rim and z: line width multipliers minus 1 (characters only); the world's y: the sky's and haze's brightness multiplier minus 1, read by the sky and by the haze in every pack shader; w: reserved |
 
 ### The dither fade
 

@@ -6,6 +6,9 @@
   Overrides switch), `AnimeLightDirector` (a stack by level, Base, Area and Shot; tokens; globals written only on a
   change; `Suspend`, `Isolate`), `LightArea` (an interior's light, with an edge margin), `AnimeLightExempt` (a camera
   keeping its own light). A sky preset's **Light** is the base, pushed by the applier owning the sky.
+- The world light's **Sky**: the sky and the haze dimmed or brightened together (`_AnimeDirectorWorldScalars.y`), on
+  every pack shader the haze reaches. Tests: the sky halved by 0.5 and untouched by the characters' light, the haze
+  halved on world and character surfaces, written only when switched; break proofs.
 - Day carries `DayLight`: the world's light and shadow a touch quieter, the characters' shadow side filled.
 - Two channels: the world's director globals (`_AnimeDirectorWorld*`: light and shadow colour, ambient, cast shadow)
   read by `Anime/World` and `Anime/Ground` (`ANIME_DIRECTOR_WORLD`); the characters keep the existing names. The haze,

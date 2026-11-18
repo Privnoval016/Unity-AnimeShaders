@@ -223,7 +223,7 @@ half4 AnimeSkyFragment(AnimeSkyVaryings input) : SV_Target
     if (_RidgeColor2.a > 0.0h)
         sky = AnimeSkyRidge(sky, _RidgeColor2, _RidgeShape2, _RidgeDistance.z, direction, around, sun);
 
-    return half4(sky, 1.0h);
+    return half4(sky * AnimeDirectorSkyMultiplier(), 1.0h);
 }
 
 #endif
