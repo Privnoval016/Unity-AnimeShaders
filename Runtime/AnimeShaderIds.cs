@@ -28,6 +28,9 @@ namespace AnimeShaders
         /** <summary>The light mode of the depth-edge rim pass, drawn by <c>AnimeRimFeature</c>.</summary> */
         public const string RimLightMode = "AnimeRim";
 
+        /** <summary>The character shader's name.</summary> */
+        public const string CharacterShader = "Anime/Character";
+
         /** <summary>The face shader's name.</summary> */
         public const string FaceShader = "Anime/Face";
 

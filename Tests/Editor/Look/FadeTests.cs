@@ -105,5 +105,26 @@ namespace AnimeShaders.Tests
             int solid = Count(CoverageAt(AnimeShaderIds.Fade.Solid));
             Assert.AreEqual(solid, Count(CoverageAt(~AnimeShaderIds.Fade.LevelMask)));
         }
+
+        [Test]
+        public void ACoverage_KeepsThatShareOfThePixels_InSixteenths()
+        {
+            int solid = Count(CoverageAt(AnimeShaderIds.Fade.Solid));
+            Assert.Greater(solid, 256, "the sphere covers enough pixels to count");
+            foreach (float coverage in new[] { 0.25f, 0.5f, 0.75f })
+                Assert.AreEqual(coverage, Count(CoverageAt(AnimeFade.LevelFor(coverage))) / (float)solid, 0.02f, $"{coverage} kept");
+            Assert.AreEqual(AnimeShaderIds.Fade.Solid, AnimeFade.LevelFor(1f), "all kept: solid");
+            Assert.AreEqual(AnimeShaderIds.Fade.Full, AnimeFade.LevelFor(0f), "none kept: gone");
+            Assert.AreEqual(AnimeFade.LevelFor(0.25f), AnimeFade.LevelFor(0.26f), "rounded to the pattern's steps");
+        }
+
+        [Test]
+        public void TheCharacterShaders_ReadTheFade_TheWorldsDoNot()
+        {
+            foreach (string name in new[] { AnimeShaderIds.CharacterShader, AnimeShaderIds.FaceShader, AnimeShaderIds.HairShader, AnimeShaderIds.EyesShader })
+                Assert.IsTrue(AnimeFade.ReadsFade(Shader.Find(name)), name);
+            Assert.IsFalse(AnimeFade.ReadsFade(Shader.Find("Anime/World")), "the world leaves the fade out");
+            Assert.IsFalse(AnimeFade.ReadsFade(Shader.Find("Universal Render Pipeline/Lit")), "not a pack shader");
+        }
     }
 }

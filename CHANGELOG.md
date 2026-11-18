@@ -18,6 +18,9 @@
   (`LightShadowStrength`, `LightSky`). One global list and write path; `Writes` internal. The baker's open-edge scan is
   its own class, `DefaultQuantiseShare`, `long` weld keys. The inspector warns at Line On Open Edges with no Z offset.
   The project-wide line-cull scan moved to the host project. New tests and break proofs for each.
+- `AnimeFade`: a coverage as the fade level in the pattern's sixteenths (`LevelFor`), written to a mesh or skinned
+  renderer (`Apply`), and which shaders read it (`ReadsFade`, `Fades`); `AnimeShaderIds.CharacterShader`. Tests: a
+  quarter, a half and three quarters kept as rendered.
 - Day carries `DayLight`: the world's light and shadow a touch quieter, the characters' shadow side filled.
 - Two channels: the world's director globals (`_AnimeDirectorWorld*`: light and shadow colour, ambient, cast shadow)
   read by `Anime/World` and `Anime/Ground` (`ANIME_DIRECTOR_WORLD`); the characters keep the existing names. The haze,
