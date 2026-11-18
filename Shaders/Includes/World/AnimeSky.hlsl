@@ -170,8 +170,8 @@ half3 AnimeSkyRidge(half3 sky, half4 colour, float4 shape, float distance, float
     half3 mist = _HorizonColor.rgb;
     if (ANIME_ATMOSPHERE_ON)
     {
-        mist = AnimeHazeAlong(ridge, _WorldSpaceCameraPos, direction, _AnimeHazeSky.x);
-        ridge = AnimeHazeAlong(ridge, _WorldSpaceCameraPos, direction, distance);
+        mist = AnimeHazeAlongAt(ridge, _WorldSpaceCameraPos, direction, _AnimeHazeSky.x, 1.0h);
+        ridge = AnimeHazeAlongAt(ridge, _WorldSpaceCameraPos, direction, distance, 1.0h);
     }
     half foot = half(1.0 - smoothstep(0.0, max(_RidgeMist.x, 1e-4), direction.y)) * half(_RidgeMist.y);
     ridge = lerp(ridge, mist, foot);
@@ -206,7 +206,7 @@ half4 AnimeSkyFragment(AnimeSkyVaryings input) : SV_Target
     half halo = half(exp(-away / max(_SunHaloSize * _SunHaloSize * 0.5, 1e-5))) * _SunHaloStrength;
     sky = min(sky + _SunColor.rgb * halo * (1.0h - cloud * 0.6h), _BloomCeiling);
     if (ANIME_ATMOSPHERE_ON)
-        sky = AnimeHazeAlong(sky, _WorldSpaceCameraPos, direction, _AnimeHazeSky.x);
+        sky = AnimeHazeAlongAt(sky, _WorldSpaceCameraPos, direction, _AnimeHazeSky.x, 1.0h);
 
     float discEdge = _SunSize * _SunSize * 0.5;
     half disc = half(1.0 - smoothstep(discEdge * 0.8, discEdge, away)) * (1.0h - cloud * 0.9h);

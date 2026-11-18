@@ -40,5 +40,9 @@ MonoBehaviour:
       overrides: 0
       colour: {r: 0.5, g: 0.5, b: 0.5, a: 1}
       weight: 1
-    castShadowOverrides: 0
-    castShadow: 1
+    shadow:
+      overrides: 0
+      castShadow: 1
+    sky:
+      overrides: 0
+      brightness: 1

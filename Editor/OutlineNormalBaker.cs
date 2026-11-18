@@ -8,16 +8,9 @@ namespace AnimeShaders.EditorTools
 {
     /**
      * <summary>Bakes smoothed outline normals into UV3 of every mesh in a model that carries the
-     * <see cref="AnimeShaderIds.OutlineNormalLabel"/> asset label.</summary>
-     * <remarks>Each vertex's normal is averaged, weighted by corner angle, with those of every vertex of the mesh at
-     * the same quantised position (across submeshes, so a material seam doesn't crack the line), and stored in that
-     * vertex's own tangent space, so the value follows skinning (UV3.xyz). A vertex on an open edge (an edge of one
-     * triangle, positions welded as above so UV and material seams are not edges) also gets the outward direction in its
-     * sheet's plane, summed over its open edges and normalised, as an angle in its tangent plane plus
-     * <see cref="AnimeShaderIds.OutlineOpenEdgeOffset" /> (UV3.w; 0 elsewhere): the line widens past hems with Line On
-     * Open Edges. Degenerate triangles are skipped; an edge on three or more triangles is not open; two coincident
-     * layers read as closed. Lighting normals are never changed; a mesh with no tangents gets them built from its UVs. A mesh that already has UV3 is left alone with a warning. Changing a
-     * model's labels does not reimport it: reimport the model after adding the label.</remarks>
+     * <see cref="AnimeShaderIds.OutlineNormalLabel"/> asset label: UV3.xyz the normal averaged over every vertex at one
+     * welded position, in the vertex's tangent space; UV3.w an open edge's outward angle (0 inside). The rules are in
+     * the README's "The outline".</summary>
      */
     public class OutlineNormalBaker : AssetPostprocessor
     {
@@ -28,6 +21,12 @@ namespace AnimeShaders.EditorTools
         /** <summary>Below this sine of its smallest corner a triangle is too thin to have a plane: skipped.</summary> */
         private const float ThinnestTriangle = 1e-6f;
 
+        /** <summary>A direction whose squared length is below this has none (a sum that cancelled, a vertex on the axis).</summary> */
+        private const float NoDirection = 1e-8f;
+
+        /** <summary>The finest weld grid, in mesh units, so a mesh with no size still welds.</summary> */
+        private const float FinestGrid = 1e-9f;
+
         #endregion
 
         #region Properties
@@ -37,8 +36,7 @@ namespace AnimeShaders.EditorTools
          * closer than that share a smoothed normal and an edge. Relative, so a model imported at a hundredth of its size
          * (a centimetre export) welds as finely as one in metres.</summary>
          */
-        public const float DefaultQuantise = 1e-5f;
-
+        public const float DefaultQuantiseShare = 1e-5f;
 
         /** <summary>The bake's version: raising it reimports every model (labelled or not) once.</summary> */
         public const uint BakeVersion = 4u;
@@ -50,11 +48,11 @@ namespace AnimeShaders.EditorTools
         /**
          * <summary>Bakes the outline normals of one mesh into <see cref="AnimeShaderIds.OutlineNormalChannel"/>.</summary>
          * <param name="mesh">A readable mesh.</param>
-         * <param name="quantise">Positions are grouped at this share of the mesh's size.</param>
+         * <param name="quantiseShare">Positions are grouped at this share of the mesh's size.</param>
          * <returns>True when the channel was written; false when the mesh has no normals or already uses the channel
          * for something else (a model's own fourth UV set is never overwritten).</returns>
          */
-        public static bool Bake(Mesh mesh, float quantise = DefaultQuantise)
+        public static bool Bake(Mesh mesh, float quantiseShare = DefaultQuantiseShare)
         {
             Vector3[] normals = mesh.normals;
             Vector3[] vertices = mesh.vertices;
@@ -73,7 +71,7 @@ namespace AnimeShaders.EditorTools
                 tangents = mesh.tangents;
             }
 
-            float grid = Mathf.Max(quantise * mesh.bounds.size.magnitude, 1e-9f);
+            float grid = Mathf.Max(quantiseShare * mesh.bounds.size.magnitude, FinestGrid);
             Vector3[] smoothed = SmoothByPosition(mesh, vertices, normals, grid);
             Vector3[] outward = OpenEdgeOutward(mesh, vertices, grid);
             var packed = new List<Vector4>(vertices.Length);
@@ -150,10 +148,10 @@ namespace AnimeShaders.EditorTools
                     AddCornerWeights(mesh.GetTriangles(submesh), vertices, normals, weighted);
             }
 
-            var groups = new Dictionary<Vector3Int, Vector3>(vertices.Length);
+            var groups = new Dictionary<(long, long, long), Vector3>(vertices.Length);
             for (int v = 0; v < vertices.Length; v++)
             {
-                Vector3Int key = Quantise(vertices[v], quantise);
+                (long, long, long) key = Quantise(vertices[v], quantise);
                 groups.TryGetValue(key, out Vector3 sum);
                 groups[key] = sum + weighted[v];
             }
@@ -191,12 +189,11 @@ namespace AnimeShaders.EditorTools
             return Mathf.Acos(Mathf.Clamp(Vector3.Dot(a, b) / lengths, -1f, 1f));
         }
 
-        private static Vector3Int Quantise(Vector3 position, float quantise)
+        /** <summary>A position's weld cell; whole numbers wide enough for any mesh's position over the finest grid.</summary> */
+        private static (long, long, long) Quantise(Vector3 position, float quantise)
         {
-            return new Vector3Int(
-                (int)Math.Round(position.x / quantise),
-                (int)Math.Round(position.y / quantise),
-                (int)Math.Round(position.z / quantise));
+            return ((long)Math.Round((double)position.x / quantise), (long)Math.Round((double)position.y / quantise),
+                (long)Math.Round((double)position.z / quantise));
         }
 
         /**
@@ -206,68 +203,13 @@ namespace AnimeShaders.EditorTools
          */
         private static Vector3[] OpenEdgeOutward(Mesh mesh, Vector3[] vertices, float quantise)
         {
-            var welded = new int[vertices.Length];
-            var ids = new Dictionary<Vector3Int, int>(vertices.Length);
-            for (int v = 0; v < vertices.Length; v++)
-            {
-                Vector3Int key = Quantise(vertices[v], quantise);
-                if (!ids.TryGetValue(key, out int id))
-                {
-                    id = ids.Count;
-                    ids[key] = id;
-                }
-                welded[v] = id;
-            }
-
-            var edges = new Dictionary<(int, int), (int Count, Vector3 Outward)>();
+            var scan = new OpenEdgeScan(vertices, quantise);
             for (int submesh = 0; submesh < mesh.subMeshCount; submesh++)
             {
-                if (mesh.GetTopology(submesh) != MeshTopology.Triangles)
-                    continue;
-                int[] triangles = mesh.GetTriangles(submesh);
-                for (int t = 0; t + 2 < triangles.Length; t += 3)
-                {
-                    int a = triangles[t], b = triangles[t + 1], c = triangles[t + 2];
-                    if (welded[a] == welded[b] || welded[b] == welded[c] || welded[a] == welded[c])
-                        continue;
-                    Vector3 ab = vertices[b] - vertices[a], ac = vertices[c] - vertices[a];
-                    Vector3 face = Vector3.Cross(ab, ac);
-                    if (face.sqrMagnitude <= ThinnestTriangle * ThinnestTriangle * ab.sqrMagnitude * ac.sqrMagnitude)
-                        continue;
-                    AddEdge(edges, welded, vertices, face, a, b, c);
-                    AddEdge(edges, welded, vertices, face, b, c, a);
-                    AddEdge(edges, welded, vertices, face, c, a, b);
-                }
+                if (mesh.GetTopology(submesh) == MeshTopology.Triangles)
+                    scan.AddTriangles(mesh.GetTriangles(submesh));
             }
-
-            var sums = new Vector3[ids.Count];
-            foreach (KeyValuePair<(int, int), (int Count, Vector3 Outward)> edge in edges)
-            {
-                if (edge.Value.Count != 1)
-                    continue;
-                sums[edge.Key.Item1] += edge.Value.Outward;
-                sums[edge.Key.Item2] += edge.Value.Outward;
-            }
-
-            var outward = new Vector3[vertices.Length];
-            for (int v = 0; v < vertices.Length; v++)
-            {
-                Vector3 sum = sums[welded[v]];
-                outward[v] = sum.sqrMagnitude > 1e-8f ? sum.normalized : Vector3.zero;
-            }
-            return outward;
-        }
-
-        private static void AddEdge(Dictionary<(int, int), (int Count, Vector3 Outward)> edges, int[] welded, Vector3[] vertices,
-            Vector3 face, int from, int to, int third)
-        {
-            Vector3 along = vertices[to] - vertices[from];
-            Vector3 across = Vector3.Cross(face / face.magnitude, along / along.magnitude);
-            if (Vector3.Dot(across, vertices[third] - vertices[from]) > 0f)
-                across = -across;
-            (int, int) key = welded[from] < welded[to] ? (welded[from], welded[to]) : (welded[to], welded[from]);
-            edges.TryGetValue(key, out (int Count, Vector3 Outward) seen);
-            edges[key] = (seen.Count + 1, seen.Outward + across);
+            return scan.Outward();
         }
 
         /** <summary>The outward direction as an angle in the vertex's tangent plane plus the offset, or 0 for none.</summary> */
@@ -276,7 +218,7 @@ namespace AnimeShaders.EditorTools
             Vector3 n = normal.normalized;
             Vector3 inPlane = outward - n * Vector3.Dot(outward, n);
             Vector3 t = (Vector3)tangent - n * Vector3.Dot(n, tangent);
-            if (inPlane.sqrMagnitude < 1e-8f || t.sqrMagnitude < 1e-8f)
+            if (inPlane.sqrMagnitude < NoDirection || t.sqrMagnitude < NoDirection)
                 return 0f;
             t.Normalize();
             Vector3 b = Vector3.Cross(n, t) * (tangent.w < 0f ? -1f : 1f);
@@ -287,11 +229,89 @@ namespace AnimeShaders.EditorTools
         {
             Vector3 n = normal.normalized;
             Vector3 t = (Vector3)tangent - n * Vector3.Dot(n, tangent);
-            if (t.sqrMagnitude < 1e-8f)
+            if (t.sqrMagnitude < NoDirection)
                 return new Vector3(0f, 0f, Vector3.Dot(smoothed, n));
             t.Normalize();
             Vector3 b = Vector3.Cross(n, t) * (tangent.w < 0f ? -1f : 1f);
             return new Vector3(Vector3.Dot(smoothed, t), Vector3.Dot(smoothed, b), Vector3.Dot(smoothed, n));
+        }
+
+        /** <summary>The open edges of one mesh: its vertices welded by position, each edge counted with its outward sum.</summary> */
+        private sealed class OpenEdgeScan
+        {
+            private readonly Vector3[] _vertices;
+            private readonly int[] _welded;
+            private readonly int _positions;
+            private readonly Dictionary<(int, int), (int Count, Vector3 Outward)> _edges = new();
+
+            public OpenEdgeScan(Vector3[] vertices, float quantise)
+            {
+                _vertices = vertices;
+                _welded = new int[vertices.Length];
+                var ids = new Dictionary<(long, long, long), int>(vertices.Length);
+                for (int v = 0; v < vertices.Length; v++)
+                {
+                    (long, long, long) key = Quantise(vertices[v], quantise);
+                    if (!ids.TryGetValue(key, out int id))
+                    {
+                        id = ids.Count;
+                        ids[key] = id;
+                    }
+                    _welded[v] = id;
+                }
+                _positions = ids.Count;
+            }
+
+            /** <summary>Counts each edge of each triangle in <paramref name="triangles" />, skipping degenerate ones.</summary> */
+            public void AddTriangles(int[] triangles)
+            {
+                for (int t = 0; t + 2 < triangles.Length; t += 3)
+                {
+                    int a = triangles[t], b = triangles[t + 1], c = triangles[t + 2];
+                    if (_welded[a] == _welded[b] || _welded[b] == _welded[c] || _welded[a] == _welded[c])
+                        continue;
+                    Vector3 ab = _vertices[b] - _vertices[a], ac = _vertices[c] - _vertices[a];
+                    Vector3 face = Vector3.Cross(ab, ac);
+                    if (face.sqrMagnitude <= ThinnestTriangle * ThinnestTriangle * ab.sqrMagnitude * ac.sqrMagnitude)
+                        continue;
+                    Vector3 plane = face / face.magnitude;
+                    AddEdge(plane, a, b, c);
+                    AddEdge(plane, b, c, a);
+                    AddEdge(plane, c, a, b);
+                }
+            }
+
+            /** <summary>Each vertex's outward direction: its welded position's open edges' sum, normalised (zero for none).</summary> */
+            public Vector3[] Outward()
+            {
+                var sums = new Vector3[_positions];
+                foreach (KeyValuePair<(int, int), (int Count, Vector3 Outward)> edge in _edges)
+                {
+                    if (edge.Value.Count != 1)
+                        continue;
+                    sums[edge.Key.Item1] += edge.Value.Outward;
+                    sums[edge.Key.Item2] += edge.Value.Outward;
+                }
+
+                var outward = new Vector3[_vertices.Length];
+                for (int v = 0; v < _vertices.Length; v++)
+                {
+                    Vector3 sum = sums[_welded[v]];
+                    outward[v] = sum.sqrMagnitude > NoDirection ? sum.normalized : Vector3.zero;
+                }
+                return outward;
+            }
+
+            private void AddEdge(Vector3 plane, int from, int to, int third)
+            {
+                Vector3 along = _vertices[to] - _vertices[from];
+                Vector3 across = Vector3.Cross(plane, along / along.magnitude);
+                if (Vector3.Dot(across, _vertices[third] - _vertices[from]) > 0f)
+                    across = -across;
+                (int, int) key = _welded[from] < _welded[to] ? (_welded[from], _welded[to]) : (_welded[to], _welded[from]);
+                _edges.TryGetValue(key, out (int Count, Vector3 Outward) seen);
+                _edges[key] = (seen.Count + 1, seen.Outward + across);
+            }
         }
 
         #endregion

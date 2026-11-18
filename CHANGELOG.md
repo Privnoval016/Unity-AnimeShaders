@@ -9,6 +9,15 @@
 - The world light's **Sky**: the sky and the haze dimmed or brightened together (`_AnimeDirectorWorldScalars.y`), on
   every pack shader the haze reaches. Tests: the sky halved by 0.5 and untouched by the characters' light, the haze
   halved on world and character surfaces, written only when switched; break proofs.
+- Review fixes (four reviewers): the sky hazes once and dims once (far ground meets a dimmed sky); the open-edge push
+  is a unit world direction at any scale and only where a baked normal exists; a direction override cancelling the
+  light falls back to it; the world channel never reads its sky as a rim or line multiplier; `Isolate` leaves
+  suspensions alone; `Clear` releases its tokens (`LightToken.Released` public); the exempt camera recovers a lost end;
+  a cleared preset releases its light; a light area's margin is metres at any scale. Light groups derive from
+  `LightGroup`, drawn greyed while off (`Editor/Director/LightGroupDrawer`); the world's cast shadow and sky are groups
+  (`LightShadowStrength`, `LightSky`). One global list and write path; `Writes` internal. The baker's open-edge scan is
+  its own class, `DefaultQuantiseShare`, `long` weld keys. The inspector warns at Line On Open Edges with no Z offset.
+  The project-wide line-cull scan moved to the host project. New tests and break proofs for each.
 - Day carries `DayLight`: the world's light and shadow a touch quieter, the characters' shadow side filled.
 - Two channels: the world's director globals (`_AnimeDirectorWorld*`: light and shadow colour, ambient, cast shadow)
   read by `Anime/World` and `Anime/Ground` (`ANIME_DIRECTOR_WORLD`); the characters keep the existing names. The haze,

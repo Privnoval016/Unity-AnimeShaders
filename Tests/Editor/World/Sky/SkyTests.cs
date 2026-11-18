@@ -136,8 +136,8 @@ namespace AnimeShaders.Tests
             characters.Characters.Colours.Overrides = true;
             characters.Characters.Colours.Light = new Color(0.5f, 0.5f, 0.5f);
             var dim = ScriptableObject.CreateInstance<LightSet>();
-            dim.World.SkyOverrides = true;
-            dim.World.Sky = 0.5f;
+            dim.World.Sky.Overrides = true;
+            dim.World.Sky.Brightness = 0.5f;
             try
             {
                 using (AnimeLightDirector.Isolate())

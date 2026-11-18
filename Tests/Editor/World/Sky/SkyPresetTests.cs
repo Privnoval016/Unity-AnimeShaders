@@ -14,7 +14,8 @@ namespace AnimeShaders.Tests
      * the world's globals snapshot and put back): every value lands on the sky, the sun, the scene and the globals; the
      * scene's fog takes the haze; clouds need a noise; clearing the globals clears them; the component with no preset
      * (Authored) writes nothing, and switched off clears the globals; a preset's light is the base while its applier owns
-     * the sky, replaced by the next and removed with it; every shipped preset carries its state.</summary>
+     * the sky, replaced by the next (under a lit shot too), removed with it, with a next sky that has none, and as the
+     * preset is cleared; every shipped preset carries its state.</summary>
      */
     public class SkyPresetTests
     {
@@ -257,6 +258,85 @@ namespace AnimeShaders.Tests
                 dusk.Dispose();
                 Object.DestroyImmediate(dayLight);
                 Object.DestroyImmediate(duskLight);
+            }
+        }
+
+        [Test]
+        public void ASkyChangedUnderALitShot_LeavesTheShotOnTop_AndANextSkyWithNoLightRemovesTheBase()
+        {
+            var first = new GameObject("First Sky");
+            var second = new GameObject("Second Sky");
+            var third = new GameObject("Third Sky");
+            var day = new MadeSky();
+            var dusk = new MadeSky();
+            var unlit = new MadeSky();
+            var dayLight = ScriptableObject.CreateInstance<LightSet>();
+            var duskLight = ScriptableObject.CreateInstance<LightSet>();
+            var shot = ScriptableObject.CreateInstance<LightSet>();
+            var director = new DirectorGlobals();
+            IDisposable isolated = AnimeLightDirector.Isolate();
+            try
+            {
+                duskLight.World.Ambient.Overrides = true;
+                shot.World.Colours.Overrides = true;
+                shot.World.Colours.Light = new Color(0.5f, 0.5f, 0.5f);
+                LitBy(day.Preset, dayLight);
+                LitBy(dusk.Preset, duskLight);
+                Applier(first, day.Preset);
+                Applier(second, dusk.Preset);
+                Applier(third, unlit.Preset);
+                first.SetActive(true);
+                LightToken lit = AnimeLightDirector.Push(shot, LightLevel.Shot);
+                second.SetActive(true);
+                Assert.AreSame(shot, AnimeLightDirector.Pushed[AnimeLightDirector.Pushed.Count - 1].Set, "the shot still on top");
+                Assert.AreEqual(new Color(0.5f, 0.5f, 0.5f).linear.r - 1f, Shader.GetGlobalVector(AnimeShaderIds.Director.WorldLightColor).x, 1e-4f, "its colour still shows");
+                Assert.Greater(Shader.GetGlobalVector(AnimeShaderIds.Director.WorldAmbient).w, 0.5f, "the new base's ambient shows where the shot sets nothing");
+                lit.Dispose();
+                third.SetActive(true);
+                Assert.AreEqual(0, AnimeLightDirector.Pushed.Count, "a sky with no light: no base left behind");
+            }
+            finally
+            {
+                Object.DestroyImmediate(first);
+                Object.DestroyImmediate(second);
+                Object.DestroyImmediate(third);
+                isolated.Dispose();
+                director.Dispose();
+                day.Dispose();
+                dusk.Dispose();
+                unlit.Dispose();
+                Object.DestroyImmediate(dayLight);
+                Object.DestroyImmediate(duskLight);
+                Object.DestroyImmediate(shot);
+            }
+        }
+
+        [Test]
+        public void ClearingThePresetInTheInspector_RemovesItsLight()
+        {
+            var holder = new GameObject("Sky");
+            var day = new MadeSky();
+            var dayLight = ScriptableObject.CreateInstance<LightSet>();
+            var director = new DirectorGlobals();
+            IDisposable isolated = AnimeLightDirector.Isolate();
+            try
+            {
+                LitBy(day.Preset, dayLight);
+                Applier(holder, day.Preset);
+                holder.SetActive(true);
+                Assert.AreEqual(1, AnimeLightDirector.Pushed.Count, "pushed");
+                var serialized = new SerializedObject(holder.GetComponent<SkyPresetApplier>());
+                serialized.FindProperty("_preset").objectReferenceValue = null;
+                serialized.ApplyModifiedProperties();
+                Assert.AreEqual(0, AnimeLightDirector.Pushed.Count, "the preset cleared: its light gone with it");
+            }
+            finally
+            {
+                Object.DestroyImmediate(holder);
+                isolated.Dispose();
+                director.Dispose();
+                day.Dispose();
+                Object.DestroyImmediate(dayLight);
             }
         }
 

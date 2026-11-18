@@ -49,7 +49,8 @@ float3 AnimeDirectorLightDirection(float3 lightDirectionWS)
 #if defined(ANIME_DIRECTOR_WORLD)
     return normalize(lightDirectionWS);
 #else
-    return normalize(lerp(lightDirectionWS, _AnimeDirectorLightDirection.xyz, _AnimeDirectorLightDirection.w));
+    float3 blended = lerp(lightDirectionWS, _AnimeDirectorLightDirection.xyz, _AnimeDirectorLightDirection.w);
+    return dot(blended, blended) > 1e-6 ? normalize(blended) : normalize(lightDirectionWS);
 #endif
 }
 
@@ -73,14 +74,23 @@ half AnimeDirectorShadowStrengthMultiplier()
     return max(0.0h, 1.0h + half(ANIME_DIRECTOR_SCALARS.x));
 }
 
+// The rim and the line width are the characters' alone: the world's scalars hold other things in those places.
 half AnimeDirectorRimStrengthMultiplier()
 {
-    return max(0.0h, 1.0h + half(ANIME_DIRECTOR_SCALARS.y));
+#if defined(ANIME_DIRECTOR_WORLD)
+    return 1.0h;
+#else
+    return max(0.0h, 1.0h + half(_AnimeDirectorScalars.y));
+#endif
 }
 
 float AnimeDirectorOutlineWidthMultiplier()
 {
-    return max(0.0, 1.0 + ANIME_DIRECTOR_SCALARS.z);
+#if defined(ANIME_DIRECTOR_WORLD)
+    return 1.0;
+#else
+    return max(0.0, 1.0 + _AnimeDirectorScalars.z);
+#endif
 }
 
 // The sky's and the haze's brightness: always the world channel's, whatever shader the haze or sky is drawn in.

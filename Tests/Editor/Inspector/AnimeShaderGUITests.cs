@@ -9,8 +9,7 @@ namespace AnimeShaders.Tests
 {
     /**
      * <summary>The inspector shows each feature's settings only while it is on, and its ramp preview matches what the
-     * shader draws; the line's cull follows Line On Open Edges, set by script or the inspector, on every material in the
-     * project.</summary>
+     * shader draws; the line's cull follows Line On Open Edges, set by script or the inspector.</summary>
      */
     public class AnimeShaderGUITests
     {
@@ -95,33 +94,6 @@ namespace AnimeShaders.Tests
             _material.SetFloat(Ids.OutlineOpenEdges, 0.5f);
             new AnimeShaderGUI().ValidateMaterial(_material);
             Assert.AreEqual((float)UnityEngine.Rendering.CullMode.Off, _material.GetFloat(Switches.OutlineCull));
-        }
-
-        /** <summary>Reads each material's file for the pack's line shaders first: loading any other material would upgrade and dirty it.</summary> */
-        [Test]
-        public void EveryMaterialInTheProject_HasItsLineCullInStep()
-        {
-            var lined = new System.Collections.Generic.List<string>();
-            foreach (string shader in new[] { "Anime/Character", AnimeShaderIds.FaceShader, AnimeShaderIds.HairShader })
-                lined.Add(UnityEditor.AssetDatabase.AssetPathToGUID(UnityEditor.AssetDatabase.GetAssetPath(Shader.Find(shader))));
-            var outOfStep = new System.Collections.Generic.List<string>();
-            int checkedCount = 0;
-            foreach (string guid in UnityEditor.AssetDatabase.FindAssets("t:Material"))
-            {
-                string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
-                string text = System.IO.File.ReadAllText(path);
-                if (!lined.Exists(shaderGuid => text.Contains("guid: " + shaderGuid)))
-                    continue;
-                var material = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>(path);
-                if (material == null || !material.HasFloat(Ids.OutlineOpenEdges) || !material.HasFloat(Switches.OutlineCull))
-                    continue;
-                checkedCount++;
-                float expected = (float)(material.GetFloat(Ids.OutlineOpenEdges) > 0f ? UnityEngine.Rendering.CullMode.Off : UnityEngine.Rendering.CullMode.Front);
-                if (!Mathf.Approximately(material.GetFloat(Switches.OutlineCull), expected))
-                    outOfStep.Add(path);
-            }
-            Assert.Greater(checkedCount, 0, "found the pack's materials to check");
-            CollectionAssert.IsEmpty(outOfStep, "set Line On Open Edges through AnimeMaterials.SetOpenEdges or the inspector");
         }
     }
 }

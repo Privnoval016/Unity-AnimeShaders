@@ -10,7 +10,8 @@ namespace AnimeShaders.Tests
      * <summary>The pack's haze, published from a made sky state and seen on black surfaces drawn by Anime/World (so a
      * pixel's brightness is how much haze lies over it): off, nothing changes; it thickens with distance and thins with
      * height, on perspective and orthographic cameras; it glows toward the sun, on a character toward the real sun whatever
-     * the characters' light; the director's sky dims it on the world and characters alike; the scene's own fog on as well fogs
+     * the characters' light; the director's sky dims it on the world and characters alike, and a
+     * far wall still meets a dimmed sky; the scene's own fog on as well fogs
      * nothing twice; and a wall at the sky's distance takes the colour of the sky beside it, so far ground and sky
      * meet. The scene's fog settings are put back after.</summary>
      */
@@ -120,17 +121,17 @@ namespace AnimeShaders.Tests
         {
             Material character = TestMaterials.Character(Color.black, Color.black);
             var dim = ScriptableObject.CreateInstance<LightSet>();
-            dim.World.SkyOverrides = true;
-            dim.World.Sky = 0.5f;
+            dim.World.Sky.Overrides = true;
+            dim.World.Sky.Brightness = 0.5f;
             try
             {
                 LookFromOrigin();
                 Wall(new Vector3(-90f, 0f, 300f), 120f);
                 _stage.Add(_quad, character, new Vector3(90f, 0f, 300f), Quaternion.identity, Vector3.one * 120f);
-                Color[] before = Render();
-                Color[] dimmed;
+                Color[] before, dimmed;
                 using (AnimeLightDirector.Isolate())
                 {
+                    before = Render();
                     AnimeLightDirector.Push(dim, LightLevel.Shot);
                     dimmed = Render();
                 }
@@ -298,6 +299,39 @@ namespace AnimeShaders.Tests
             finally
             {
                 Object.DestroyImmediate(sky);
+            }
+        }
+
+        [Test]
+        public void UnderADimmedSky_AWallAtTheSkysDistance_StillMeetsTheSkyBesideIt()
+        {
+            var sky = TestMaterials.Sky();
+            var dim = ScriptableObject.CreateInstance<LightSet>();
+            dim.World.Sky.Overrides = true;
+            dim.World.Sky.Brightness = 0.5f;
+            try
+            {
+                _made.Set("hazeStart", 0f).Set("hazeDensity", 0.003f).Set("skyDistance", 1500f).Set("discStrength", 0f).Set("haloStrength", 0f);
+                SkyApply.ToSky(_made.State, sky);
+                _stage.Camera.clearFlags = CameraClearFlags.Skybox;
+                _stage.Camera.gameObject.AddComponent<Skybox>().material = sky;
+                LookFromOrigin();
+                Wall(new Vector3(-900f, 0f, 1500f), 1700f);
+                Color[] bright, dimmed;
+                using (AnimeLightDirector.Isolate())
+                {
+                    bright = Render();
+                    AnimeLightDirector.Push(dim, LightLevel.Shot);
+                    dimmed = Render();
+                }
+                Color wall = At(dimmed, 0.2f, 0.5f), beside = At(dimmed, 0.8f, 0.5f);
+                Assert.Less(FrameReads.Distance(wall, beside), 0.05f, $"dimmed: wall {wall}, sky {beside}");
+                Assert.AreEqual(0.5f, beside.r / At(bright, 0.8f, 0.5f).r, 0.03f, "and the sky there dimmed once, not twice");
+            }
+            finally
+            {
+                Object.DestroyImmediate(sky);
+                Object.DestroyImmediate(dim);
             }
         }
     }

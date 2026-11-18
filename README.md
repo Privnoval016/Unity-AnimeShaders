@@ -67,6 +67,7 @@ vertex, and has a global multiplier.
 | `Editor/ShaderDefaults.cs` | Sets the pack shaders' default textures (the noise, the neutral detail map) in every pack shader declaring the property, keeping their other defaults |
 | `Editor/DataTextures.cs`, `Editor/DataSampling.cs` | Textures that hold data: written as labelled PNGs or half-float EXRs, held by their import rule to linear, alpha-as-data settings, sampled as each needs (`DataSampling`: mipmapped and trilinear; point-sampled without mips for ids and codes; bilinear, clamped, no mips for a map laid once over a mesh's UVs); a source file's cached content hash for "out of date" (the noise's, the detail maps', the stone maps' and the face maps' rules all use it) |
 | `Editor/Detail/` | Detail sets (below): `AnimeDetailSet` (the asset), `AnimeDetailSetEditor` (Pack, out of date, video memory), `DetailMath` (the packing as pure image maths), `AnimeDetailPacker` (the sources read from disk, the map written and recorded, the neutral map), `AnimeDetailImport` (the labels `AnimeDetail` and `AnimeStones`), `DetailImage`, `DetailSources`, `DetailSettings`, `NormalConvention`; `Stones/`: `StoneMath` (finding the stones as pure image maths), `StoneSettings`, `StoneMap` |
+| `Editor/Director/` | `LightGroupDrawer`: a light set's group as a foldout, its values greyed while its Overrides switch is off |
 | `Editor/Face/` | Face maps (Create > Anime Shaders > Face Map): `AnimeFaceMap` (the asset: a face mesh, size, smoothing, sphere blend, gutter; the baked map and what the bake found), `AnimeFaceMapEditor` (Bake, out of date, video memory, warnings: few texels across the face, overlapping or mirrored UVs, a face not facing the root's +Z, a lost label), `FaceMapMath` (the bake as pure maths: each face triangle drawn into UV space with its horizontal normal in the model's space, smoothed within each UV island and never across one, normalised, near-vertical texels given their neighbour's direction, each island padded; R and G the direction, B the face weight, A coverage), `AnimeFaceMapBaker` (out of date by the model's file and import settings and the map's settings; refuses a mesh with no model, no skin weights, no Read/Write; the mesh read from its model at rest, turned into the root's space, its face weight its skin weight to the humanoid head and the bones below; the EXR written beside the asset), `AnimeFaceMapImport` (label `AnimeFaceMap`: linear, uncompressed, clamped, no mips), `FaceMapSource`, `FaceMapSettings`, `FaceMap` |
 | `Shaders/Textures/AnimeDetailNeutral.png` | The neutral detail map (shade 0.5, mask 1, flat normal): the ground's default, so a layer with no set renders as its palette's middle (Tools > Anime Shaders > Make Neutral Detail Map) |
 | `Shaders/AnimeWorld.shader`, `AnimeGround.shader`, `AnimeSky.shader`; `Shaders/Includes/World/` | The world's shaders and the ground's and sky's own code (below) |
@@ -291,6 +292,20 @@ depth clamped to `_OutlineDistanceMin`..`_OutlineDistanceMax`, times the directo
 hull away from the camera along the view ray. Width and Z offset can read vertex colour channels (`_ANIME_OUTLINE_VCOLOR`,
 off by default, because meshes' vertex colours often mean something else). Disable the line on a material with
 `material.SetShaderPassEnabled("SRPDefaultUnlit", false)`.
+
+Positions are welded on a grid a share of the mesh's size (`OutlineNormalBaker.DefaultQuantiseShare`), so UV and
+material seams are not edges and a centimetre export welds as finely as one in metres. An **open edge** is an edge of
+one triangle among the welded positions; its vertices also get, in UV3.w, the outward direction in the sheet's plane
+(perpendicular to the edge, away from the triangle's third corner, summed over the position's open edges and
+normalised) as an angle in the tangent plane plus `AnimeShaderIds.OutlineOpenEdgeOffset` (0 inside). Degenerate and
+too-thin triangles are skipped, an edge on three or more triangles is not open, and two coincident layers read as
+closed. With **Line On Open Edges** the line is drawn from both sides behind a two-sided sheet and pushed past its open
+edges and hems by that direction (a unit direction in world space, whatever the object's scale); only a vertex with a
+baked normal takes the push. The line turned behind the sheet sits behind a closed part's surface only where it faces
+the camera within about 45 degrees; past that, a closed part sharing the material needs a **Z offset** of about
+the square root of half its radius times the line's width (millimetres on a character's limb; the characters' 5 cm is
+ample), or the line shows across its sides (the inspector warns at none). A model that already has UV3 is left alone
+with a warning.
 
 ## Credits and sources
 

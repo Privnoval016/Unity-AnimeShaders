@@ -102,6 +102,14 @@ float AnimeOutlineWorldWidth(float3 positionWS)
     return _OutlineWidth * 0.001 * scale * AnimeDirectorOutlineWidthMultiplier();
 }
 
+// The open-edge push in world space, a unit direction whatever the object's scale; zero where the vertex has no baked
+// smoothed normal (a mesh never baked reads its UV3 as anything) or is not on an open edge.
+float3 AnimeOutlineOpenEdgeWS(float3 normalOS, float4 tangentOS, float4 packed)
+{
+    float3 outward = dot(packed.xyz, packed.xyz) > 1e-6 ? AnimeOutlineOpenEdgeOS(normalOS, tangentOS, packed.w) : float3(0, 0, 0);
+    return dot(outward, outward) > 1e-12 ? TransformObjectToWorldDir(outward, true) : float3(0, 0, 0);
+}
+
 AnimeOutlineVaryings AnimeOutlineVertex(AnimeOutlineAttributes input)
 {
     AnimeOutlineVaryings output = (AnimeOutlineVaryings)0;
@@ -129,7 +137,7 @@ AnimeOutlineVaryings AnimeOutlineVertex(AnimeOutlineAttributes input)
     {
         hullWS = positionWS + AnimeOutlineAwayFromCamera(normalWS, GetWorldSpaceNormalizeViewDir(positionWS)) * width;
 #if defined(_ANIME_OUTLINE_BAKED)
-        float3 openEdgeWS = TransformObjectToWorldDir(AnimeOutlineOpenEdgeOS(input.normalOS, input.tangentOS, input.outlineNormal.w), false);
+        float3 openEdgeWS = AnimeOutlineOpenEdgeWS(input.normalOS, input.tangentOS, input.outlineNormal);
         hullWS += openEdgeWS * (width * _OutlineOpenEdges);
 #endif
     }

@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 using Director = AnimeShaders.AnimeShaderIds.Director;
 
 namespace AnimeShaders
@@ -22,7 +25,7 @@ namespace AnimeShaders
             Director.LightDirection, Director.LightColor, Director.ShadowColor, Director.Ambient, Director.Scalars,
             Director.WorldLightColor, Director.WorldShadowColor, Director.WorldAmbient, Director.WorldScalars,
         };
-        private static long _pushes;
+        private static readonly Vector4[] Values = new Vector4[Globals.Length];
         private static int _suspended;
 
         #endregion
@@ -30,7 +33,7 @@ namespace AnimeShaders
         #region Properties
 
         /** <summary>How many times the globals have been written: a write happens only on a change.</summary> */
-        public static int Writes { get; private set; }
+        internal static int Writes { get; private set; }
 
         /** <summary>The lights pushed, lowest first.</summary> */
         public static IReadOnlyList<LightToken> Pushed => Layers;
@@ -42,7 +45,7 @@ namespace AnimeShaders
         /** <summary>Pushes <paramref name="set" /> at <paramref name="level" />; dispose the token to remove it.</summary> */
         public static LightToken Push(LightSet set, LightLevel level)
         {
-            var token = new LightToken(set, level, ++_pushes);
+            var token = new LightToken(set, level);
             int at = Layers.Count;
             while (at > 0 && Layers[at - 1].Level > level)
                 at--;
@@ -92,20 +95,22 @@ namespace AnimeShaders
 
         /**
          * <summary>Sets the pushed lights aside and starts with none until disposed (a test, a tool lighting its own
-         * renders), then puts back those not removed meanwhile; what was pushed inside is dropped.</summary>
+         * renders), then puts back those not removed meanwhile; what was pushed inside is dropped. Suspensions carry on
+         * through it as they were.</summary>
          */
         public static IDisposable Isolate()
         {
-            var isolation = new Isolation(new List<LightToken>(Layers), _suspended);
+            var isolation = new Isolation(new List<LightToken>(Layers));
             Layers.Clear();
-            _suspended = 0;
-            WriteNeutral();
+            Write();
             return isolation;
         }
 
-        /** <summary>Removes every light and zeroes the globals.</summary> */
+        /** <summary>Removes every light (their tokens read as released), ends every suspension and zeroes the globals.</summary> */
         public static void Clear()
         {
+            foreach (LightToken token in Layers)
+                token.Drop();
             Layers.Clear();
             _suspended = 0;
             WriteNeutral();
@@ -128,12 +133,18 @@ namespace AnimeShaders
         }
 
 #if UNITY_EDITOR
-        [UnityEditor.InitializeOnLoadMethod]
+        [InitializeOnLoadMethod]
         private static void ResetOnReload()
         {
             Clear();
         }
 #endif
+
+        /** <summary>The group from <paramref name="candidate" /> if it sets its values, else the one already chosen.</summary> */
+        private static T Pick<T>(T chosen, T candidate) where T : LightGroup
+        {
+            return candidate.Overrides ? candidate : chosen;
+        }
 
         private static void Write()
         {
@@ -143,39 +154,47 @@ namespace AnimeShaders
             LightColours colours = null, worldColours = null;
             LightAmbient ambient = null, worldAmbient = null;
             LightStrengths strengths = null;
-            WorldLight worldCast = null, worldSky = null;
+            LightShadowStrength worldShadow = null;
+            LightSky sky = null;
             foreach (LightToken token in Layers)
             {
                 if (token.Set == null)
                     continue;
                 CharacterLight characters = token.Set.Characters;
                 WorldLight world = token.Set.World;
-                direction = characters.Direction.Overrides ? characters.Direction : direction;
-                colours = characters.Colours.Overrides ? characters.Colours : colours;
-                ambient = characters.Ambient.Overrides ? characters.Ambient : ambient;
-                strengths = characters.Strengths.Overrides ? characters.Strengths : strengths;
-                worldColours = world.Colours.Overrides ? world.Colours : worldColours;
-                worldAmbient = world.Ambient.Overrides ? world.Ambient : worldAmbient;
-                worldCast = world.CastShadowOverrides ? world : worldCast;
-                worldSky = world.SkyOverrides ? world : worldSky;
+                direction = Pick(direction, characters.Direction);
+                colours = Pick(colours, characters.Colours);
+                ambient = Pick(ambient, characters.Ambient);
+                strengths = Pick(strengths, characters.Strengths);
+                worldColours = Pick(worldColours, world.Colours);
+                worldAmbient = Pick(worldAmbient, world.Ambient);
+                worldShadow = Pick(worldShadow, world.Shadow);
+                sky = Pick(sky, world.Sky);
             }
 
-            Shader.SetGlobalVector(Director.LightDirection, direction == null ? Vector4.zero : (Vector4)direction.TowardLight + new Vector4(0f, 0f, 0f, direction.Weight));
-            Shader.SetGlobalVector(Director.LightColor, LessOne(colours?.Light));
-            Shader.SetGlobalVector(Director.ShadowColor, LessOne(colours?.Shadow));
-            Shader.SetGlobalVector(Director.Ambient, Ambient(ambient));
-            Shader.SetGlobalVector(Director.Scalars, strengths == null ? Vector4.zero : new Vector4(strengths.CastShadow - 1f, strengths.Rim - 1f, strengths.Line - 1f, 0f));
-            Shader.SetGlobalVector(Director.WorldLightColor, LessOne(worldColours?.Light));
-            Shader.SetGlobalVector(Director.WorldShadowColor, LessOne(worldColours?.Shadow));
-            Shader.SetGlobalVector(Director.WorldAmbient, Ambient(worldAmbient));
-            Shader.SetGlobalVector(Director.WorldScalars, new Vector4(worldCast == null ? 0f : worldCast.CastShadow - 1f, worldSky == null ? 0f : worldSky.Sky - 1f, 0f, 0f));
-            Writes++;
+            Values[0] = direction == null ? Vector4.zero : (Vector4)direction.TowardLight + new Vector4(0f, 0f, 0f, direction.Weight);
+            Values[1] = LessOne(colours?.Light);
+            Values[2] = LessOne(colours?.Shadow);
+            Values[3] = Ambient(ambient);
+            Values[4] = strengths == null ? Vector4.zero : new Vector4(strengths.CastShadow - 1f, strengths.Rim - 1f, strengths.Line - 1f, 0f);
+            Values[5] = LessOne(worldColours?.Light);
+            Values[6] = LessOne(worldColours?.Shadow);
+            Values[7] = Ambient(worldAmbient);
+            Values[8] = new Vector4(worldShadow == null ? 0f : worldShadow.CastShadow - 1f, sky == null ? 0f : sky.Brightness - 1f, 0f, 0f);
+            SetGlobals();
         }
 
         private static void WriteNeutral()
         {
-            foreach (int id in Globals)
-                Shader.SetGlobalVector(id, Vector4.zero);
+            Array.Clear(Values, 0, Values.Length);
+            SetGlobals();
+        }
+
+        /** <summary>Writes <see cref="Values" /> to <see cref="Globals" />, in the same order.</summary> */
+        private static void SetGlobals()
+        {
+            for (int i = 0; i < Globals.Length; i++)
+                Shader.SetGlobalVector(Globals[i], Values[i]);
             Writes++;
         }
 
@@ -199,13 +218,11 @@ namespace AnimeShaders
         private sealed class Isolation : IDisposable
         {
             private readonly List<LightToken> _aside;
-            private readonly int _wasSuspended;
             private bool _done;
 
-            public Isolation(List<LightToken> aside, int suspended)
+            public Isolation(List<LightToken> aside)
             {
                 _aside = aside;
-                _wasSuspended = suspended;
             }
 
             public void Dispose()
@@ -213,17 +230,15 @@ namespace AnimeShaders
                 if (_done)
                     return;
                 _done = true;
+                foreach (LightToken token in Layers)
+                    token.Drop();
                 Layers.Clear();
                 foreach (LightToken token in _aside)
                 {
                     if (!token.Released)
                         Layers.Add(token);
                 }
-                _suspended = _wasSuspended;
-                if (_wasSuspended > 0)
-                    WriteNeutral();
-                else
-                    Write();
+                Write();
             }
         }
 

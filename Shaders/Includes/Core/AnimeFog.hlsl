@@ -13,8 +13,9 @@
 // The largest exponent the height term takes, so a long ray up or down never overflows.
 #define ANIME_HAZE_MAX_EXPONENT 60.0
 
-// <colour> seen through the haze along a ray from <origin> in the unit direction <ray> for <distance> metres.
-half3 AnimeHazeAlong(half3 colour, float3 origin, float3 ray, float distance)
+// <colour> seen through the haze, its colour times <brightness>, along a ray from <origin> in the unit direction <ray>
+// for <distance> metres.
+half3 AnimeHazeAlongAt(half3 colour, float3 origin, float3 ray, float distance, half brightness)
 {
     float start = _AnimeHazeShape.x;
     float travelled = max(distance - start, 0.0);
@@ -28,8 +29,15 @@ half3 AnimeHazeAlong(half3 colour, float3 origin, float3 ray, float distance)
     float3 sun = normalize(_MainLightPosition.xyz);
     float away = 1.0 - dot(ray, sun);
     half glow = half(exp(-away / max(_AnimeHazeSky.y * _AnimeHazeSky.y * 0.5, 1e-4))) * half(_AnimeHazeGlow.a);
-    half3 haze = lerp(half3(_AnimeHazeColor.rgb), half3(_AnimeHazeGlow.rgb), glow) * AnimeDirectorSkyMultiplier();
+    half3 haze = lerp(half3(_AnimeHazeColor.rgb), half3(_AnimeHazeGlow.rgb), glow) * brightness;
     return lerp(colour, haze, cover);
+}
+
+// <colour> seen through the haze as bright as the light director's sky says (a surface's haze; the sky, which dims as a
+// whole, takes AnimeHazeAlongAt at 1).
+half3 AnimeHazeAlong(half3 colour, float3 origin, float3 ray, float distance)
+{
+    return AnimeHazeAlongAt(colour, origin, ray, distance, AnimeDirectorSkyMultiplier());
 }
 
 // <colour> of a surface at <positionWS> seen from the camera through the haze.

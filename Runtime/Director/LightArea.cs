@@ -17,18 +17,21 @@ namespace AnimeShaders
         [Tooltip("The light inside.")]
         [SerializeField] private LightSet lightSet;
 
-        [Tooltip("What decides being inside: the fight's centre or the player. Empty: the main camera.")]
+        [Tooltip("What decides being inside: a target transform (a player, a camera rig). Empty: the main camera.")]
         [SerializeField] private Transform tracked;
 
         [Tooltip("The box, in this object's space, centred on it.")]
         [SerializeField] private Vector3 size = new(10f, 4f, 10f);
 
-        [Tooltip("Metres past the box's edge before the light leaves, once inside.")]
+        [Tooltip("Metres past the box's edge before the light leaves, once inside (whatever the box's scale).")]
         [SerializeField, Min(0f)] private float edgeMargin = 0.5f;
 
         #endregion
 
         #region Private Fields
+
+        /** <summary>The smallest scale an axis is taken to have, so a flattened box never divides by zero.</summary> */
+        private const float MinScale = 1e-4f;
 
         private LightToken _token;
 
@@ -37,7 +40,7 @@ namespace AnimeShaders
         #region Properties
 
         /** <summary>Whether its light is pushed.</summary> */
-        public bool Lit => _token != null;
+        public bool Lit => _token != null && !_token.Released;
 
         #endregion
 
@@ -76,8 +79,8 @@ namespace AnimeShaders
         /** <summary>Pushes or removes its light for what it tracks being at <paramref name="position" /> (none: removes).</summary> */
         public void Step(Vector3? position)
         {
-            bool inside = position != null && Contains(position.Value, _token != null ? edgeMargin : 0f);
-            if (inside && _token == null && lightSet != null)
+            bool inside = position != null && Contains(position.Value, Lit ? edgeMargin : 0f);
+            if (inside && !Lit && lightSet != null)
                 _token = AnimeLightDirector.Push(lightSet, LightLevel.Area);
             else if (!inside && _token != null)
             {
@@ -93,7 +96,9 @@ namespace AnimeShaders
         private bool Contains(Vector3 position, float margin)
         {
             Vector3 local = transform.InverseTransformPoint(position);
-            Vector3 half = size * 0.5f + Vector3.one * margin;
+            Vector3 scale = transform.lossyScale;
+            Vector3 half = size * 0.5f + new Vector3(margin / Mathf.Max(Mathf.Abs(scale.x), MinScale), margin / Mathf.Max(Mathf.Abs(scale.y), MinScale),
+                margin / Mathf.Max(Mathf.Abs(scale.z), MinScale));
             return Mathf.Abs(local.x) <= half.x && Mathf.Abs(local.y) <= half.y && Mathf.Abs(local.z) <= half.z;
         }
 

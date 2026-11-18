@@ -256,5 +256,61 @@ namespace AnimeShaders.Tests
                 Object.DestroyImmediate(sheet);
             }
         }
+
+        /** <summary>How many pixels past the sheet's right edge the line reaches on the middle row, the sheet at <paramref name="scale" />.</summary> */
+        private int ReachPastTheEdge(float scale)
+        {
+            _body.transform.localScale = Vector3.one * scale;
+            Color[] frame = _stage.Render();
+            int edge = _stage.Column(0.5f * scale), row = _stage.Column(0f), last = edge;
+            for (int column = edge; column < Size; column++)
+            {
+                if (IsLine(FrameReads.At(frame, column, row)))
+                    last = column;
+            }
+            return last - edge;
+        }
+
+        [Test]
+        public void OpenEdges_OnAScaledSheet_PushPastTheEdgeAsFarAsAtScaleOne()
+        {
+            Mesh sheet = Sheet(1f);
+            try
+            {
+                int atOne = ReachPastTheEdge(1f), scaled = ReachPastTheEdge(1.6f);
+                Assert.Greater(atOne, 3, "lined past its edge");
+                Assert.AreEqual(atOne, scaled, 2, "as far at 1.6 times the size: the push is not scaled with the object");
+            }
+            finally
+            {
+                Object.DestroyImmediate(sheet);
+            }
+        }
+
+        [Test]
+        public void OpenEdges_OnAClosedMeshWithItsZOffset_LeaveItsFaceUnlined_AndItsRimAsWithout()
+        {
+            Mesh sphere = Object.Instantiate(TestMeshes.Sphere());
+            try
+            {
+                Assert.IsTrue(OutlineNormalBaker.Bake(sphere));
+                _body.GetComponent<MeshFilter>().sharedMesh = sphere;
+                AnimeMaterials.SetFeature(_material, AnimeShaderIds.Keywords.OutlineBakedName, AnimeShaderIds.Switches.OutlineBakedNormals, true);
+                float width = Width * 0.001f * 2f * _stage.Camera.orthographicSize;
+                _material.SetFloat(Ids.OutlineZOffset, 1.5f * Mathf.Sqrt(width * 1f * 0.5f));
+                AnimeMaterials.SetOpenEdges(_material, 0f);
+                int without = FrameReads.Count(_stage.Render(), IsLine);
+                AnimeMaterials.SetOpenEdges(_material, 1f);
+                Color[] frame = _stage.Render();
+                int with = FrameReads.Count(frame, IsLine);
+                Assert.Greater(without, 0, "the closed sphere has its rim");
+                Assert.AreEqual(without, with, without * 0.1f, "with open edges on, the same rim (the sphere has none)");
+                Assert.IsFalse(IsLine(FrameReads.Centre(frame)), "and its face unlined, the near hull turned behind it");
+            }
+            finally
+            {
+                Object.DestroyImmediate(sphere);
+            }
+        }
     }
 }

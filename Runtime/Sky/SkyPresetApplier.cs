@@ -75,8 +75,7 @@ namespace AnimeShaders
             if (owns)
             {
                 SkyApply.Unpublish();
-                _base?.Dispose();
-                _base = null;
+                ReleaseBase();
                 _current = null;
             }
             if (_recorded && owns)
@@ -91,8 +90,14 @@ namespace AnimeShaders
 
         private void OnValidate()
         {
-            if (!isActiveAndEnabled || Application.isPlaying || _preset == null)
+            if (!isActiveAndEnabled || Application.isPlaying)
                 return;
+            if (_preset == null)
+            {
+                if (_current == this)
+                    ReleaseBase();
+                return;
+            }
             SkyApply.Apply(_preset.Resolve(), _sky, _sun);
             if (_current == this)
                 PushBase();
@@ -105,8 +110,14 @@ namespace AnimeShaders
         /** <summary>Makes the preset's light the scene's base light, in place of any before it.</summary> */
         private void PushBase()
         {
-            _base?.Dispose();
+            ReleaseBase();
             _base = _preset.Light != null ? AnimeLightDirector.Push(_preset.Light, LightLevel.Base) : null;
+        }
+
+        private static void ReleaseBase()
+        {
+            _base?.Dispose();
+            _base = null;
         }
 
         /** <summary>What a preset overwrites, captured to be put back.</summary> */

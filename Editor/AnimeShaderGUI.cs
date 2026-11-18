@@ -77,6 +77,7 @@ namespace AnimeShaders.EditorTools
                 WarnIfNotPacked(property);
                 WarnAboutStones(property);
                 WarnAboutFaceMap(property);
+                WarnAboutOpenEdges(property, material);
             }
             EditorGUILayout.Space();
             materialEditor.RenderQueueField();
@@ -182,6 +183,15 @@ namespace AnimeShaders.EditorTools
             string path = AssetDatabase.GetAssetPath(property.textureValue);
             if (!string.IsNullOrEmpty(path) && !DataTextures.HasLabel(path, AnimeFaceMapImport.Label))
                 EditorGUILayout.HelpBox("Not a baked face map: bake one from a Face Map asset.", MessageType.Warning);
+        }
+
+        /** <summary>Under Line On Open Edges: closed parts sharing the material need a Z offset, or the line shows across their sides.</summary> */
+        private static void WarnAboutOpenEdges(MaterialProperty property, Material material)
+        {
+            if (property.name != Ids.OutlineOpenEdgesName || property.floatValue <= 0f || !material.HasFloat(Ids.OutlineZOffset))
+                return;
+            if (material.GetFloat(Ids.OutlineZOffset) <= 0f)
+                EditorGUILayout.HelpBox("With no Z offset, a closed part drawn with this material shows the line across its sides. Give the line a Z offset (a few centimetres on a character).", MessageType.Warning);
         }
 
         private static void DrawRamp(Material material)

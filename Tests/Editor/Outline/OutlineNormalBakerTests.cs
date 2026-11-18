@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using AnimeShaders.EditorTools;
 using NUnit.Framework;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace AnimeShaders.Tests
 {
@@ -152,7 +154,7 @@ namespace AnimeShaders.Tests
         {
             Mesh cube = Cube();
             Vector3[] vertices = cube.vertices;
-            vertices[0] += Vector3.one * (OutlineNormalBaker.DefaultQuantise * 0.01f);
+            vertices[0] += Vector3.one * (OutlineNormalBaker.DefaultQuantiseShare * 0.01f);
             cube.vertices = vertices;
             OutlineNormalBaker.Bake(cube);
             AssertCornersPointOut(cube);
@@ -230,8 +232,8 @@ namespace AnimeShaders.Tests
             return result;
         }
 
-        /** <summary>A flat grid of quads in the XY plane, <paramref name="cells" /> by <paramref name="cells" />, facing -Z.</summary> */
-        private Mesh Grid(int cells, bool splitAtTheMiddleColumn = false)
+        /** <summary>A flat grid of quads in the XY plane, <paramref name="cells" /> by <paramref name="cells" />, facing -Z, every quad with its own four vertices.</summary> */
+        private Mesh Grid(int cells, float tangentSign = 1f)
         {
             var vertices = new List<Vector3>();
             var uvs = new List<Vector2>();
@@ -242,7 +244,7 @@ namespace AnimeShaders.Tests
                 {
                     int start = vertices.Count;
                     float x0 = cx - cells * 0.5f, y0 = cy - cells * 0.5f;
-                    float u = splitAtTheMiddleColumn && cx >= cells / 2 ? 0.5f : 0f;
+                    float u = cx * 0.5f;
                     vertices.AddRange(new[] { new Vector3(x0, y0, 0f), new Vector3(x0, y0 + 1f, 0f), new Vector3(x0 + 1f, y0 + 1f, 0f), new Vector3(x0 + 1f, y0, 0f) });
                     uvs.AddRange(new[] { new Vector2(u, 0f), new Vector2(u, 1f), new Vector2(u + 0.5f, 1f), new Vector2(u + 0.5f, 0f) });
                     triangles.AddRange(new[] { start, start + 1, start + 2, start + 2, start + 3, start });
@@ -251,45 +253,97 @@ namespace AnimeShaders.Tests
             var mesh = new Mesh { name = "TestGrid" };
             mesh.SetVertices(vertices);
             mesh.SetNormals(Enumerable.Repeat(Vector3.back, vertices.Count).ToList());
-            mesh.SetTangents(Enumerable.Repeat(new Vector4(1f, 0f, 0f, 1f), vertices.Count).ToList());
+            mesh.SetTangents(Enumerable.Repeat(new Vector4(1f, 0f, 0f, tangentSign), vertices.Count).ToList());
             mesh.SetUVs(0, uvs);
             mesh.SetTriangles(triangles, 0);
             return Made(mesh);
         }
 
-        [Test]
-        public void AFlatSheetsOpenEdges_PushOutward_ItsMiddleDoesNot()
+        /** <summary>The same grid with each corner shared by the quads around it, as an indexed export.</summary> */
+        private Mesh SharedGrid(int cells)
         {
-            Mesh grid = Grid(3);
-            Assert.IsTrue(OutlineNormalBaker.Bake(grid));
-            Vector3[] outward = OpenEdges(grid);
-            Vector3[] vertices = grid.vertices;
-            for (int i = 0; i < vertices.Length; i++)
+            var vertices = new List<Vector3>();
+            for (int y = 0; y <= cells; y++)
             {
-                bool onTheEdge = Mathf.Abs(vertices[i].x) > 1.4f || Mathf.Abs(vertices[i].y) > 1.4f;
-                if (!onTheEdge)
+                for (int x = 0; x <= cells; x++)
+                    vertices.Add(new Vector3(x - cells * 0.5f, y - cells * 0.5f, 0f));
+            }
+            var triangles = new List<int>();
+            for (int cy = 0; cy < cells; cy++)
+            {
+                for (int cx = 0; cx < cells; cx++)
                 {
-                    Assert.AreEqual(Vector3.zero, outward[i], $"vertex {i} inside the sheet");
-                    continue;
+                    int a = cy * (cells + 1) + cx, b = a + cells + 1;
+                    triangles.AddRange(new[] { a, b, b + 1, b + 1, a + 1, a });
                 }
-                Assert.Greater(Vector3.Dot(outward[i], vertices[i]), 0f, $"vertex {i} on the edge points away from the middle");
-                Assert.AreEqual(1f, outward[i].magnitude, 1e-3f, $"vertex {i}: a full width, corners too");
+            }
+            var mesh = new Mesh { name = "TestSharedGrid" };
+            mesh.SetVertices(vertices);
+            mesh.SetNormals(Enumerable.Repeat(Vector3.back, vertices.Count).ToList());
+            mesh.SetTangents(Enumerable.Repeat(new Vector4(1f, 0f, 0f, 1f), vertices.Count).ToList());
+            mesh.SetUVs(0, vertices.Select(vertex => new Vector2(vertex.x, vertex.y)).ToList());
+            mesh.SetTriangles(triangles, 0);
+            return Made(mesh);
+        }
+
+        /** <summary>The direction a flat grid's vertex at <paramref name="vertex" /> should push: out of each side it lies on, summed (zero inside).</summary> */
+        private static Vector3 ExpectedOutward(Vector3 vertex, float half)
+        {
+            var expected = new Vector3(Mathf.Abs(vertex.x) > half - 0.1f ? Mathf.Sign(vertex.x) : 0f, Mathf.Abs(vertex.y) > half - 0.1f ? Mathf.Sign(vertex.y) : 0f, 0f);
+            return expected.normalized;
+        }
+
+        [Test]
+        public void AFlatSheetsOpenEdges_PushStraightOutOfTheirSides_CornersOutOfBoth_ItsMiddleNot()
+        {
+            foreach (float sign in new[] { 1f, -1f })
+            {
+                Mesh grid = Grid(3, sign);
+                Assert.IsTrue(OutlineNormalBaker.Bake(grid));
+                Vector3[] outward = OpenEdges(grid);
+                Vector3[] vertices = grid.vertices;
+                for (int i = 0; i < vertices.Length; i++)
+                {
+                    Vector3 expected = ExpectedOutward(vertices[i], 1.5f);
+                    Assert.Less(Vector3.Distance(expected, outward[i]), 1e-3f, $"tangent sign {sign}, vertex {i} at {vertices[i]}: {outward[i]}, not {expected}");
+                }
             }
         }
 
         [Test]
-        public void AUvSeam_IsNotAnOpenEdge()
+        public void ASheetSplitAtEveryVertex_HasTheOpenEdgesOfOneSharingThem()
         {
-            Mesh grid = Grid(2, splitAtTheMiddleColumn: true);
+            Mesh split = Grid(2);
+            Mesh shared = SharedGrid(2);
+            OutlineNormalBaker.Bake(split);
+            OutlineNormalBaker.Bake(shared);
+            Vector3[] splitOutward = OpenEdges(split), sharedOutward = OpenEdges(shared);
+            Vector3[] splitVertices = split.vertices, sharedVertices = shared.vertices;
+            for (int i = 0; i < splitVertices.Length; i++)
+            {
+                int same = Array.FindIndex(sharedVertices, vertex => Vector3.Distance(vertex, splitVertices[i]) < 1e-4f);
+                Assert.Less(Vector3.Distance(sharedOutward[same], splitOutward[i]), 1e-3f, $"at {splitVertices[i]}: seams (UV and split vertices) are not edges");
+            }
+            Assert.AreEqual(Vector3.zero, sharedOutward[4], "the shared middle vertex has none");
+        }
+
+        [Test]
+        public void ATooThinTriangle_IsSkipped_ItsEdgesNotOpen()
+        {
+            Mesh grid = Grid(1);
+            var vertices = new List<Vector3>(grid.vertices) { new(0f, 0f, 5f), new(1f, 0f, 5f), new(2f, 1e-7f, 5f) };
+            var triangles = new List<int>(grid.triangles) { 4, 5, 6 };
+            grid.SetVertices(vertices);
+            grid.SetNormals(Enumerable.Repeat(Vector3.back, vertices.Count).ToList());
+            grid.SetTangents(Enumerable.Repeat(new Vector4(1f, 0f, 0f, 1f), vertices.Count).ToList());
+            grid.SetUVs(0, Enumerable.Repeat(Vector2.zero, vertices.Count).ToList());
+            grid.SetTriangles(triangles, 0);
+            grid.RecalculateBounds();
             OutlineNormalBaker.Bake(grid);
             Vector3[] outward = OpenEdges(grid);
-            Vector3[] vertices = grid.vertices;
-            for (int i = 0; i < vertices.Length; i++)
-            {
-                if (Mathf.Abs(vertices[i].x) > 1e-3f)
-                    continue;
-                Assert.Less(Mathf.Abs(outward[i].x), 1e-3f, $"seam vertex {i}: no push across the seam");
-            }
+            for (int i = 4; i < 7; i++)
+                Assert.AreEqual(Vector3.zero, outward[i], $"vertex {i} of a sliver with no plane");
+            Assert.AreNotEqual(Vector3.zero, outward[0], "the quad's own edges still open");
         }
 
         [Test]

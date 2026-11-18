@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -14,7 +15,10 @@ namespace AnimeShaders.Tests
      * elsewhere; at one level the later push wins; disposing in either order, twice, or a token from before a clear does
      * the right thing; an edited set rewrites, an unpushed one does not; a suspension zeroes and puts back, nested; a
      * light area pushes while its target is inside, keeps it within its edge margin, removes it past it and when switched
-     * off; an isolation starts empty and puts back only what was not removed; an exempt camera renders with no director light and puts it back after.</summary>
+     * off; an isolation starts empty and puts back only what was not removed;
+     * each group writes where the shaders read it; a push while suspended waits; a destroyed set is passed over;
+     * clearing releases tokens; a suspension survives an isolation; an area contains by its own space with its margin in
+     * metres; an exempt camera renders with no director light and puts it back after.</summary>
      */
     public class LightDirectorTests
     {
@@ -38,6 +42,25 @@ namespace AnimeShaders.Tests
             set.Characters.Colours.Light = light;
             _made.Add(set);
             return set;
+        }
+
+        /** <summary>A light area on a new object, its box <paramref name="size" />, margin <paramref name="margin" />, lit by <paramref name="set" />.</summary> */
+        private LightArea Area(LightSet set, Vector3 size, float margin)
+        {
+            var holder = new GameObject("LightArea");
+            _made.Add(holder);
+            var area = holder.AddComponent<LightArea>();
+            var serialized = new SerializedObject(area);
+            serialized.FindProperty("lightSet").objectReferenceValue = set;
+            serialized.FindProperty("size").vector3Value = size;
+            serialized.FindProperty("edgeMargin").floatValue = margin;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            return area;
+        }
+
+        private static void AreClose(Vector4 expected, Vector4 actual, string message)
+        {
+            Assert.Less((expected - actual).magnitude, Close, $"{message}: expected {expected}, got {actual}");
         }
 
         private static float LightRed => Shader.GetGlobalVector(Director.LightColor).x;
@@ -90,12 +113,12 @@ namespace AnimeShaders.Tests
         {
             var set = ScriptableObject.CreateInstance<LightSet>();
             _made.Add(set);
-            set.World.Sky = 0.5f;
-            set.World.CastShadowOverrides = true;
-            set.World.CastShadow = 0.75f;
+            set.World.Sky.Brightness = 0.5f;
+            set.World.Shadow.Overrides = true;
+            set.World.Shadow.CastShadow = 0.75f;
             AnimeLightDirector.Push(set, LightLevel.Base);
             Assert.AreEqual(0f, Shader.GetGlobalVector(Director.WorldScalars).y, Close, "unswitched: no change to the sky");
-            set.World.SkyOverrides = true;
+            set.World.Sky.Overrides = true;
             AnimeLightDirector.Changed(set);
             Vector4 scalars = Shader.GetGlobalVector(Director.WorldScalars);
             Assert.AreEqual(-0.5f, scalars.y, Close, "switched: the sky, less one");
@@ -214,6 +237,141 @@ namespace AnimeShaders.Tests
             area.Step(Vector3.zero);
             holder.SetActive(false);
             Assert.AreEqual(0f, LightRed, Close, "switched off: removed");
+        }
+
+        [Test]
+        public void AWorldLight_WritesEachOfItsOwnGlobals_AndNoneOfTheCharacters()
+        {
+            var set = ScriptableObject.CreateInstance<LightSet>();
+            _made.Add(set);
+            set.World.Colours.Overrides = true;
+            set.World.Colours.Light = new Color(0.5f, 0.6f, 0.7f);
+            set.World.Colours.Shadow = new Color(0.25f, 0.35f, 0.45f);
+            set.World.Ambient.Overrides = true;
+            set.World.Ambient.Colour = new Color(0.2f, 0.3f, 0.4f);
+            set.World.Ambient.Weight = 0.7f;
+            set.World.Shadow.Overrides = true;
+            set.World.Shadow.CastShadow = 0.6f;
+            set.World.Sky.Overrides = true;
+            set.World.Sky.Brightness = 0.8f;
+            AnimeLightDirector.Push(set, LightLevel.Base);
+
+            Color light = new Color(0.5f, 0.6f, 0.7f).linear, shadow = new Color(0.25f, 0.35f, 0.45f).linear, ambient = new Color(0.2f, 0.3f, 0.4f).linear;
+            AreClose(new Vector4(light.r - 1f, light.g - 1f, light.b - 1f, 0f), Shader.GetGlobalVector(Director.WorldLightColor), "the light, less one");
+            AreClose(new Vector4(shadow.r - 1f, shadow.g - 1f, shadow.b - 1f, 0f), Shader.GetGlobalVector(Director.WorldShadowColor), "the shadow, less one");
+            AreClose(new Vector4(ambient.r, ambient.g, ambient.b, 0.7f), Shader.GetGlobalVector(Director.WorldAmbient), "the ambient and its weight");
+            AreClose(new Vector4(-0.4f, -0.2f, 0f, 0f), Shader.GetGlobalVector(Director.WorldScalars), "cast shadow and sky, less one");
+            foreach (int character in new[] { Director.LightDirection, Director.LightColor, Director.ShadowColor, Director.Ambient, Director.Scalars })
+                Assert.AreEqual(Vector4.zero, Shader.GetGlobalVector(character), "the characters' globals untouched");
+        }
+
+        [Test]
+        public void TheCharactersStrengthsAndDirection_WriteWhereTheShadersReadThem()
+        {
+            var set = ScriptableObject.CreateInstance<LightSet>();
+            _made.Add(set);
+            set.Characters.Strengths.Overrides = true;
+            set.Characters.Strengths.CastShadow = 0.5f;
+            set.Characters.Strengths.Rim = 2f;
+            set.Characters.Strengths.Line = 1.5f;
+            set.Characters.Direction.Overrides = true;
+            set.Characters.Direction.Yaw = 90f;
+            set.Characters.Direction.Pitch = 0f;
+            set.Characters.Direction.Weight = 0.4f;
+            AnimeLightDirector.Push(set, LightLevel.Base);
+            AreClose(new Vector4(-0.5f, 1f, 0.5f, 0f), Shader.GetGlobalVector(Director.Scalars), "cast shadow, rim and line, less one");
+            AreClose(new Vector4(1f, 0f, 0f, 0.4f), Shader.GetGlobalVector(Director.LightDirection), "toward +X, its weight in w");
+            Assert.AreEqual(Vector4.zero, Shader.GetGlobalVector(Director.WorldScalars), "the world's untouched");
+        }
+
+        [Test]
+        public void APushWhileSuspended_StaysNeutral_UntilTheLastSuspensionEnds()
+        {
+            AnimeLightDirector.BeginSuspend();
+            AnimeLightDirector.Push(Coloured(new Color(0.5f, 1f, 1f)), LightLevel.Base);
+            Assert.AreEqual(0f, LightRed, Close, "suspended: neutral, though pushed");
+            AnimeLightDirector.EndSuspend();
+            Assert.AreEqual(Expected(new Color(0.5f, 1f, 1f)), LightRed, Close, "the suspension over: written");
+            AnimeLightDirector.EndSuspend();
+            Assert.AreEqual(Expected(new Color(0.5f, 1f, 1f)), LightRed, Close, "an end with nothing to end changes nothing");
+        }
+
+        [Test]
+        public void ASetDestroyedWhilePushed_IsPassedOver()
+        {
+            AnimeLightDirector.Push(Coloured(new Color(0.5f, 1f, 1f)), LightLevel.Base);
+            var gone = ScriptableObject.CreateInstance<LightSet>();
+            gone.Characters.Colours.Overrides = true;
+            gone.Characters.Colours.Light = new Color(0.25f, 1f, 1f);
+            AnimeLightDirector.Push(gone, LightLevel.Shot);
+            Object.DestroyImmediate(gone);
+            LightToken next = AnimeLightDirector.Push(Coloured(Color.white), LightLevel.Area);
+            next.Dispose();
+            Assert.AreEqual(Expected(new Color(0.5f, 1f, 1f)), LightRed, Close, "the destroyed shot read as nothing; the base shows");
+        }
+
+        [Test]
+        public void Clearing_ReleasesEveryToken_SoAnAreaStillInsidePushesAgain()
+        {
+            LightArea area = Area(Coloured(new Color(0.5f, 1f, 1f)), Vector3.one * 2f, 0.5f);
+            area.Step(Vector3.zero);
+            LightToken held = AnimeLightDirector.Pushed[0];
+            AnimeLightDirector.Clear();
+            Assert.IsTrue(held.Released, "its token reads as released");
+            Assert.IsFalse(area.Lit, "the area knows it is no longer lit");
+            area.Step(Vector3.zero);
+            Assert.AreEqual(1, AnimeLightDirector.Pushed.Count, "and pushes again while inside");
+        }
+
+        [Test]
+        public void ASuspensionOpenedBeforeAnIsolation_EndsInsideIt_AndTheLightComesBackAfter()
+        {
+            AnimeLightDirector.Push(Coloured(new Color(0.5f, 1f, 1f)), LightLevel.Base);
+            AnimeLightDirector.BeginSuspend();
+            IDisposable isolation = AnimeLightDirector.Isolate();
+            AnimeLightDirector.EndSuspend();
+            isolation.Dispose();
+            Assert.AreEqual(Expected(new Color(0.5f, 1f, 1f)), LightRed, Close, "the end was not swallowed: lit again");
+        }
+
+        [Test]
+        public void AScaledTurnedArea_ContainsByItsOwnSpace_ItsMarginInMetres()
+        {
+            LightArea area = Area(Coloured(new Color(0.5f, 1f, 1f)), Vector3.one * 2f, 0.5f);
+            area.transform.localScale = new Vector3(2f, 1f, 1f);
+            area.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
+            area.Step(new Vector3(0f, 0f, 1.8f));
+            Assert.IsTrue(area.Lit, "its long side, turned onto z, holds 1.8 m out");
+            area.Step(new Vector3(0f, 0f, 2.4f));
+            Assert.IsTrue(area.Lit, "within half a metre past its 2 m edge: kept");
+            area.Step(new Vector3(0f, 0f, 2.6f));
+            Assert.IsFalse(area.Lit, "past it: gone (a margin scaled with the box would keep it to 3 m)");
+            area.Step(new Vector3(1.2f, 0f, 0f));
+            Assert.IsFalse(area.Lit, "its short side, turned onto x, ends at 1 m");
+        }
+
+        [Test]
+        public void AnExemptCameraThatLostItsEnd_PutsTheLightBackBeforeTheNextFrame()
+        {
+            AnimeLightDirector.Push(Coloured(new Color(0.5f, 1f, 1f)), LightLevel.Base);
+            var holder = new GameObject("Exempt");
+            _made.Add(holder);
+            holder.AddComponent<Camera>().enabled = false;
+            var exempt = holder.AddComponent<AnimeLightExempt>();
+            AnimeLightDirector.BeginSuspend();
+            typeof(AnimeLightExempt).GetField("_suspended", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(exempt, true);
+            Assert.AreEqual(0f, LightRed, Close, "suspended by a render whose end never came");
+            typeof(AnimeLightExempt).GetMethod("LateUpdate", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(exempt, null);
+            Assert.AreEqual(Expected(new Color(0.5f, 1f, 1f)), LightRed, Close, "between frames: lit again");
+        }
+
+        [Test]
+        public void AnAreaWithNoLight_NeverPushes()
+        {
+            LightArea area = Area(null, Vector3.one * 2f, 0.5f);
+            area.Step(Vector3.zero);
+            Assert.IsFalse(area.Lit);
+            Assert.AreEqual(0, AnimeLightDirector.Pushed.Count);
         }
 
         [Test]

@@ -1,6 +1,7 @@
 using System;
 using NUnit.Framework;
 using UnityEngine;
+using Director = AnimeShaders.AnimeShaderIds.Director;
 using Object = UnityEngine.Object;
 
 namespace AnimeShaders.Tests
@@ -101,6 +102,16 @@ namespace AnimeShaders.Tests
             Assert.Greater(At(after, -Apart - side).r, At(after, -Apart + side).r + 0.1f, "turned: lit from the left");
             Assert.AreEqual(At(before, Apart + side).r, At(after, Apart + side).r, Close, "the world as it was, right");
             Assert.AreEqual(At(before, Apart - side).r, At(after, Apart - side).r, Close, "and left");
+        }
+
+        [Test]
+        public void AnOverrideOppositeTheLight_HalfWay_StillLightsEveryPixel()
+        {
+            Build(TestMeshes.Sphere());
+            _stage.LightFrom(Vector3.right);
+            Vector3 towardLight = -_stage.Light.transform.forward;
+            Shader.SetGlobalVector(Director.LightDirection, new Vector4(-towardLight.x, -towardLight.y, -towardLight.z, 0.5f));
+            Assert.IsTrue(FrameReads.AllFinite(_stage.Render()), "the blend cancels to nothing: the scene's light, never NaN");
         }
     }
 }
