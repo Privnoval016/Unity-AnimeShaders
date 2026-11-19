@@ -16,6 +16,13 @@
 //                                     MINUS 1 (characters only), the world's y: the sky's and haze's brightness
 //                                     multiplier MINUS 1 (read by every shader the haze reaches); w: reserved (keep 0)
 //
+//   _AnimeTierDrops                the features a quality tier drops, as the sum of their bits (AnimeTierDrop's values:
+//                                 1 the fresnel rim, 2 the second band, 4 the angel ring, 8 the extra lights; AnimeTiers
+//                                 sets it; never set, nothing is dropped). Read with float maths (exact for powers of
+//                                 two, on every API) in each feature's own branch: no variant, and the dropped
+//                                 feature's work is skipped. A new drop is a new enum value and a new line below.
+//                                 Screen-space features drop by leaving their renderer feature off a tier's renderer.
+//
 // The world has no direction override: the sun's angle is the sky's, so the haze, the sky and the cloud shadows read the
 // real light. Cast shadows always come from the real light.
 
@@ -29,7 +36,15 @@ CBUFFER_START(AnimeDirector)
     float4 _AnimeDirectorWorldShadowColor;
     float4 _AnimeDirectorWorldAmbient;
     float4 _AnimeDirectorWorldScalars;
+    float _AnimeTierDrops;
 CBUFFER_END
+
+// Whether the drop with the value <bit> (a power of two) is set.
+#define ANIME_TIER_DROPS(bit) (fmod(floor(_AnimeTierDrops / (bit)), 2.0) >= 1.0)
+#define ANIME_TIER_DROPS_RIM ANIME_TIER_DROPS(1.0)
+#define ANIME_TIER_DROPS_BAND2 ANIME_TIER_DROPS(2.0)
+#define ANIME_TIER_DROPS_RING ANIME_TIER_DROPS(4.0)
+#define ANIME_TIER_DROPS_EXTRA_LIGHTS ANIME_TIER_DROPS(8.0)
 
 #if defined(ANIME_DIRECTOR_WORLD)
     #define ANIME_DIRECTOR_LIGHT_COLOR _AnimeDirectorWorldLightColor

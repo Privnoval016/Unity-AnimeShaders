@@ -8,6 +8,7 @@
 // decals and vertex lights; the ambient comes from the probe's average (or the director's tint). An entry shader's pass
 // may define ANIME_FORWARD_ALPHA (an expression over the fragment's input and inputData) for the colour's alpha, for a
 // blended pass; otherwise it is 1.
+// AnimeInitializeInputData follows URP's LitForwardPass.hlsl InitializeInputData (Unity Companion License).
 
 #include "../Core/AnimeLighting.hlsl"
 #include "../Core/AnimeFade.hlsl"

@@ -92,7 +92,7 @@ half AnimeRingAmount(float3 positionWS, half3 normalWS, half3 viewWS)
 
 void AnimeCustomSurface(float3 positionWS, float2 uv, inout AnimeSurface surface)
 {
-    if (!AnimeHeadFrameSet())
+    if (!AnimeHeadFrameSet() || ANIME_TIER_DROPS_RING || _RingStrength <= 0.0h)
         return;
     half3 viewWS = half3(GetWorldSpaceNormalizeViewDir(positionWS));
     half amount = AnimeRingAmount(positionWS, surface.normalWS, viewWS);

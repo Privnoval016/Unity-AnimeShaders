@@ -5,9 +5,9 @@ two-tone look in the manner of modern anime games, outlines that hold up on two-
 as the head turns, and a light director so a project can set a mood per scene and relight a single shot. Everything is
 tuned through its own material inspector with look presets, with nothing needing code.
 
-**Status: in construction (0.5.0).** The lit core, the character, face, hair and eye shaders, the depth-edge rim, the
-world, ground and sky shaders, sky presets with clouds, ridges and haze, detail sets, the light director, the material inspector and
-look presets are written; the foliage shader arrives next, proved before it ships.
+**Status: in construction (0.6.0).** The lit core, the character, face, hair and eye shaders, the depth-edge rim, the
+world, ground and sky shaders, sky presets with clouds, ridges and haze, detail sets, the light director, the material inspector,
+look presets, quality tiers and the shader warm-up are written; the foliage shader arrives next, proved before it ships.
 
 - **Requires:** Unity 6, URP 17, the Forward or Forward+ renderer with depth priming off. Deferred is not supported
   (it would draw the line but not the body), and depth priming would test the line against the body's primed depth and
@@ -37,7 +37,7 @@ normals, smoothed so hard edges don't crack the line. Those normals are baked on
 leaving the tangents free for normal maps. Width follows the camera's distance and field of view, can be painted per
 vertex, and has a global multiplier.
 
-## What exists now (0.5.0)
+## What exists now (0.6.0)
 
 | File | What it is |
 |---|---|
@@ -49,7 +49,7 @@ vertex, and has a global multiplier.
 | `Runtime/Rendering/AnimeHairDepthFeature.cs`, `AnimeHairDepthPass.cs`; `Shaders/Includes/Character/AnimeHairShadow.hlsl` | The front hair's shadow: the feature draws every HairDepth pass in view before the opaques into `_AnimeHairDepth` (half resolution, or full with **Full Resolution**; cleared to 0, its own 16-bit depth buffer with no stencil), with `_AnimeHairDepthOn` and `_AnimeHairDepthSize`; every camera starts with it black and off, so a camera it skips (previews, reflections, a renderer without it) never reads another's. The face reads it at its point moved toward the light across the screen by **Hair Shadow Reach** (metres), shaded where hair is nearer by more than **Hair Shadow Bias**, over **Hair Shadow Softness**, by **Hair Shadow Strength**, and none from hair farther in front than **Hair Shadow Range** (another's, metres away); the four nearest texels compared and blended, so the edge is smooth across a texel. With no feature drawing on a camera, nothing is read. Game and Scene cameras; not XR |
 | `Shaders/Includes/Core/AnimeProperties.hlsl` | The one `UnityPerMaterial` block every pass includes (SRP Batcher): a core plus feature groups a shader opts into in its `HLSLINCLUDE` (`ANIME_GROUP_BAND`, `_BODY`, `_EMISSION`, `_INSIDE`, `_RIM`, `_LINE`, `_GROUND`, `_FACE`, `_HAIR`, `_EYES`, `_COLOUR`; the code reading a group compiles only with it, and the shader's Properties list holds exactly its groups); its own extra properties through `ANIME_ENTRY_PROPERTIES`; the dynamic-branch keyword macros |
 | `Shaders/Textures/AnimeNoise.png` | The pack's noise, baked by `Editor/AnimeNoiseBaker.cs` (Tools > Anime Shaders > Bake Noise Texture; our own code, deterministic, versioned): 1024 square, R value noise, G fbm, B distance to the nearest cell edge, A a value per cell, every channel tiling; held linear, uncompressed and mipmapped by `Editor/AnimeNoiseImport.cs` (label `AnimeNoise`) |
-| `Shaders/Includes/Core/AnimeDirector.hlsl` | The light director's global properties, in two channels: the characters' and the world's (below) |
+| `Shaders/Includes/Core/AnimeDirector.hlsl` | The light director's global properties, in two channels: the characters' and the world's (below); and the quality tiers' `_AnimeTierDrops` (a float holding the dropped features' bits) with its `ANIME_TIER_DROPS_*` tests |
 | `Shaders/Includes/Core/AnimeColour.hlsl` | Group `ANIME_GROUP_COLOUR` (taken by `Anime/Character`, `Anime/Face`, `Anime/Hair`, `Anime/Eyes`, never the world's shaders): **Brightness** scales the shaded colour and **Saturation** moves it from its own grey (0 grey, 1 unchanged, above 1 richer), before the haze, so a shader can lift what it draws over what doesn't; a few ALU a pixel |
 | `Shaders/Includes/Core/AnimeWorld.hlsl`, `AnimeClouds.hlsl`, `AnimeFog.hlsl` | The world's globals (published by a sky preset), the cloud field the sky and the cloud shadows share, and the haze that replaces URP's fog in the pack's shaders (below) |
 | `Shaders/Includes/Core/AnimeSurface.hlsl` | The surface struct (with a form override and its weight: an entry shader's lit weight in place of the normal's; and a lit highlight added by the lit weight, as the hair's ring; zero for every other shader), base and emission sampling, alpha clip, the inside tone |
@@ -78,6 +78,9 @@ vertex, and has a global multiplier.
 | `Editor/Looks/` | Looks in the Editor (`AnimeLooks`: Extract, Update, Apply, Revert, what differs, the link a material follows) and a look's own inspector |
 | `Runtime/Looks/` | `AnimeLookPreset`, a look; applied by `AnimeMaterials.ApplyLook` (scripts can apply one in play), which keeps keywords and passes in step (`SyncDerived`) |
 | `Looks/` | A neutral Default look per shader |
+| `Runtime/Quality/` | Quality tiers (below): `AnimeQualityTiers` (the asset: what each pipeline asset drops), `AnimeTierDrop`, `AnimeTiers` (the one writer of `_AnimeTierDrops`) |
+| `Runtime/WarmUp/` | The shader warm-up (below): `AnimeTrace` (records a trace in a build), `AnimeWarmUp` (warms the running API's trace, all at once or a few states a frame) |
+| `Editor/WarmUp/`, `Editor/Quality/` | `AnimeTraceTools` (merging a recording into a trace; a trace's shape, to tell a traced shader that changed); `AnimeTiersEditorBoot` (hands `AnimeTiers` the project's one tiers asset in the Editor) |
 | `Tests/Editor/` | `Support/` (in `Stage/`, `World/` and `Sources/`: `LitStage`: a preview scene, camera and light rendering into a linear float target; `MadePipeline`: a URP asset made for a test with given features, swapped in and always put back; meshes, materials with colours as the shader reads them, frame reads, source readers, the director's globals and the world's globals held neutral (`WorldGlobals`; every stage holds them), a sky preset made field by field (`MadeSky`), a volume only the stage camera sees (`MadeVolume`), the finite scan, the batcher check), `Shader/` (passes, batcher, names and constants, every platform's compile, and `Probe/`: an entry shader adding its own property, and one through the surface hook), `Inspector/` (the feature map, the preview against a render), `Character/` (the block store, the head frame, the face against Lambert round the horizon, the front hair's shadow, the angel ring, eyes through their fringe), `Face/` (the face map's bake on made faces, against Lambert; its import and hash), `Look/` (tones, band, rim, director, cast shadows, cloud shadows, contact shading, inside tone, fade, the surface hook; `Screen/`: the depth rim, the sun shafts), `World/` (the noise, world UVs; `Ground/`: the detail packer and its import, the ground; `Sky/`: the sky, its ridges and clouds, the haze, presets), `Outline/` (the line, the baker) |
 
 A thin entry shader (face, hair, world, or a project's own with extra passes) includes the same files, declares its own
@@ -340,7 +343,66 @@ follows none; a variant, a material inside a model or one in a package can't fol
 (back to the look), **Extract** (a new look from this material, beside it), **Update Look** (this material's values into
 the look, merged: settings its shader lacks are kept; confirmed by a second click; Undo takes it back).
 
+### Quality tiers
+
+A quality level drops features by two means, neither adding a shader variant:
+
+- **Screen-space features by renderer**: a level that doesn't want a renderer feature (the depth-edge rim's
+  `AnimeRimFeature`) is given a renderer without it, so its pass never runs. Keep the hair depth feature on every
+  renderer whose characters have eyes: the eyes through the hair need it.
+- **In-shader features by one global**, `_AnimeTierDrops` in the director's constant buffer (not the material block, so
+  the SRP Batcher holds): one float holding the dropped features' bits (`AnimeTierDrop`: 1 the fresnel rim, 2 the second
+  band, 4 the angel ring, 8 the extra lights), read with float maths, exact on every API. The branches the shaders
+  already have read it (`ANIME_TIER_DROPS_RIM` and the rest) and skip their work: a dropped ring returns before computing
+  anything, dropped extra lights before their loop. Unset reads 0: nothing dropped. A new drop is an enum value and a
+  line in `AnimeDirector.hlsl` (a test holds the two together).
+
+`AnimeQualityTiers` (Create > Anime Shaders > Quality Tiers) lists a drop set per pipeline asset (a quality level's
+own: two levels sharing one pipeline asset drop the same). A project hands its tiers to `AnimeTiers.Use` as it starts
+(before the first scene loads); in the Editor the pack hands over the project's one tiers asset itself
+(`AnimeTiersEditorBoot`). `AnimeTiers` writes the global at once and again whenever the quality level changes. Never handed any, nothing is dropped. Its own owner, apart
+from the light director, whose neutral writes never touch it. A dropped feature renders exactly as switched off, and
+nothing dropped renders exactly as with no tiers (tests).
+
+### Shader warm-up
+
+A shader variant compiles for the GPU the first time it is drawn, which shows as a hitch the first time a fight, a
+technique or a menu appears in a build. A trace records every graphics state the game draws with; a build then
+compiles them before they are needed.
+
+- **Recording**: `AnimeTrace.Record(path)` in a build on the platform's real GPU (never without one), while someone
+  plays what the trace should cover; the trace is saved on a normal quit. One trace per graphics API, at the quality
+  level played (a level with another renderer draws other states: switch levels while recording to cover them). Saved
+  on a normal quit only. In the Editor, `AnimeTraceTools.Merge(into, from)` adds a later recording to a trace, so
+  something new needs only itself played, and `AnimeTraceTools.Shape(trace)` records each traced shader's passes and
+  keywords: kept beside the trace, `Changed(recorded, now)` names a traced shader that gained or lost one since.
+- **Warming**: `AnimeWarmUp.WarmNow(traces)` compiles every state of the trace recorded on the running API
+  (`AnimeWarmUp.For`) before returning: at launch, before anything draws. `WarmAsync(traces, perFrame, cancel)` warms
+  a few states a frame, for behind a loading screen whose own shaders are warm: whatever draws meanwhile still compiles
+  as it is drawn, so warming a few a frame under a live scene still stalls it. It ends on cancel without throwing, and
+  gives up with a warning if the trace stops warming more. With no trace for the API, either warns and does nothing. Never warm while recording: the trace would take in the warmed states.
+
+### Variant budget
+
+`Tests/Editor/Shader/PackShaderTests` holds every shader in `Shaders/` to a recorded variant count (Unity's own,
+before stripping) and to the SRP Batcher. A change that adds a compiled keyword multiplies a count and fails; a
+deliberate one records the new count in the same change. A cheap switch stays a dynamic branch or a uniform.
+
 ## Credits and sources
 
-Built from public write-ups of anime rendering (Arc System Works' toon line talk, community breakdowns of modern anime
-games, Unity's own toon shader). No code is copied from any GPL source.
+The pack's code and its two textures are its own; nothing in it is copied from a GPL source, and it holds no
+third-party texture or model.
+
+- **Ideas, not code**: the inverted-hull line with smoothed normals and the shading ramp, as described in Arc System
+  Works' GDC 2015 talk on Guilty Gear Xrd's art style (Junya Motomura); the screen-space depth-edge rim and the face
+  shadow from a map, as community breakdowns of recent anime-styled games describe them; Unity's own Toon Shader as a
+  reference for which controls artists expect.
+- **`Shaders/Includes/Core/AnimeHash.hlsl`**: the one-dimensional "Hash without Sine" by Dave Hoskins
+  (https://www.shadertoy.com/view/4djSRW), under its MIT licence, wrapped with a seed.
+- **`Shaders/Includes/Passes/AnimeShadowCasterPass.hlsl`, `AnimeForwardPass.hlsl`**: the shadow-caster position and the
+  forward pass's input data follow URP's `ShadowCasterPass.hlsl` and `LitForwardPass.hlsl` (Unity Companion License,
+  for use with Unity); every other URP function is called from URP's own includes, never copied.
+- **Standard constructions**: the 4x4 Bayer matrix of the dither fade (`AnimeFade.hlsl`); MurmurHash2's mixing
+  constant in the noise baker (public domain).
+- **Textures**: `AnimeNoise.png` is baked by `Editor/AnimeNoiseBaker.cs` from maths alone; `AnimeDetailNeutral.png`
+  is a flat 16-pixel default.

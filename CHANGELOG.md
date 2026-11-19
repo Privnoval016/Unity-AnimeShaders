@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.6.0 (2026-11-18)
+
+- Quality tiers (`Runtime/Quality/`): `AnimeQualityTiers` (a drop set per pipeline asset), `AnimeTiers` (the one writer
+  of `_AnimeTierDrops`, a float of the dropped bits in the director's constant buffer), `AnimeTiersEditorBoot` (the
+  project's tiers in the Editor); the fresnel rim, the second band, the angel ring and the extra lights skip their work
+  when dropped. No new variants. Tests: a dropped feature renders exactly as switched off,
+  nothing dropped exactly as before, each bit alone, the global follows the quality level; break proofs.
+- The shader warm-up (`Runtime/WarmUp/`): `AnimeTrace` records a `GraphicsStateCollection` in a build and saves it on
+  quit; `AnimeWarmUp` warms the running API's trace all at once (`WarmNow`) or a few states a frame (`WarmAsync`: ends
+  on cancel, gives up on a stalled trace), warning for an API with none. `Editor/WarmUp/AnimeTraceTools`: merging a
+  recording into a trace, a trace's shape and which traced shaders changed.
+- Plenary review fixes (four reviewers): the hair ring skips its work at zero strength and the stars below the horizon
+  (both render as before); the credits name each source (the Hoskins hash, the URP-adapted passes, the GDC talk).
+- `PackShaderTests`: every shader in `Shaders/` held to a recorded variant count and to the SRP Batcher (in place of
+  the hand-listed batcher cases).
+
 ## 0.5.0 (2026-11-18)
 
 - The material inspector (`Editor/Inspector/`): shaders declare their layout by markers (`AnimeSection`,

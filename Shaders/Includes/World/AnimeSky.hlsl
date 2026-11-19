@@ -196,7 +196,7 @@ half4 AnimeSkyFragment(AnimeSkyVaryings input) : SV_Target
     cloud *= half(smoothstep(0.0, _CloudHorizonFade, height)) * belowClouds;
     sky = lerp(sky, lerp(_CloudLitColor.rgb, _CloudShadeColor.rgb, shaded), cloud);
 
-    if (ANIME_SKY_STARS_ON)
+    if (ANIME_SKY_STARS_ON && height >= 0.0)
     {
         half star = AnimeSkyStars(direction.xz / (abs(height) + 1.0) * _StarScale, _StarDensity, _StarSize);
         sky += _StarColor.rgb * (star * (1.0h - cloud) * step(0.0, height));

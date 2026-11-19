@@ -1,7 +1,8 @@
 #ifndef ANIME_SHADOW_CASTER_PASS_INCLUDED
 #define ANIME_SHADOW_CASTER_PASS_INCLUDED
 
-// ShadowCaster: the body's shadow, faded with the body by the same dither (screen space of the shadow map).
+// ShadowCaster: the body's shadow, faded with the body by the same dither (screen space of the shadow map). The
+// shadow-caster position follows URP's ShadowCasterPass.hlsl (Unity Companion License).
 
 #include "../Core/AnimeSurface.hlsl"
 #include "../Core/AnimeFade.hlsl"

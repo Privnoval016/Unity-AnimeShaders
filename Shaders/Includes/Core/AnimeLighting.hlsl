@@ -134,6 +134,8 @@ half3 AnimeExtraLights(AnimeSurface surface, InputData inputData, half4 shadowMa
 {
     half3 sum = half3(0, 0, 0);
 #if defined(_ANIME_EXTRA_LIGHTS) && defined(_ADDITIONAL_LIGHTS)
+    if (ANIME_TIER_DROPS_EXTRA_LIGHTS)
+        return sum;
     uint pixelLightCount = GetAdditionalLightsCount();
 
     #if USE_CLUSTER_LIGHT_LOOP
@@ -193,7 +195,7 @@ half3 AnimeShade(AnimeSurface surface, InputData inputData)
     half3 shadowTone = surface.albedo * (_ShadowTint.rgb * AnimeWorldShadeMultiplier() * AnimeDirectorShadowColorMultiplier() + ambient * _AmbientStrength);
 
 #if defined(ANIME_GROUP_BAND)
-    if (ANIME_BAND2_ON)
+    if (ANIME_BAND2_ON && !ANIME_TIER_DROPS_BAND2)
     {
         half deepWeight = AnimeToneWeight(x, _ShadowThreshold - _Band2Offset, _Band2Softness);
         deepWeight = lerp(deepWeight, 1.0h, surface.formOverrideWeight);
@@ -206,7 +208,7 @@ half3 AnimeShade(AnimeSurface surface, InputData inputData)
     color += AnimeExtraLights(surface, inputData, shadowMask);
 
 #if defined(ANIME_GROUP_RIM)
-    if (ANIME_RIM_ON)
+    if (ANIME_RIM_ON && !ANIME_TIER_DROPS_RIM)
         color += AnimeRim(surface.normalWS, inputData.viewDirectionWS, litWeight);
 #endif
 

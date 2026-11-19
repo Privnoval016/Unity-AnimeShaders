@@ -157,6 +157,12 @@ namespace AnimeShaders
             /** <summary>The property id of _AnimeDirectorWorldScalars.</summary> */
             public static readonly int WorldScalars = Shader.PropertyToID(WorldScalarsName);
 
+            /** <summary>The name _AnimeTierDrops: the quality tiers' dropped bits, in the director's buffer but written by <see cref="AnimeTiers" />, never the light director.</summary> */
+            public const string TierDropsName = "_AnimeTierDrops";
+
+            /** <summary>The property id of _AnimeTierDrops.</summary> */
+            public static readonly int TierDrops = Shader.PropertyToID(TierDropsName);
+
             #endregion
         }
 

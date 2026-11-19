@@ -8,7 +8,7 @@ using UnityEngine.Rendering;
 
 namespace AnimeShaders.Tests
 {
-    /** <summary>Anime/Character compiles cleanly, has its passes, keeps the SRP Batcher, and every pass shares the one block.</summary> */
+    /** <summary>Anime/Character compiles cleanly, has its passes, and every pass shares the one block; an entry shader adding its own property keeps the SRP Batcher (every pack shader's batcher check: PackShaderTests).</summary> */
     public class CharacterShaderTests
     {
         #region Private Fields
@@ -46,17 +46,6 @@ namespace AnimeShaders.Tests
             for (int pass = 0; pass < shader.GetPassCountInSubshader(0); pass++)
                 modes.Add(shader.FindPassTagValue(pass, new ShaderTagId("LightMode")).name.ToUpperInvariant());
             CollectionAssert.AreEquivalent(ExpectedLightModes.Select(mode => mode.ToUpperInvariant()), modes);
-        }
-
-        [TestCase("Anime/Character")]
-        [TestCase("Anime/World")]
-        [TestCase("Anime/Ground")]
-        [TestCase(AnimeShaderIds.FaceShader)]
-        [TestCase(AnimeShaderIds.HairShader)]
-        [TestCase(AnimeShaderIds.EyesShader)]
-        public void SrpBatcher_IsCompatible(string name)
-        {
-            Assert.IsNull(ShaderChecks.SrpBatcherProblem(Shader.Find(name)));
         }
 
         [TestCase("Anime/World")]
