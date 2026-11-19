@@ -1,0 +1,145 @@
+# Each pack shader setting's tooltip: "_Property: text", or "Shader/_Property: text" for one shader only (it wins).
+_AlphaClip: Cuts away where the base map's alpha is below the cutoff (hair strands, lace).
+_AmbientStrength: How much the scene's ambient light adds to the shadow tone.
+_AnimeNoiseTex: The pack's baked noise (Tools > Anime Shaders > Bake Noise Texture).
+_Band2: A second, deeper shadow tone inside the first, for a three-step look.
+_Band2Offset: How far into the shadow the deeper tone starts, below the shadow threshold.
+_Band2Softness: How wide the step into the deeper tone is.
+_Band2Tint: The deeper tone: the shadow tone times this.
+_BaseColor: Multiplies the base map. Belongs to this material's model, so a look preset leaves it.
+_BaseMap: The colour texture (diffuse). Multiplied by Base Color.
+_BodyShadow: Shades the whole body when something stands between it and the light (a wall, a roof), not only where a shadow lands.
+_BodyShadowReach: How far toward the light the body's shadow is looked for, in metres.
+_BreakUpAngle: The angle of the second read that breaks up tiling.
+_BreakUpScale: The scale of the second read that breaks up tiling.
+_BumpMap: The normal map.
+_BumpScale: How strongly the normal map bends the light. Belongs to this material's model.
+_CastShadowStrength: How dark cast shadows make it, folded into the two tones: 0 none, 1 full shadow tone.
+_CircleBreakUp: Blends a second read of the detail at another scale and angle, so the circle shows no repeat.
+_CircleDark: The circle's colour in its darkest detail.
+_CircleDetail: The circle's packed detail map (from a Detail Set).
+_CircleLight: The circle's colour in its lightest detail.
+_CircleNormal: How much the circle detail's normal tilts the surface.
+_CircleSecondDark: The dark colour where the detail's mask is off.
+_CircleSecondLight: The light colour where the detail's mask is off.
+_CircleSteps: Quantises the circle's shade into steps; 0 smooth.
+_CircleStoneJoint: Shades darker than this (the joints between stones) take no variation.
+_CircleStoneMix: The share of stones that take the second colour pair.
+_CircleStoneShade: How much each stone's shade varies, up to this.
+_CircleStones: The circle's stone map, packed from a Detail Set with Stones ticked: each stone gets its own shade.
+_CircleTile: The circle detail's tile size in metres.
+_CloudShadow: How much the clouds shade it.
+_ColourBrightness: The shaded colour times this: above 1 lifts the characters above the world.
+_ColourSaturation: The shaded colour's saturation: 0 grey, 1 as shaded, above 1 richer.
+_ContactShading: How much ambient occlusion shades it.
+_ContactThreshold: Ambient occlusion below this turns to shade.
+_Cull: Which faces are hidden: Back for a closed body, Off for two-sided cloth. Belongs to this material's model.
+_Cutoff: Alpha below this is cut away. Belongs to this material's model.
+_DetailFadeRange: Over how many metres the detail fades.
+_DetailFadeStart: From this distance, in metres, the detail's normal and steps fade, leaving the shade to the mips.
+_EarthAmount: How much bare earth shows.
+_EarthColor: The colour of bare earth showing through the field.
+_EdgeSoftness: How soft the edge between the circle and the field is, in metres.
+_Emission: Glow: adds colour unaffected by light (eyes, gems, magic).
+_EmissionColor: The glow's colour and strength (HDR: above 1 blooms).
+_EmissionMap: Where it glows, times Emission Colour.
+_EmissionMapOn: Takes where it glows from a texture.
+_ExtraLightCap: The most the additional lights can add together, so a crowd of lights never washes it out.
+_ExtraLightStrength: How strongly the additional lights add.
+_ExtraLights: Point and spot lights add to its colour, through the same two tones.
+_EyeHairDistance: How close in front of the eyes, in metres, hair must be to cover them; farther hair is ignored.
+_EyeHairFade: Over how many metres before that distance the hair's cover fades out.
+_EyePitchLimit: Degrees up or down at which the fringe is opaque.
+_EyeStencilBit: The stencil bit the eyes mark so hair can let them through. Pick one no other shader in the project writes (URP's Deferred path uses Bit 4).
+_EyeThinHair: Shows the eyes only where the fringe is thin: how many texels round to look for it (0 off).
+_EyeThinHairNeed: Share of that ring clear of the fringe for full.
+_EyeThroughTint: The colour the eyes take where they show through the hair (white leaves them as they are).
+_EyeYawLimit: How far the head may turn, in degrees, before the fringe hides the eyes fully.
+_FaceLightHeight: How much a light from far above or below dims the face.
+_FaceMap: The face's shadow map, baked from its mesh (Create > Anime Shaders > Face Map): where the face shades as the light goes round the head.
+_FaceMapStrength: How much the face map shades the face: 0 by its normals alone, 1 by the map.
+_FaceShadowBias: Shifts where the face turns to shadow: higher lights more of the face.
+_FaceShadowSoftness: How soft the face's shadow edge is, in degrees of the light round the head.
+_FieldBreakUp: Blends a second read of the detail at another scale and angle, so a large field shows no repeat.
+_FieldDark: The field's colour in its darkest detail.
+_FieldDetail: The field's packed detail map (from a Detail Set).
+_FieldLight: The field's colour in its lightest detail.
+_FieldNormal: How much the field detail's normal tilts the surface.
+_FieldSecondDark: The dark colour where the detail's mask is off.
+_FieldSecondLight: The light colour where the detail's mask is off.
+_FieldSteps: Quantises the field's shade into steps; 0 smooth.
+_FieldStoneJoint: Shades darker than this (the joints between stones) take no variation.
+_FieldStoneMix: The share of stones that take the second colour pair.
+_FieldStoneShade: How much each stone's shade varies, up to this.
+_FieldStones: The field's stone map, packed from a Detail Set with Stones ticked: each stone gets its own shade.
+_FieldTile: The field detail's tile size in metres.
+_GroundCircle: The fighting circle: its centre x and z, its radius, and how much its edge wobbles.
+_HairOverEyes: The least the fringe covers the eyes: 0 the eyes show fully through, 1 hidden.
+_HairShadowBias: How much nearer the camera hair must be, in metres, to cast its shadow on the face.
+_HairShadowRange: Hair farther than this in front of the face, in metres, casts no shadow on it.
+_HairShadowReach: How far toward the light the front hair's shadow on the face reaches, in metres.
+_HairShadowSoftness: How soft the front hair's shadow edge is, in metres.
+_HairShadowStrength: How dark the front hair's shadow on the face is. Needs the Anime Hair Depth feature on the renderer.
+_InsideDarken: How much darker the inside is.
+_InsideFade: Fades the inside tone out along a UV direction (darker deep inside, lighter at the hem).
+_InsideFadeAxis: The UV direction the inside tone fades along.
+_InsideFadeEnd: Where the fade ends, in UV.
+_InsideFadeStart: Where the fade starts, in UV.
+_InsideSaturation: The inside's saturation: below 1 duller, above 1 richer.
+_InsideTint: The inside's tint.
+_InsideTone: Gives the inside of two-sided cloth its own darker tone.
+_LightInfluence: How much the main light's colour tints the lit tone: 0 keeps the base colour, 1 takes the light's colour fully.
+_NormalMapOn: Uses a normal map to bend the light on the surface's detail.
+_OutlineBakedNormals: Draws the line from smoothed normals baked into the mesh (on import, by label), so hard edges don't split it.
+_OutlineBaseTint: How much the base map tints the line.
+_OutlineBaseTintOn: Tints the line by the base map underneath, for a softer coloured line.
+_OutlineColor: The line's colour.
+_OutlineDistanceMax: Farther than this, in metres, the line stops shrinking on screen.
+_OutlineDistanceMin: Nearer than this, in metres, the line stops growing on screen.
+_OutlineOpenEdges: Two-sided cloth: the line widens past hems and open edges; needs the line bake.
+_OutlineVertexColor: Reads the line's width and offset from the mesh's vertex colours, painted per vertex.
+_OutlineVertexZ: The extra push back, in metres, at a vertex colour of 1. Belongs to this material's model.
+_OutlineWidth: The line's thickness, in thousandths of the screen's height (1.5: 0.15%), the same at any distance between the near and far distances.
+_OutlineWidthChannel: The vertex colour channel holding the line's width. Belongs to this material's model.
+_OutlineZChannel: The vertex colour channel holding the line's extra offset. Belongs to this material's model.
+_OutlineZOffset: Pushes the line back from the camera, in metres, so it stays behind curved sheets. Belongs to this material's model.
+_PatchScale: The size of the soft patches from the noise, per metre.
+_PatchStrength: How strongly the soft patches lighten and darken the field.
+_PatchTint: A hue given to broad patches of the field; its alpha is the strength.
+_PatchTintCover: How much of the field the tinted patches cover.
+_PatchTintScale: The size of the tinted patches, per metre.
+_PatchTintSoftness: How soft the tinted patches' edges are.
+_ReceiveShadows: Shadows cast by other objects fall on it.
+_Rim: A rim of light round the silhouette, from the angle to the camera (works everywhere, needs no renderer feature).
+_RimColor: The rim's colour. With the depth edge rim on Brighten, the tint of the part's own colour.
+_RimDepth: A rim only where the body's edge stands in front of something farther away (as in Honkai: Star Rail). Needs the Anime Rim feature on the renderer.
+_RimDepthBlend: Add: light added along the edge. Brighten: the part's own colour brightened, Rim Colour tinting it.
+_RimDepthThreshold: How much farther the background must be, in metres, for an edge to get the rim.
+_RimDepthWidth: The depth edge rim's width in pixels at 1080p, kept the same on screen at any distance.
+_RimLightMask: 0: the rim all round; 1: only on the side facing the light.
+_RimSoftness: How soft the rim's inner edge is.
+_RimStrength: How bright the rim is.
+_RimWidth: How far in from the silhouette the fresnel rim reaches.
+_RingBreakup: Each strand's stroke its own height and length.
+_RingBreakupCount: How many strands the ring is drawn as, round the head.
+_RingBreakupShape: Square dashes to needles pointed top and bottom.
+_RingBrightest: The most the ring can add, so it never blows out.
+_RingColor: The angel ring's colour (the hair's band of light).
+_RingFacing: Brighter where the hair faces the camera.
+_RingFollowsView: 0 fixed on the head, 1 sliding with the view.
+_RingGlow: A soft glow beyond the ring's strokes.
+_RingHairTint: How much the ring takes the hair's own hue, texel by texel.
+_RingHeight: Where the ring sits on the head, from -1 (bottom) to 1 (top).
+_RingLift: 0 added light, 1 the hair's own colour brightened.
+_RingLightColor: How much the ring takes the main light's colour.
+_RingMask: Optional: where the ring may show, in the texture's red channel.
+_RingSoftness: How far the ring's edges fade.
+_RingSphereBlend: Which shape the ring follows: 0 the hair's own normals, 1 a smooth sphere round the head.
+_RingStrandGap: The thin gaps between the ring's strands.
+_RingStrength: How bright the ring is: with Lift at 1, how many times the hair's own brightness it adds.
+_RingTilt: Tilts the ring toward the front of the head.
+_RingWidth: The ring's width: half the band's height on the head.
+_ShadowSoftness: How wide the step between the two tones is: 0 a hard edge, higher a soft blend.
+_ShadowThreshold: Where light turns to shadow, from facing away (0) to facing the light (1). The ramp above marks it.
+_ShadowTint: The shadow tone: the base colour times this where the surface faces away from the light.
+_WorldUV: Maps the base map in world space across XZ (tiling per metre), so floors and walls match across meshes.

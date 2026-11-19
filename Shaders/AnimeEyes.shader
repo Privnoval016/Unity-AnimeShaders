@@ -8,49 +8,49 @@ Shader "Anime/Eyes"
     // Variants: as Anime/Character's forward pass, twice (the blended pass has the same keywords).
     Properties
     {
-        [Header(Surface)]
+        [AnimeSection(Surface)]
         [MainTexture] _BaseMap("Base Map", 2D) = "white" {}
-        [MainColor] _BaseColor("Base Color", Color) = (1, 1, 1, 1)
+        [MainColor] [AnimeOwn] _BaseColor("Base Color", Color) = (1, 1, 1, 1)
 
-        [Header(Tones)]
+        [AnimeSection(Tones)]
         _ShadowTint("Shadow Tint", Color) = (0.62, 0.6, 0.72, 1)
         _ShadowThreshold("Shadow Threshold", Range(0, 1)) = 0.5
         _ShadowSoftness("Shadow Softness", Range(0, 1)) = 0.08
         _LightInfluence("Light Colour Influence", Range(0, 1)) = 1
         _AmbientStrength("Ambient Strength", Range(0, 1)) = 0.25
 
-        [Header(Through Hair)]
-        _HairOverEyes("Hair Over Eyes (the fringe's least cover: 0 eyes fully through, 1 hidden)", Range(0, 1)) = 0.6
-        _EyeYawLimit("Eye Yaw Limit (degrees round at which the fringe is opaque)", Range(1, 90)) = 70
-        _EyePitchLimit("Eye Pitch Limit (degrees up or down at which the fringe is opaque)", Range(1, 90)) = 45
-        _EyeHairDistance("Eye Hair Distance (m: only hair this close in front)", Range(0.005, 0.5)) = 0.15
-        _EyeHairFade("Eye Hair Fade (m: fading out before that distance)", Range(0, 0.2)) = 0.03
-        _EyeThinHair("Eye Thin Hair (texels round: only where the fringe is thin; 0 off)", Range(0, 16)) = 0
-        _EyeThinHairNeed("Eye Thin Hair Need (share of that ring clear of the fringe for full)", Range(0.05, 1)) = 0.5
-        _EyeThroughTint("Eye Through Tint (the eyes as they show through; white none)", Color) = (1, 1, 1, 1)
-        [Enum(Bit0, 1, Bit1, 2, Bit2, 4, Bit3, 8, Bit4, 16, Bit5, 32, Bit6, 64)] _EyeStencilBit("Eye Stencil Bit (one no other shader in the project writes; URP's Deferred path uses Bit4)", Float) = 16
+        [AnimeSection(Through Hair)]
+        _HairOverEyes("Hair Over Eyes", Range(0, 1)) = 0.6
+        _EyeYawLimit("Eye Yaw Limit", Range(1, 90)) = 70
+        _EyePitchLimit("Eye Pitch Limit", Range(1, 90)) = 45
+        _EyeHairDistance("Eye Hair Distance", Range(0.005, 0.5)) = 0.15
+        _EyeHairFade("Eye Hair Fade", Range(0, 0.2)) = 0.03
+        _EyeThinHair("Eye Thin Hair", Range(0, 16)) = 0
+        _EyeThinHairNeed("Eye Thin Hair Need", Range(0.05, 1)) = 0.5
+        _EyeThroughTint("Eye Through Tint", Color) = (1, 1, 1, 1)
+        [Enum(Bit0, 1, Bit1, 2, Bit2, 4, Bit3, 8, Bit4, 16, Bit5, 32, Bit6, 64)] _EyeStencilBit("Eye Stencil Bit", Float) = 16
 
-        [Header(Shadows and Lights)]
+        [AnimeSection(Shadows and Lights)]
         [ToggleOff(_RECEIVE_SHADOWS_OFF)] _ReceiveShadows("Receive Shadows", Float) = 1
         _CastShadowStrength("Cast Shadow Strength", Range(0, 1)) = 1
-        _CloudShadow("Cloud Shadow (how much the clouds shade it)", Range(0, 1)) = 1
-        _ContactShading("Contact Shading (how much ambient occlusion shades it)", Range(0, 1)) = 0.3
-        _ContactThreshold("Contact Threshold (occlusion turns to shade below it)", Range(0, 1)) = 0.6
+        _CloudShadow("Cloud Shadow", Range(0, 1)) = 1
+        _ContactShading("Contact Shading", Range(0, 1)) = 0.3
+        _ContactThreshold("Contact Threshold", Range(0, 1)) = 0.6
         [Toggle(_ANIME_BODY_SHADOW)] _BodyShadow("Shadow The Whole Body", Float) = 0
-        _BodyShadowReach("Body Shadow Reach (m toward the light)", Range(0, 5)) = 1.5
+        [AnimeShowWith(_BodyShadow)] _BodyShadowReach("Body Shadow Reach (m toward the light)", Range(0, 5)) = 1.5
 
         [Toggle(_ANIME_EXTRA_LIGHTS)] _ExtraLights("Use Additional Lights", Float) = 0
-        _ExtraLightStrength("Additional Light Strength", Range(0, 2)) = 1
-        _ExtraLightCap("Additional Light Cap", Range(0, 2)) = 0.6
+        [AnimeShowWith(_ExtraLights)] _ExtraLightStrength("Additional Light Strength", Range(0, 2)) = 1
+        [AnimeShowWith(_ExtraLights)] _ExtraLightCap("Additional Light Cap", Range(0, 2)) = 0.6
 
-        [Header(Colour)]
-        _ColourBrightness("Brightness (the shaded colour times this: lift characters above the world)", Range(0, 2)) = 1
-        _ColourSaturation("Saturation (0 grey, 1 as shaded, above 1 richer)", Range(0, 2)) = 1
+        [AnimeSection(Colour)]
+        _ColourBrightness("Brightness", Range(0, 2)) = 1
+        _ColourSaturation("Saturation", Range(0, 2)) = 1
 
-        [Header(Rim)]
+        [AnimeSection(Rim)]
         [Toggle(_ANIME_RIM)] _Rim("Use Fresnel Rim", Float) = 0
         [HDR] _RimColor("Rim Colour", Color) = (1, 1, 1, 1)
-        _RimWidth("Fresnel Rim Width", Range(0, 1)) = 0.3
+        [AnimeShowWith(_Rim)] _RimWidth("Fresnel Rim Width", Range(0, 1)) = 0.3
         _RimSoftness("Rim Softness", Range(0, 1)) = 0.15
         _RimStrength("Rim Strength", Range(0, 2)) = 0.5
         _RimLightMask("Rim Lit Side Only", Range(0, 1)) = 0.5
@@ -58,21 +58,21 @@ Shader "Anime/Eyes"
         [HideInInspector] _RimDepthWidth("Depth Rim Width (px at 1080p)", Range(0, 12)) = 3
         [HideInInspector] _RimDepthThreshold("Depth Rim Threshold (m)", Range(0.01, 2)) = 0.15
 
-        [Header(Emission)]
-        [Toggle(_ANIME_EMISSION)] _Emission("Use Emission", Float) = 0
-        [HDR] _EmissionColor("Emission Colour", Color) = (0, 0, 0, 1)
-        [Toggle(_ANIME_EMISSION_MAP)] _EmissionMapOn("Use Emission Map", Float) = 0
-        [NoScaleOffset] _EmissionMap("Emission Map", 2D) = "white" {}
+        [AnimeSection(Emission)]
+        [Toggle(_ANIME_EMISSION)] [AnimeSectionSwitch] _Emission("Use Emission", Float) = 0
+        [HDR] [AnimeShowWith(_Emission)] _EmissionColor("Emission Colour", Color) = (0, 0, 0, 1)
+        [Toggle(_ANIME_EMISSION_MAP)] [AnimeShowWith(_Emission)] _EmissionMapOn("Use Emission Map", Float) = 0
+        [NoScaleOffset] [AnimeShowWith(_EmissionMapOn)] _EmissionMap("Emission Map", 2D) = "white" {}
 
-        [Header(Normal Map and Clipping)]
+        [AnimeSection(Normal Map and Clipping)]
         [Toggle(_NORMALMAP)] _NormalMapOn("Use Normal Map", Float) = 0
-        [Normal] [NoScaleOffset] _BumpMap("Normal Map", 2D) = "bump" {}
-        _BumpScale("Normal Scale", Float) = 1
+        [Normal] [NoScaleOffset] [AnimeShowWith(_NormalMapOn)] _BumpMap("Normal Map", 2D) = "bump" {}
+        [AnimeShowWith(_NormalMapOn)] [AnimeOwn] _BumpScale("Normal Scale", Float) = 1
 
         [Toggle(_ALPHATEST_ON)] _AlphaClip("Use Alpha Clip", Float) = 0
-        _Cutoff("Alpha Cutoff", Range(0, 1)) = 0.5
+        [AnimeShowWith(_AlphaClip)] [AnimeOwn] _Cutoff("Alpha Cutoff", Range(0, 1)) = 0.5
 
-        [Enum(UnityEngine.Rendering.CullMode)] _Cull("Cull (Off = two-sided)", Float) = 2
+        [Enum(UnityEngine.Rendering.CullMode)] [AnimeOwn] _Cull("Cull (Off = two-sided)", Float) = 2
     }
 
     SubShader
@@ -83,6 +83,7 @@ Shader "Anime/Eyes"
             "RenderPipeline" = "UniversalPipeline"
             "Queue" = "Geometry+10"
             "IgnoreProjector" = "True"
+            "AnimePreview" = "Ball"
         }
         LOD 300
 

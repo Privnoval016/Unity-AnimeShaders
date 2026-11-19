@@ -1,0 +1,259 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3462c84fed76468d9fe2bb9ac1f0bd2, type: 3}
+  m_Name: Default Face
+  m_EditorClassIdentifier: AnimeShaders::AnimeShaders.AnimeLookPreset
+  madeFrom: {fileID: 4800000, guid: 800204afc521d40738dd6bf329d55f68, type: 3}
+  covers:
+  - Tones
+  - Face
+  - Front Hair Shadow
+  - Shadows and Lights
+  - Colour
+  - Rim
+  - Normal Map and Clipping
+  - Outline
+  settings:
+  - property: _ShadowTint
+    section: Tones
+    kind: 1
+    number: 0.62
+    vector: {x: 0.62, y: 0.6, z: 0.72, w: 1}
+  - property: _ShadowThreshold
+    section: Tones
+    kind: 0
+    number: 0.5
+    vector: {x: 0.5, y: 0, z: 0, w: 0}
+  - property: _ShadowSoftness
+    section: Tones
+    kind: 0
+    number: 0.08
+    vector: {x: 0.08, y: 0, z: 0, w: 0}
+  - property: _LightInfluence
+    section: Tones
+    kind: 0
+    number: 1
+    vector: {x: 1, y: 0, z: 0, w: 0}
+  - property: _AmbientStrength
+    section: Tones
+    kind: 0
+    number: 0.25
+    vector: {x: 0.25, y: 0, z: 0, w: 0}
+  - property: _FaceMapStrength
+    section: Face
+    kind: 0
+    number: 1
+    vector: {x: 1, y: 0, z: 0, w: 0}
+  - property: _FaceShadowSoftness
+    section: Face
+    kind: 0
+    number: 6
+    vector: {x: 6, y: 0, z: 0, w: 0}
+  - property: _FaceShadowBias
+    section: Face
+    kind: 0
+    number: 0
+    vector: {x: 0, y: 0, z: 0, w: 0}
+  - property: _FaceLightHeight
+    section: Face
+    kind: 0
+    number: 0.3
+    vector: {x: 0.3, y: 0, z: 0, w: 0}
+  - property: _HairShadowStrength
+    section: Front Hair Shadow
+    kind: 0
+    number: 1
+    vector: {x: 1, y: 0, z: 0, w: 0}
+  - property: _HairShadowReach
+    section: Front Hair Shadow
+    kind: 0
+    number: 0.03
+    vector: {x: 0.03, y: 0, z: 0, w: 0}
+  - property: _HairShadowBias
+    section: Front Hair Shadow
+    kind: 0
+    number: 0.01
+    vector: {x: 0.01, y: 0, z: 0, w: 0}
+  - property: _HairShadowSoftness
+    section: Front Hair Shadow
+    kind: 0
+    number: 0.01
+    vector: {x: 0.01, y: 0, z: 0, w: 0}
+  - property: _HairShadowRange
+    section: Front Hair Shadow
+    kind: 0
+    number: 0.3
+    vector: {x: 0.3, y: 0, z: 0, w: 0}
+  - property: _ReceiveShadows
+    section: Shadows and Lights
+    kind: 0
+    number: 1
+    vector: {x: 1, y: 0, z: 0, w: 0}
+  - property: _CastShadowStrength
+    section: Shadows and Lights
+    kind: 0
+    number: 1
+    vector: {x: 1, y: 0, z: 0, w: 0}
+  - property: _CloudShadow
+    section: Shadows and Lights
+    kind: 0
+    number: 1
+    vector: {x: 1, y: 0, z: 0, w: 0}
+  - property: _ContactShading
+    section: Shadows and Lights
+    kind: 0
+    number: 0.3
+    vector: {x: 0.3, y: 0, z: 0, w: 0}
+  - property: _ContactThreshold
+    section: Shadows and Lights
+    kind: 0
+    number: 0.6
+    vector: {x: 0.6, y: 0, z: 0, w: 0}
+  - property: _BodyShadow
+    section: Shadows and Lights
+    kind: 0
+    number: 0
+    vector: {x: 0, y: 0, z: 0, w: 0}
+  - property: _BodyShadowReach
+    section: Shadows and Lights
+    kind: 0
+    number: 1.5
+    vector: {x: 1.5, y: 0, z: 0, w: 0}
+  - property: _ExtraLights
+    section: Shadows and Lights
+    kind: 0
+    number: 0
+    vector: {x: 0, y: 0, z: 0, w: 0}
+  - property: _ExtraLightStrength
+    section: Shadows and Lights
+    kind: 0
+    number: 1
+    vector: {x: 1, y: 0, z: 0, w: 0}
+  - property: _ExtraLightCap
+    section: Shadows and Lights
+    kind: 0
+    number: 0.6
+    vector: {x: 0.6, y: 0, z: 0, w: 0}
+  - property: _ColourBrightness
+    section: Colour
+    kind: 0
+    number: 1
+    vector: {x: 1, y: 0, z: 0, w: 0}
+  - property: _ColourSaturation
+    section: Colour
+    kind: 0
+    number: 1
+    vector: {x: 1, y: 0, z: 0, w: 0}
+  - property: _Rim
+    section: Rim
+    kind: 0
+    number: 0
+    vector: {x: 0, y: 0, z: 0, w: 0}
+  - property: _RimColor
+    section: Rim
+    kind: 1
+    number: 1
+    vector: {x: 1, y: 1, z: 1, w: 1}
+  - property: _RimWidth
+    section: Rim
+    kind: 0
+    number: 0.3
+    vector: {x: 0.3, y: 0, z: 0, w: 0}
+  - property: _RimSoftness
+    section: Rim
+    kind: 0
+    number: 0.15
+    vector: {x: 0.15, y: 0, z: 0, w: 0}
+  - property: _RimStrength
+    section: Rim
+    kind: 0
+    number: 0.5
+    vector: {x: 0.5, y: 0, z: 0, w: 0}
+  - property: _RimLightMask
+    section: Rim
+    kind: 0
+    number: 0.5
+    vector: {x: 0.5, y: 0, z: 0, w: 0}
+  - property: _RimDepth
+    section: Rim
+    kind: 0
+    number: 0
+    vector: {x: 0, y: 0, z: 0, w: 0}
+  - property: _RimDepthWidth
+    section: Rim
+    kind: 0
+    number: 3
+    vector: {x: 3, y: 0, z: 0, w: 0}
+  - property: _RimDepthThreshold
+    section: Rim
+    kind: 0
+    number: 0.15
+    vector: {x: 0.15, y: 0, z: 0, w: 0}
+  - property: _RimDepthBlend
+    section: Rim
+    kind: 0
+    number: 1
+    vector: {x: 1, y: 0, z: 0, w: 0}
+  - property: _NormalMapOn
+    section: Normal Map and Clipping
+    kind: 0
+    number: 0
+    vector: {x: 0, y: 0, z: 0, w: 0}
+  - property: _AlphaClip
+    section: Normal Map and Clipping
+    kind: 0
+    number: 0
+    vector: {x: 0, y: 0, z: 0, w: 0}
+  - property: _OutlineColor
+    section: Outline
+    kind: 1
+    number: 0.09999994
+    vector: {x: 0.09999994, y: 0.07999993, z: 0.09999994, w: 1}
+  - property: _OutlineWidth
+    section: Outline
+    kind: 0
+    number: 1.5
+    vector: {x: 1.5, y: 0, z: 0, w: 0}
+  - property: _OutlineDistanceMin
+    section: Outline
+    kind: 0
+    number: 1
+    vector: {x: 1, y: 0, z: 0, w: 0}
+  - property: _OutlineDistanceMax
+    section: Outline
+    kind: 0
+    number: 12
+    vector: {x: 12, y: 0, z: 0, w: 0}
+  - property: _OutlineBakedNormals
+    section: Outline
+    kind: 0
+    number: 0
+    vector: {x: 0, y: 0, z: 0, w: 0}
+  - property: _OutlineBaseTintOn
+    section: Outline
+    kind: 0
+    number: 0
+    vector: {x: 0, y: 0, z: 0, w: 0}
+  - property: _OutlineBaseTint
+    section: Outline
+    kind: 0
+    number: 0.5
+    vector: {x: 0.5, y: 0, z: 0, w: 0}
+  - property: _OutlineVertexColor
+    section: Outline
+    kind: 0
+    number: 0
+    vector: {x: 0, y: 0, z: 0, w: 0}
+  passes:
+  - lightMode: SRPDefaultUnlit
+    section: Outline
+    on: 1

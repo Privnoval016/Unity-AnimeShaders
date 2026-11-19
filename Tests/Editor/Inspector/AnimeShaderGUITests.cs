@@ -35,18 +35,6 @@ namespace AnimeShaders.Tests
         }
 
         [Test]
-        public void EveryNameInTheFeatureMap_IsAPropertyOfTheShader()
-        {
-            Shader shader = _material.shader;
-            foreach (var feature in AnimeShaderGUI.FeatureSettings)
-            {
-                Assert.GreaterOrEqual(shader.FindPropertyIndex(feature.Key), 0, feature.Key);
-                foreach (string setting in feature.Value)
-                    Assert.GreaterOrEqual(shader.FindPropertyIndex(setting), 0, $"{feature.Key}: {setting}");
-            }
-        }
-
-        [Test]
         public void ASettingShows_OnlyWhileEveryToggleAboveItIsOn()
         {
             AnimeMaterials.SetFeature(_material, Keywords.InsideToneName, Switches.InsideTone, false);

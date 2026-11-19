@@ -5,49 +5,49 @@ Shader "Anime/World"
     // clip: tile-based GPUs keep early depth rejection). Groups: band, emission.
     Properties
     {
-        [Header(Surface)]
+        [AnimeSection(Surface)]
         [MainTexture] _BaseMap("Base Map", 2D) = "white" {}
-        [MainColor] _BaseColor("Base Color", Color) = (1, 1, 1, 1)
+        [MainColor] [AnimeOwn] _BaseColor("Base Color", Color) = (1, 1, 1, 1)
 
-        [Header(Tones)]
+        [AnimeSection(Tones)]
         _ShadowTint("Shadow Tint", Color) = (0.7, 0.72, 0.82, 1)
         _ShadowThreshold("Shadow Threshold", Range(0, 1)) = 0.45
         _ShadowSoftness("Shadow Softness", Range(0, 1)) = 0.08
         _LightInfluence("Light Colour Influence", Range(0, 1)) = 1
         _AmbientStrength("Ambient Strength", Range(0, 1)) = 0.25
 
-        [Header(Shadows and Lights)]
+        [AnimeSection(Shadows and Lights)]
         [ToggleOff(_RECEIVE_SHADOWS_OFF)] _ReceiveShadows("Receive Shadows", Float) = 1
         _CastShadowStrength("Cast Shadow Strength", Range(0, 1)) = 1
-        _CloudShadow("Cloud Shadow (how much the clouds shade it)", Range(0, 1)) = 1
-        _ContactShading("Contact Shading (how much ambient occlusion shades it)", Range(0, 1)) = 1
-        _ContactThreshold("Contact Threshold (occlusion turns to shade below it)", Range(0, 1)) = 0.6
+        _CloudShadow("Cloud Shadow", Range(0, 1)) = 1
+        _ContactShading("Contact Shading", Range(0, 1)) = 1
+        _ContactThreshold("Contact Threshold", Range(0, 1)) = 0.6
         [Toggle(_ANIME_EXTRA_LIGHTS)] _ExtraLights("Use Additional Lights", Float) = 0
-        _ExtraLightStrength("Additional Light Strength", Range(0, 2)) = 1
-        _ExtraLightCap("Additional Light Cap", Range(0, 2)) = 0.6
+        [AnimeShowWith(_ExtraLights)] _ExtraLightStrength("Additional Light Strength", Range(0, 2)) = 1
+        [AnimeShowWith(_ExtraLights)] _ExtraLightCap("Additional Light Cap", Range(0, 2)) = 0.6
 
-        [Header(Normal Map and Clipping)]
+        [AnimeSection(Normal Map and Clipping)]
         [Toggle(_NORMALMAP)] _NormalMapOn("Use Normal Map", Float) = 0
-        [Normal] [NoScaleOffset] _BumpMap("Normal Map", 2D) = "bump" {}
-        _BumpScale("Normal Scale", Float) = 1
+        [Normal] [NoScaleOffset] [AnimeShowWith(_NormalMapOn)] _BumpMap("Normal Map", 2D) = "bump" {}
+        [AnimeShowWith(_NormalMapOn)] [AnimeOwn] _BumpScale("Normal Scale", Float) = 1
         [Toggle(_ALPHATEST_ON)] _AlphaClip("Use Alpha Clip", Float) = 0
-        _Cutoff("Alpha Cutoff", Range(0, 1)) = 0.5
-        [Enum(UnityEngine.Rendering.CullMode)] _Cull("Cull (Off = two-sided)", Float) = 2
+        [AnimeShowWith(_AlphaClip)] [AnimeOwn] _Cutoff("Alpha Cutoff", Range(0, 1)) = 0.5
+        [Enum(UnityEngine.Rendering.CullMode)] [AnimeOwn] _Cull("Cull (Off = two-sided)", Float) = 2
 
-        [Header(World Space)]
+        [AnimeSection(World Space)]
         [Toggle(_ANIME_WORLD_UV)] _WorldUV("Base Map In World XZ (tiling per metre)", Float) = 0
 
-        [Header(Second Shadow Band)]
-        [Toggle(_ANIME_BAND2)] _Band2("Use Second Band", Float) = 0
-        _Band2Tint("Second Band Tint", Color) = (0.82, 0.8, 0.9, 1)
-        _Band2Offset("Second Band Offset", Range(0, 0.5)) = 0.2
-        _Band2Softness("Second Band Softness", Range(0, 1)) = 0.06
+        [AnimeSection(Second Shadow Band)]
+        [Toggle(_ANIME_BAND2)] [AnimeSectionSwitch] _Band2("Use Second Band", Float) = 0
+        [AnimeShowWith(_Band2)] _Band2Tint("Second Band Tint", Color) = (0.82, 0.8, 0.9, 1)
+        [AnimeShowWith(_Band2)] _Band2Offset("Second Band Offset", Range(0, 0.5)) = 0.2
+        [AnimeShowWith(_Band2)] _Band2Softness("Second Band Softness", Range(0, 1)) = 0.06
 
-        [Header(Emission)]
-        [Toggle(_ANIME_EMISSION)] _Emission("Use Emission", Float) = 0
-        [HDR] _EmissionColor("Emission Colour", Color) = (0, 0, 0, 1)
-        [Toggle(_ANIME_EMISSION_MAP)] _EmissionMapOn("Use Emission Map", Float) = 0
-        [NoScaleOffset] _EmissionMap("Emission Map", 2D) = "white" {}
+        [AnimeSection(Emission)]
+        [Toggle(_ANIME_EMISSION)] [AnimeSectionSwitch] _Emission("Use Emission", Float) = 0
+        [HDR] [AnimeShowWith(_Emission)] _EmissionColor("Emission Colour", Color) = (0, 0, 0, 1)
+        [Toggle(_ANIME_EMISSION_MAP)] [AnimeShowWith(_Emission)] _EmissionMapOn("Use Emission Map", Float) = 0
+        [NoScaleOffset] [AnimeShowWith(_EmissionMapOn)] _EmissionMap("Emission Map", 2D) = "white" {}
     }
 
     SubShader

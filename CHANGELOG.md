@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.5.0 (2026-11-18)
+
+- The material inspector (`Editor/Inspector/`): shaders declare their layout by markers (`AnimeSection`,
+  `AnimeSectionSwitch`, `AnimeShowWith`, `AnimeOwn`; the old code table of feature settings is gone); section bars with
+  a feature's switch, greyed but openable while off, a count of settings that differ from the look; a search field; a
+  tooltip on every setting (`Tooltips.txt`; labels shortened); the ramp with the second band's edge and a lit ball drawn
+  with the base map left white; a warning when the depth-edge rim has no Anime Rim feature to draw it. Every change to
+  every selected material under one Undo.
+- Looks (`AnimeLookPreset`, `AnimeMaterials.ApplyLook`, `SyncDerived`, `SyncToggleKeywords`; `Editor/Looks/`): Apply,
+  Revert of one setting, Extract, Update (merged), the link a material follows in its importer's user data; a Default
+  look per shader in `Looks/`.
+- The Line section is named Outline. Review fixes (four reviewers): a show-with loop can't hang the Editor; no reimport
+  or switch change mid-draw; one clamp for Apply, Revert and the count; another tool's user data kept whole.
+
 ## 0.4.0 (2026-11-17)
 
 - The light director (`Runtime/Director/`): `LightSet` (a characters' and a world's light in groups, each with an

@@ -2,7 +2,9 @@
     "name": "AnimeShaders.Editor",
     "rootNamespace": "AnimeShaders.EditorTools",
     "references": [
-        "AnimeShaders"
+        "AnimeShaders",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime"
     ],
     "includePlatforms": [
         "Editor"

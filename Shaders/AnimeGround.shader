@@ -7,36 +7,36 @@ Shader "Anime/Ground"
     // rim, no fade. Group: ground.
     Properties
     {
-        [Header(Surface)]
+        [AnimeSection(Surface)]
         [MainTexture] _BaseMap("Base Map", 2D) = "white" {}
-        [MainColor] _BaseColor("Base Color", Color) = (1, 1, 1, 1)
+        [MainColor] [AnimeOwn] _BaseColor("Base Color", Color) = (1, 1, 1, 1)
 
-        [Header(Tones)]
+        [AnimeSection(Tones)]
         _ShadowTint("Shadow Tint", Color) = (0.7, 0.72, 0.82, 1)
         _ShadowThreshold("Shadow Threshold", Range(0, 1)) = 0.45
         _ShadowSoftness("Shadow Softness", Range(0, 1)) = 0.08
         _LightInfluence("Light Colour Influence", Range(0, 1)) = 1
         _AmbientStrength("Ambient Strength", Range(0, 1)) = 0.25
 
-        [Header(Shadows and Lights)]
+        [AnimeSection(Shadows and Lights)]
         [ToggleOff(_RECEIVE_SHADOWS_OFF)] _ReceiveShadows("Receive Shadows", Float) = 1
         _CastShadowStrength("Cast Shadow Strength", Range(0, 1)) = 1
-        _CloudShadow("Cloud Shadow (how much the clouds shade it)", Range(0, 1)) = 1
-        _ContactShading("Contact Shading (how much ambient occlusion shades it)", Range(0, 1)) = 1
-        _ContactThreshold("Contact Threshold (occlusion turns to shade below it)", Range(0, 1)) = 0.6
+        _CloudShadow("Cloud Shadow", Range(0, 1)) = 1
+        _ContactShading("Contact Shading", Range(0, 1)) = 1
+        _ContactThreshold("Contact Threshold", Range(0, 1)) = 0.6
         [Toggle(_ANIME_EXTRA_LIGHTS)] _ExtraLights("Use Additional Lights", Float) = 0
-        _ExtraLightStrength("Additional Light Strength", Range(0, 2)) = 1
-        _ExtraLightCap("Additional Light Cap", Range(0, 2)) = 0.6
+        [AnimeShowWith(_ExtraLights)] _ExtraLightStrength("Additional Light Strength", Range(0, 2)) = 1
+        [AnimeShowWith(_ExtraLights)] _ExtraLightCap("Additional Light Cap", Range(0, 2)) = 0.6
 
-        [Header(Normal Map and Clipping)]
+        [AnimeSection(Normal Map and Clipping)]
         [Toggle(_NORMALMAP)] _NormalMapOn("Use Normal Map", Float) = 0
-        [Normal] [NoScaleOffset] _BumpMap("Normal Map", 2D) = "bump" {}
-        _BumpScale("Normal Scale", Float) = 1
+        [Normal] [NoScaleOffset] [AnimeShowWith(_NormalMapOn)] _BumpMap("Normal Map", 2D) = "bump" {}
+        [AnimeShowWith(_NormalMapOn)] [AnimeOwn] _BumpScale("Normal Scale", Float) = 1
         [Toggle(_ALPHATEST_ON)] _AlphaClip("Use Alpha Clip", Float) = 0
-        _Cutoff("Alpha Cutoff", Range(0, 1)) = 0.5
-        [Enum(UnityEngine.Rendering.CullMode)] _Cull("Cull (Off = two-sided)", Float) = 2
+        [AnimeShowWith(_AlphaClip)] [AnimeOwn] _Cutoff("Alpha Cutoff", Range(0, 1)) = 0.5
+        [Enum(UnityEngine.Rendering.CullMode)] [AnimeOwn] _Cull("Cull (Off = two-sided)", Float) = 2
 
-        [Header(Field)]
+        [AnimeSection(Field)]
         [NoScaleOffset] _FieldDetail("Field Detail (packed)", 2D) = "linearGrey" {}
         _FieldTile("Field Tile Size (m)", Range(0.1, 20)) = 2
         _FieldDark("Field Dark", Color) = (0.3, 0.45, 0.22, 1)
@@ -46,12 +46,12 @@ Shader "Anime/Ground"
         [IntRange] _FieldSteps("Field Shade Steps (0 smooth)", Range(0, 6)) = 0
         _FieldNormal("Field Normal Strength", Range(0, 2)) = 0.3
         _FieldBreakUp("Field Break Up Tiling", Range(0, 1)) = 1
-        [NoScaleOffset] _FieldStones("Field Stone Map (from a detail set with Stones)", 2D) = "black" {}
-        _FieldStoneShade("Field Stone Shade (each stone varies by up to this)", Range(0, 0.5)) = 0
-        _FieldStoneMix("Field Stone Mix (share of stones in the second pair)", Range(0, 1)) = 0
-        _FieldStoneJoint("Field Stone Joint (shade below which joints take no variation)", Range(0, 1)) = 0.25
+        [NoScaleOffset] _FieldStones("Field Stone Map", 2D) = "black" {}
+        _FieldStoneShade("Field Stone Shade", Range(0, 0.5)) = 0
+        _FieldStoneMix("Field Stone Mix", Range(0, 1)) = 0
+        _FieldStoneJoint("Field Stone Joint", Range(0, 1)) = 0.25
 
-        [Header(Circle)]
+        [AnimeSection(Circle)]
         [NoScaleOffset] _CircleDetail("Circle Detail (packed)", 2D) = "linearGrey" {}
         _CircleTile("Circle Tile Size (m)", Range(0.1, 20)) = 2
         _CircleDark("Circle Dark", Color) = (0.5, 0.48, 0.45, 1)
@@ -61,12 +61,12 @@ Shader "Anime/Ground"
         [IntRange] _CircleSteps("Circle Shade Steps (0 smooth)", Range(0, 6)) = 0
         _CircleNormal("Circle Normal Strength", Range(0, 2)) = 0.5
         _CircleBreakUp("Circle Break Up Tiling", Range(0, 1)) = 0
-        [NoScaleOffset] _CircleStones("Circle Stone Map (from a detail set with Stones)", 2D) = "black" {}
-        _CircleStoneShade("Circle Stone Shade (each stone varies by up to this)", Range(0, 0.5)) = 0
-        _CircleStoneMix("Circle Stone Mix (share of stones in the second pair)", Range(0, 1)) = 0
-        _CircleStoneJoint("Circle Stone Joint (shade below which joints take no variation)", Range(0, 1)) = 0.25
+        [NoScaleOffset] _CircleStones("Circle Stone Map", 2D) = "black" {}
+        _CircleStoneShade("Circle Stone Shade", Range(0, 0.5)) = 0
+        _CircleStoneMix("Circle Stone Mix", Range(0, 1)) = 0
+        _CircleStoneJoint("Circle Stone Joint", Range(0, 1)) = 0.25
 
-        [Header(Patches and Tiling)]
+        [AnimeSection(Patches and Tiling)]
         _PatchScale("Patch Scale (per metre)", Float) = 0.04
         _PatchStrength("Patch Strength", Range(0, 1)) = 0.15
         _EarthColor("Bare Earth Colour", Color) = (0.55, 0.45, 0.32, 1)
@@ -78,11 +78,11 @@ Shader "Anime/Ground"
         _BreakUpScale("Break Up Second Read Scale", Range(0.1, 4)) = 0.43
         _BreakUpAngle("Break Up Second Read Angle", Range(0, 360)) = 37
 
-        [Header(Circle Edge)]
-        _GroundCircle("Circle (centre x, centre z, radius, edge wobble)", Vector) = (0, 0, 15, 0.6)
+        [AnimeSection(Circle Edge)]
+        _GroundCircle("Circle", Vector) = (0, 0, 15, 0.6)
         _EdgeSoftness("Circle Edge Softness (m)", Range(0.01, 5)) = 0.8
 
-        [Header(Distance)]
+        [AnimeSection(Distance)]
         _DetailFadeStart("Detail Fade Start (m)", Float) = 25
         _DetailFadeRange("Detail Fade Range (m)", Float) = 40
         [NoScaleOffset] _AnimeNoiseTex("Noise (baked)", 2D) = "gray" {}

@@ -2,13 +2,12 @@
 
 Anime (non-photorealistic) shaders for Unity's Universal Render Pipeline that can be dropped into any project: a clean
 two-tone look in the manner of modern anime games, outlines that hold up on two-sided cloth, faces that shade cleanly
-as the head turns, and a light director so a project can set a mood per scene and relight a single shot. When it is
-done, everything will be tuned through a custom inspector with presets, with nothing needing code.
+as the head turns, and a light director so a project can set a mood per scene and relight a single shot. Everything is
+tuned through its own material inspector with look presets, with nothing needing code.
 
-**Status: in construction (0.4.0).** The lit core, the character, face, hair and eye shaders, the depth-edge rim, the
-world, ground and sky shaders, sky presets with clouds, ridges and haze, detail sets and the light director are written;
-the foliage shader, the full inspector and look presets arrive in the order of the table below, each proved before the
-next.
+**Status: in construction (0.5.0).** The lit core, the character, face, hair and eye shaders, the depth-edge rim, the
+world, ground and sky shaders, sky presets with clouds, ridges and haze, detail sets, the light director, the material inspector and
+look presets are written; the foliage shader arrives next, proved before it ships.
 
 - **Requires:** Unity 6, URP 17, the Forward or Forward+ renderer with depth priming off. Deferred is not supported
   (it would draw the line but not the body), and depth priming would test the line against the body's primed depth and
@@ -38,7 +37,7 @@ normals, smoothed so hard edges don't crack the line. Those normals are baked on
 leaving the tangents free for normal maps. Width follows the camera's distance and field of view, can be painted per
 vertex, and has a global multiplier.
 
-## What exists now (0.4.0)
+## What exists now (0.5.0)
 
 | File | What it is |
 |---|---|
@@ -75,7 +74,10 @@ vertex, and has a global multiplier.
 | `Runtime/Character/` | `AnimeHeadFrame`: the head's centre, forward, right and up (the model's own front and up at rest: the character root's forward and up, carried through the bind pose by the head bone, whatever the bone's or the mesh's axes; Blender's meshes import turned from their root) measured each frame, after animation and cloth, and written into the face, hair, eye and brow renderers' blocks once it changes, just before a camera that can see one of them draws (its layers, scene and view), so a hidden figure pays only the measuring (`Refresh` measures and writes now, for a body posed offscreen); it tries once more after everything woke and warns once if it found no head; Reset lists the children with face, hair or eye materials; gizmos in the Scene view. Its Inspector (`Editor/Character/AnimeHeadFrameEditor`) warns when it found no head, lists nothing, or lists a renderer that reads no head frame |
 | `Runtime/Director/` | The light director (below): `LightSet` (the asset) and its groups (`LightGroups.cs`), `AnimeLightDirector` (the stack and the one writer), `LightLevel`, `LightToken`, `LightArea` (an interior's light), `AnimeLightExempt` (a camera keeping its own light) |
 | `Runtime/Sky/` | `SkyPreset`, `SkyState` (everything a preset sets, held once), `SkyRidge`, `SkyApply` (the one writer), `SkyPresetApplier`, and the shipped presets in `Presets/` (Day with its light, `DayLight`) |
-| `Editor/AnimeShaderGUI.cs` | The material inspector (thin for now): the shader's sections, a live preview of the two-tone ramp (the same maths the shader runs, tested against a render), each feature's settings shown only while the feature is on, and warnings under a slot holding the wrong kind of map (detail, stone, face) or a face with none |
+| `Editor/Inspector/` | The material inspector for every pack shader (`AnimeShaderGUI`, below): the layout read from the shader (`InspectorLayout`, the four markers in `LayoutDecorators`), section bars (`SectionBar`), the look row (`LookRow`), the ramp and lit ball (`RampPreview`, `MaterialPreview`), the warnings under a setting (`InspectorWarnings`), the tooltips (`Tooltips`, `Tooltips.txt`) |
+| `Editor/Looks/` | Looks in the Editor (`AnimeLooks`: Extract, Update, Apply, Revert, what differs, the link a material follows) and a look's own inspector |
+| `Runtime/Looks/` | `AnimeLookPreset`, a look; applied by `AnimeMaterials.ApplyLook` (scripts can apply one in play), which keeps keywords and passes in step (`SyncDerived`) |
+| `Looks/` | A neutral Default look per shader |
 | `Tests/Editor/` | `Support/` (in `Stage/`, `World/` and `Sources/`: `LitStage`: a preview scene, camera and light rendering into a linear float target; `MadePipeline`: a URP asset made for a test with given features, swapped in and always put back; meshes, materials with colours as the shader reads them, frame reads, source readers, the director's globals and the world's globals held neutral (`WorldGlobals`; every stage holds them), a sky preset made field by field (`MadeSky`), a volume only the stage camera sees (`MadeVolume`), the finite scan, the batcher check), `Shader/` (passes, batcher, names and constants, every platform's compile, and `Probe/`: an entry shader adding its own property, and one through the surface hook), `Inspector/` (the feature map, the preview against a render), `Character/` (the block store, the head frame, the face against Lambert round the horizon, the front hair's shadow, the angel ring, eyes through their fringe), `Face/` (the face map's bake on made faces, against Lambert; its import and hash), `Look/` (tones, band, rim, director, cast shadows, cloud shadows, contact shading, inside tone, fade, the surface hook; `Screen/`: the depth rim, the sun shafts), `World/` (the noise, world UVs; `Ground/`: the detail packer and its import, the ground; `Sky/`: the sky, its ridges and clouds, the haze, presets), `Outline/` (the line, the baker) |
 
 A thin entry shader (face, hair, world, or a project's own with extra passes) includes the same files, declares its own
@@ -306,6 +308,37 @@ the camera within about 45 degrees; past that, a closed part sharing the materia
 the square root of half its radius times the line's width (millimetres on a character's limb; the characters' 5 cm is
 ample), or the line shows across its sides (the inspector warns at none). A model that already has UV3 is left alone
 with a warning.
+
+### The inspector and looks
+
+Every pack shader names `AnimeShaders.EditorTools.AnimeShaderGUI` as its `CustomEditor`. The window: a header card (the
+look the material follows; a search field; the ramp, and a lit ball for shaders tagged `"AnimePreview" = "Ball"`), then
+the shader's sections as foldout bars. A section switched off is greyed (it still opens, to show what turning it on
+gives); a folded bar counts its settings that differ from the look; a setting that differs has a dot, and a right-click
+reverts it alone. Every change applies to every selected material under one Undo.
+
+**Laying out a shader** (the shader is the one owner; no code): four markers, each a zero-height decorator that sits
+beside a property's own drawer such as `[Toggle(KW)]`:
+
+| Marker | On | Does |
+|---|---|---|
+| `[AnimeSection(Name)]` | the first property of a section | starts the section `Name` (in place of `[Header]`, which would draw its title twice) |
+| `[AnimeSectionSwitch]` | a toggle | is its section's on/off switch, on the bar |
+| `[AnimeSectionSwitch(Pass, LightMode)]` | any property of a section | the section is switched by that pass (the outline) |
+| `[AnimeShowWith(_Toggle)]` | a setting | shown only while `_Toggle` is on (and every toggle above it: settings nest) |
+| `[AnimeOwn]` | a setting | the material's model's own (base colour, cull, the line's offset): a look never stores or sets it |
+
+A label stays short; its explanation is a line in `Editor/Inspector/Tooltips.txt` (`_Property: text`, or
+`Shader Name/_Property: text` for one shader, which wins). A test holds every shown setting of every pack shader to a
+tooltip; a project's own shader shows none for a setting with no line.
+
+**Looks** (`AnimeLookPreset`, Create > Anime Shaders > Look Preset): the values of the sections it covers (ticked on the
+asset), never a texture, the render queue or an `[AnimeOwn]` setting. Any pack material takes the settings its shader
+has, so one look can serve a character's body, face, hair and eyes. In the inspector: **Look** (which one the material
+follows; kept in the material importer's user data as `anime.look=GUID`, so the material itself carries nothing; a copy
+follows none; a variant, a material inside a model or one in a package can't follow one, and says why), **Apply**
+(back to the look), **Extract** (a new look from this material, beside it), **Update Look** (this material's values into
+the look, merged: settings its shader lacks are kept; confirmed by a second click; Undo takes it back).
 
 ## Credits and sources
 

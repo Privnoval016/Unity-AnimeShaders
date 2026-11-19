@@ -10,85 +10,85 @@ Shader "Anime/Face"
     // Anime/Character's, less the band, emission and inside-tone branches; the face adds none.
     Properties
     {
-        [Header(Surface)]
+        [AnimeSection(Surface)]
         [MainTexture] _BaseMap("Base Map", 2D) = "white" {}
-        [MainColor] _BaseColor("Base Color", Color) = (1, 1, 1, 1)
+        [MainColor] [AnimeOwn] _BaseColor("Base Color", Color) = (1, 1, 1, 1)
 
-        [Header(Tones)]
+        [AnimeSection(Tones)]
         _ShadowTint("Shadow Tint", Color) = (0.62, 0.6, 0.72, 1)
         _ShadowThreshold("Shadow Threshold", Range(0, 1)) = 0.5
         _ShadowSoftness("Shadow Softness", Range(0, 1)) = 0.08
         _LightInfluence("Light Colour Influence", Range(0, 1)) = 1
         _AmbientStrength("Ambient Strength", Range(0, 1)) = 0.25
 
-        [Header(Face)]
-        [NoScaleOffset] _FaceMap("Face Map (baked from the face's mesh)", 2D) = "black" {}
-        _FaceMapStrength("Face Map Strength (0: shaded by its normals)", Range(0, 1)) = 1
-        _FaceShadowSoftness("Face Shadow Softness (degrees round the head)", Range(0, 60)) = 6
-        _FaceShadowBias("Face Shadow Bias (up: more of the face lit)", Range(-1, 1)) = 0
-        _FaceLightHeight("Face Light Height (a light above or below dims the face)", Range(0, 1)) = 0.3
+        [AnimeSection(Face)]
+        [NoScaleOffset] _FaceMap("Face Map", 2D) = "black" {}
+        _FaceMapStrength("Face Map Strength", Range(0, 1)) = 1
+        _FaceShadowSoftness("Face Shadow Softness", Range(0, 60)) = 6
+        _FaceShadowBias("Face Shadow Bias", Range(-1, 1)) = 0
+        _FaceLightHeight("Face Light Height", Range(0, 1)) = 0.3
 
-        [Header(Front Hair Shadow)]
-        _HairShadowStrength("Hair Shadow Strength (needs the Anime Hair Depth feature)", Range(0, 1)) = 1
+        [AnimeSection(Front Hair Shadow)]
+        _HairShadowStrength("Hair Shadow Strength", Range(0, 1)) = 1
         _HairShadowReach("Hair Shadow Reach (m toward the light)", Range(0, 0.2)) = 0.03
-        _HairShadowBias("Hair Shadow Bias (m: hair nearer than this casts none)", Range(0, 0.1)) = 0.01
+        _HairShadowBias("Hair Shadow Bias", Range(0, 0.1)) = 0.01
         _HairShadowSoftness("Hair Shadow Softness (m)", Range(0.001, 0.1)) = 0.01
-        _HairShadowRange("Hair Shadow Range (m: hair farther in front casts none)", Range(0.02, 1)) = 0.3
+        _HairShadowRange("Hair Shadow Range", Range(0.02, 1)) = 0.3
 
-        [Header(Shadows and Lights)]
+        [AnimeSection(Shadows and Lights)]
         [ToggleOff(_RECEIVE_SHADOWS_OFF)] _ReceiveShadows("Receive Shadows", Float) = 1
         _CastShadowStrength("Cast Shadow Strength", Range(0, 1)) = 1
-        _CloudShadow("Cloud Shadow (how much the clouds shade it)", Range(0, 1)) = 1
-        _ContactShading("Contact Shading (how much ambient occlusion shades it)", Range(0, 1)) = 0.3
-        _ContactThreshold("Contact Threshold (occlusion turns to shade below it)", Range(0, 1)) = 0.6
+        _CloudShadow("Cloud Shadow", Range(0, 1)) = 1
+        _ContactShading("Contact Shading", Range(0, 1)) = 0.3
+        _ContactThreshold("Contact Threshold", Range(0, 1)) = 0.6
         [Toggle(_ANIME_BODY_SHADOW)] _BodyShadow("Shadow The Whole Body", Float) = 0
-        _BodyShadowReach("Body Shadow Reach (m toward the light)", Range(0, 5)) = 1.5
+        [AnimeShowWith(_BodyShadow)] _BodyShadowReach("Body Shadow Reach (m toward the light)", Range(0, 5)) = 1.5
 
         [Toggle(_ANIME_EXTRA_LIGHTS)] _ExtraLights("Use Additional Lights", Float) = 0
-        _ExtraLightStrength("Additional Light Strength", Range(0, 2)) = 1
-        _ExtraLightCap("Additional Light Cap", Range(0, 2)) = 0.6
+        [AnimeShowWith(_ExtraLights)] _ExtraLightStrength("Additional Light Strength", Range(0, 2)) = 1
+        [AnimeShowWith(_ExtraLights)] _ExtraLightCap("Additional Light Cap", Range(0, 2)) = 0.6
 
-        [Header(Colour)]
-        _ColourBrightness("Brightness (the shaded colour times this: lift characters above the world)", Range(0, 2)) = 1
-        _ColourSaturation("Saturation (0 grey, 1 as shaded, above 1 richer)", Range(0, 2)) = 1
+        [AnimeSection(Colour)]
+        _ColourBrightness("Brightness", Range(0, 2)) = 1
+        _ColourSaturation("Saturation", Range(0, 2)) = 1
 
-        [Header(Rim)]
+        [AnimeSection(Rim)]
         [Toggle(_ANIME_RIM)] _Rim("Use Fresnel Rim", Float) = 0
         [HDR] _RimColor("Rim Colour", Color) = (1, 1, 1, 1)
-        _RimWidth("Fresnel Rim Width", Range(0, 1)) = 0.3
+        [AnimeShowWith(_Rim)] _RimWidth("Fresnel Rim Width", Range(0, 1)) = 0.3
         _RimSoftness("Rim Softness", Range(0, 1)) = 0.15
         _RimStrength("Rim Strength", Range(0, 2)) = 0.5
         _RimLightMask("Rim Lit Side Only", Range(0, 1)) = 0.5
         [ToggleUI] _RimDepth("Use Depth Edge Rim", Float) = 0
-        _RimDepthWidth("Depth Rim Width (px at 1080p)", Range(0, 12)) = 3
-        _RimDepthThreshold("Depth Rim Threshold (m)", Range(0.01, 2)) = 0.15
-        [Enum(Add, 1, Brighten, 2)] _RimDepthBlend("Depth Rim Blend (Add: light added; Brighten: the part's own colour brightened, Rim Colour its tint)", Float) = 1
+        [AnimeShowWith(_RimDepth)] _RimDepthWidth("Depth Rim Width (px at 1080p)", Range(0, 12)) = 3
+        [AnimeShowWith(_RimDepth)] _RimDepthThreshold("Depth Rim Threshold (m)", Range(0.01, 2)) = 0.15
+        [Enum(Add, 1, Brighten, 2)] [AnimeShowWith(_RimDepth)] _RimDepthBlend("Depth Rim Blend", Float) = 1
 
-        [Header(Normal Map and Clipping)]
+        [AnimeSection(Normal Map and Clipping)]
         [Toggle(_NORMALMAP)] _NormalMapOn("Use Normal Map", Float) = 0
-        [Normal] [NoScaleOffset] _BumpMap("Normal Map", 2D) = "bump" {}
-        _BumpScale("Normal Scale", Float) = 1
+        [Normal] [NoScaleOffset] [AnimeShowWith(_NormalMapOn)] _BumpMap("Normal Map", 2D) = "bump" {}
+        [AnimeShowWith(_NormalMapOn)] [AnimeOwn] _BumpScale("Normal Scale", Float) = 1
 
         [Toggle(_ALPHATEST_ON)] _AlphaClip("Use Alpha Clip", Float) = 0
-        _Cutoff("Alpha Cutoff", Range(0, 1)) = 0.5
+        [AnimeShowWith(_AlphaClip)] [AnimeOwn] _Cutoff("Alpha Cutoff", Range(0, 1)) = 0.5
 
-        [Enum(UnityEngine.Rendering.CullMode)] _Cull("Cull (Off = two-sided)", Float) = 2
+        [Enum(UnityEngine.Rendering.CullMode)] [AnimeOwn] _Cull("Cull (Off = two-sided)", Float) = 2
 
-        [Header(Line)]
-        _OutlineColor("Line Colour", Color) = (0.1, 0.08, 0.1, 1)
-        _OutlineWidth("Line Width (per mille of screen height)", Range(0, 10)) = 1.5
+        [AnimeSection(Outline)]
+        [AnimeSectionSwitch(Pass, SRPDefaultUnlit)] _OutlineColor("Line Colour", Color) = (0.1, 0.08, 0.1, 1)
+        _OutlineWidth("Line Width", Range(0, 10)) = 1.5
         _OutlineDistanceMin("Line Near Distance", Float) = 1
         _OutlineDistanceMax("Line Far Distance", Float) = 12
-        _OutlineZOffset("Line Z Offset", Float) = 0.01
-        _OutlineOpenEdges("Line On Open Edges (two-sided cloth: the line widens past hems and open edges; needs the line bake)", Range(0, 1)) = 0
+        [AnimeOwn] _OutlineZOffset("Line Z Offset", Float) = 0.01
+        [AnimeOwn] _OutlineOpenEdges("Line On Open Edges", Range(0, 1)) = 0
         [HideInInspector] _OutlineCull("Line Cull (kept in step by Line On Open Edges: Off with it on, else Front)", Float) = 1
         [Toggle(_ANIME_OUTLINE_BAKED)] _OutlineBakedNormals("Line From Baked Normals", Float) = 0
         [Toggle(_ANIME_OUTLINE_BASETINT)] _OutlineBaseTintOn("Tint Line By Base Map", Float) = 0
-        _OutlineBaseTint("Line Base Tint", Range(0, 1)) = 0.5
+        [AnimeShowWith(_OutlineBaseTintOn)] _OutlineBaseTint("Line Base Tint", Range(0, 1)) = 0.5
         [Toggle(_ANIME_OUTLINE_VCOLOR)] _OutlineVertexColor("Line From Vertex Colour", Float) = 0
-        [Enum(R, 0, G, 1, B, 2, A, 3)] _OutlineWidthChannel("Line Width Channel (vertex colour)", Float) = 3
-        [Enum(R, 0, G, 1, B, 2, A, 3)] _OutlineZChannel("Line Z Channel (vertex colour)", Float) = 2
-        _OutlineVertexZ("Line Z Offset From Vertex Colour", Float) = 0.02
+        [Enum(R, 0, G, 1, B, 2, A, 3)] [AnimeShowWith(_OutlineVertexColor)] [AnimeOwn] _OutlineWidthChannel("Line Width Channel (vertex colour)", Float) = 3
+        [Enum(R, 0, G, 1, B, 2, A, 3)] [AnimeShowWith(_OutlineVertexColor)] [AnimeOwn] _OutlineZChannel("Line Z Channel (vertex colour)", Float) = 2
+        [AnimeShowWith(_OutlineVertexColor)] [AnimeOwn] _OutlineVertexZ("Line Z Offset From Vertex Colour", Float) = 0.02
     }
 
     SubShader
@@ -99,6 +99,7 @@ Shader "Anime/Face"
             "RenderPipeline" = "UniversalPipeline"
             "Queue" = "Geometry"
             "IgnoreProjector" = "True"
+            "AnimePreview" = "Ball"
         }
         LOD 300
 

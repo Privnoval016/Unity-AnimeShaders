@@ -1,0 +1,281 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3462c84fed76468d9fe2bb9ac1f0bd2, type: 3}
+  m_Name: Default Ground
+  m_EditorClassIdentifier: AnimeShaders::AnimeShaders.AnimeLookPreset
+  madeFrom: {fileID: 4800000, guid: 59a612a31a3e1472cb07b3df5e91476e, type: 3}
+  covers:
+  - Tones
+  - Shadows and Lights
+  - Normal Map and Clipping
+  - Field
+  - Circle
+  - Patches and Tiling
+  - Circle Edge
+  - Distance
+  settings:
+  - property: _ShadowTint
+    section: Tones
+    kind: 1
+    number: 0.7
+    vector: {x: 0.7, y: 0.72, z: 0.82, w: 1}
+  - property: _ShadowThreshold
+    section: Tones
+    kind: 0
+    number: 0.45
+    vector: {x: 0.45, y: 0, z: 0, w: 0}
+  - property: _ShadowSoftness
+    section: Tones
+    kind: 0
+    number: 0.08
+    vector: {x: 0.08, y: 0, z: 0, w: 0}
+  - property: _LightInfluence
+    section: Tones
+    kind: 0
+    number: 1
+    vector: {x: 1, y: 0, z: 0, w: 0}
+  - property: _AmbientStrength
+    section: Tones
+    kind: 0
+    number: 0.25
+    vector: {x: 0.25, y: 0, z: 0, w: 0}
+  - property: _ReceiveShadows
+    section: Shadows and Lights
+    kind: 0
+    number: 1
+    vector: {x: 1, y: 0, z: 0, w: 0}
+  - property: _CastShadowStrength
+    section: Shadows and Lights
+    kind: 0
+    number: 1
+    vector: {x: 1, y: 0, z: 0, w: 0}
+  - property: _CloudShadow
+    section: Shadows and Lights
+    kind: 0
+    number: 1
+    vector: {x: 1, y: 0, z: 0, w: 0}
+  - property: _ContactShading
+    section: Shadows and Lights
+    kind: 0
+    number: 1
+    vector: {x: 1, y: 0, z: 0, w: 0}
+  - property: _ContactThreshold
+    section: Shadows and Lights
+    kind: 0
+    number: 0.6
+    vector: {x: 0.6, y: 0, z: 0, w: 0}
+  - property: _ExtraLights
+    section: Shadows and Lights
+    kind: 0
+    number: 0
+    vector: {x: 0, y: 0, z: 0, w: 0}
+  - property: _ExtraLightStrength
+    section: Shadows and Lights
+    kind: 0
+    number: 1
+    vector: {x: 1, y: 0, z: 0, w: 0}
+  - property: _ExtraLightCap
+    section: Shadows and Lights
+    kind: 0
+    number: 0.6
+    vector: {x: 0.6, y: 0, z: 0, w: 0}
+  - property: _NormalMapOn
+    section: Normal Map and Clipping
+    kind: 0
+    number: 0
+    vector: {x: 0, y: 0, z: 0, w: 0}
+  - property: _AlphaClip
+    section: Normal Map and Clipping
+    kind: 0
+    number: 0
+    vector: {x: 0, y: 0, z: 0, w: 0}
+  - property: _FieldTile
+    section: Field
+    kind: 0
+    number: 2
+    vector: {x: 2, y: 0, z: 0, w: 0}
+  - property: _FieldDark
+    section: Field
+    kind: 1
+    number: 0.29999995
+    vector: {x: 0.29999995, y: 0.45, z: 0.21999994, w: 1}
+  - property: _FieldLight
+    section: Field
+    kind: 1
+    number: 0.56
+    vector: {x: 0.56, y: 0.68, z: 0.39999995, w: 1}
+  - property: _FieldSecondDark
+    section: Field
+    kind: 1
+    number: 0.35999995
+    vector: {x: 0.35999995, y: 0.41999993, z: 0.21999994, w: 1}
+  - property: _FieldSecondLight
+    section: Field
+    kind: 1
+    number: 0.6
+    vector: {x: 0.6, y: 0.62, z: 0.35999995, w: 1}
+  - property: _FieldSteps
+    section: Field
+    kind: 0
+    number: 0
+    vector: {x: 0, y: 0, z: 0, w: 0}
+  - property: _FieldNormal
+    section: Field
+    kind: 0
+    number: 0.3
+    vector: {x: 0.3, y: 0, z: 0, w: 0}
+  - property: _FieldBreakUp
+    section: Field
+    kind: 0
+    number: 1
+    vector: {x: 1, y: 0, z: 0, w: 0}
+  - property: _FieldStoneShade
+    section: Field
+    kind: 0
+    number: 0
+    vector: {x: 0, y: 0, z: 0, w: 0}
+  - property: _FieldStoneMix
+    section: Field
+    kind: 0
+    number: 0
+    vector: {x: 0, y: 0, z: 0, w: 0}
+  - property: _FieldStoneJoint
+    section: Field
+    kind: 0
+    number: 0.25
+    vector: {x: 0.25, y: 0, z: 0, w: 0}
+  - property: _CircleTile
+    section: Circle
+    kind: 0
+    number: 2
+    vector: {x: 2, y: 0, z: 0, w: 0}
+  - property: _CircleDark
+    section: Circle
+    kind: 1
+    number: 0.5
+    vector: {x: 0.5, y: 0.47999996, z: 0.45, w: 1}
+  - property: _CircleLight
+    section: Circle
+    kind: 1
+    number: 0.8
+    vector: {x: 0.8, y: 0.78, z: 0.73, w: 1}
+  - property: _CircleSecondDark
+    section: Circle
+    kind: 1
+    number: 0.5
+    vector: {x: 0.5, y: 0.47999996, z: 0.45, w: 1}
+  - property: _CircleSecondLight
+    section: Circle
+    kind: 1
+    number: 0.8
+    vector: {x: 0.8, y: 0.78, z: 0.73, w: 1}
+  - property: _CircleSteps
+    section: Circle
+    kind: 0
+    number: 0
+    vector: {x: 0, y: 0, z: 0, w: 0}
+  - property: _CircleNormal
+    section: Circle
+    kind: 0
+    number: 0.5
+    vector: {x: 0.5, y: 0, z: 0, w: 0}
+  - property: _CircleBreakUp
+    section: Circle
+    kind: 0
+    number: 0
+    vector: {x: 0, y: 0, z: 0, w: 0}
+  - property: _CircleStoneShade
+    section: Circle
+    kind: 0
+    number: 0
+    vector: {x: 0, y: 0, z: 0, w: 0}
+  - property: _CircleStoneMix
+    section: Circle
+    kind: 0
+    number: 0
+    vector: {x: 0, y: 0, z: 0, w: 0}
+  - property: _CircleStoneJoint
+    section: Circle
+    kind: 0
+    number: 0.25
+    vector: {x: 0.25, y: 0, z: 0, w: 0}
+  - property: _PatchScale
+    section: Patches and Tiling
+    kind: 0
+    number: 0.04
+    vector: {x: 0.04, y: 0, z: 0, w: 0}
+  - property: _PatchStrength
+    section: Patches and Tiling
+    kind: 0
+    number: 0.15
+    vector: {x: 0.15, y: 0, z: 0, w: 0}
+  - property: _EarthColor
+    section: Patches and Tiling
+    kind: 1
+    number: 0.54999995
+    vector: {x: 0.54999995, y: 0.45, z: 0.3199999, w: 1}
+  - property: _EarthAmount
+    section: Patches and Tiling
+    kind: 0
+    number: 0.06
+    vector: {x: 0.06, y: 0, z: 0, w: 0}
+  - property: _PatchTint
+    section: Patches and Tiling
+    kind: 1
+    number: 0.41999993
+    vector: {x: 0.41999993, y: 0.58, z: 0.35999995, w: 0}
+  - property: _PatchTintScale
+    section: Patches and Tiling
+    kind: 0
+    number: 0.01
+    vector: {x: 0.01, y: 0, z: 0, w: 0}
+  - property: _PatchTintCover
+    section: Patches and Tiling
+    kind: 0
+    number: 0.4
+    vector: {x: 0.4, y: 0, z: 0, w: 0}
+  - property: _PatchTintSoftness
+    section: Patches and Tiling
+    kind: 0
+    number: 0.15
+    vector: {x: 0.15, y: 0, z: 0, w: 0}
+  - property: _BreakUpScale
+    section: Patches and Tiling
+    kind: 0
+    number: 0.43
+    vector: {x: 0.43, y: 0, z: 0, w: 0}
+  - property: _BreakUpAngle
+    section: Patches and Tiling
+    kind: 0
+    number: 37
+    vector: {x: 37, y: 0, z: 0, w: 0}
+  - property: _GroundCircle
+    section: Circle Edge
+    kind: 2
+    number: 0
+    vector: {x: 0, y: 0, z: 15, w: 0.6}
+  - property: _EdgeSoftness
+    section: Circle Edge
+    kind: 0
+    number: 0.8
+    vector: {x: 0.8, y: 0, z: 0, w: 0}
+  - property: _DetailFadeStart
+    section: Distance
+    kind: 0
+    number: 25
+    vector: {x: 25, y: 0, z: 0, w: 0}
+  - property: _DetailFadeRange
+    section: Distance
+    kind: 0
+    number: 40
+    vector: {x: 40, y: 0, z: 0, w: 0}
+  passes: []
