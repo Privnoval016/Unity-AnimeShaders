@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using AnimeShaders.EditorTools;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.Rendering;
@@ -59,29 +60,6 @@ namespace AnimeShaders.Tests
             yield return NormalMapAlone;
         }
 
-        private static IEnumerable<string> Failures(Shader shader, ShaderCompilerPlatform platform, BuildTarget target)
-        {
-            ShaderData.Subshader subshader = ShaderUtil.GetShaderData(shader).ActiveSubshader;
-            var declared = new HashSet<string>(shader.keywordSpace.keywordNames);
-            foreach (string[] set in KeywordSets())
-            {
-                string[] keywords = set.Where(declared.Contains).ToArray();
-                for (int index = 0; index < subshader.PassCount; index++)
-                {
-                    ShaderData.Pass pass = subshader.GetPass(index);
-                    foreach (ShaderType stage in new[] { ShaderType.Vertex, ShaderType.Fragment })
-                    {
-                        ShaderData.VariantCompileInfo result = pass.CompileVariant(stage, keywords, platform, target);
-                        if (!result.Success)
-                        {
-                            string errors = string.Join("; ", result.Messages.Select(message => message.message));
-                            yield return $"{shader.name} {pass.Name} {stage} [{string.Join(" ", keywords)}]: {errors}";
-                        }
-                    }
-                }
-            }
-        }
-
         #endregion
 
         [Test]
@@ -99,7 +77,7 @@ namespace AnimeShaders.Tests
         [TestCase(ShaderCompilerPlatform.GLES3x, BuildTarget.Android)]
         public void EveryPass_Compiles(ShaderCompilerPlatform platform, BuildTarget target)
         {
-            List<string> failures = PackShaders.SelectMany(name => Failures(Shader.Find(name), platform, target)).ToList();
+            List<string> failures = PackShaders.SelectMany(name => ShaderCompileCheck.Failures(Shader.Find(name), KeywordSets(), platform, target)).ToList();
             Assert.IsEmpty(failures, string.Join("\n", failures));
         }
     }
