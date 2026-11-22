@@ -104,7 +104,7 @@ namespace AnimeShaders.Tests
         public void NothingDropped_RendersExactlyAsWithNoTiers()
         {
             RimAndBandOn(true);
-            Shader.SetGlobalVector(DropsId, Vector4.zero);
+            Shader.SetGlobalFloat(DropsId, 0f);
             Color[] none = _stage.Render();
 
             Drop(AnimeTierDrop.None);
